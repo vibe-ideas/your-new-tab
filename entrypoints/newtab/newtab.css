@@ -29,6 +29,10 @@ body {
   overflow: hidden;
 }
 
+.newtab-container.with-background {
+  background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8));
+}
+
 .time-display {
   text-align: center;
   margin-top: 120px;
@@ -114,9 +118,6 @@ body {
   transition: background-color 0.2s;
 }
 
-.search-button:hover {
-  background: #0056b3;
-}
 
 .shortcuts-grid {
   display: flex;
@@ -214,6 +215,71 @@ body {
 
 
 
+.windmill-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.windmill-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(45deg);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.windmill-button.loading {
+  animation: spin 1s linear infinite;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.windmill-button.loading:hover {
+  transform: none;
+}
+
+.windmill-button svg {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.windmill-button.loading svg {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .time {
     font-size: 60px;
@@ -226,5 +292,12 @@ body {
   .shortcuts-grid {
     gap: 30px;
     padding: 0 20px;
+  }
+  
+  .windmill-button {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
   }
 }

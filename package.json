@@ -1,6 +1,6 @@
 {
-  "name": "wxt-react-starter",
-  "description": "manifest.json description",
+  "name": "newtab-extension",
+  "description": "A customizable browser extension that replaces your new tab page with a beautiful, functional interface",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -13,6 +13,23 @@
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit"
   },
+  "keywords": [
+    "browser-extension",
+    "new-tab",
+    "react",
+    "wxt",
+    "productivity"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/newtab-extension.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/newtab-extension/issues"
+  },
+  "homepage": "https://github.com/your-username/newtab-extension#readme",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

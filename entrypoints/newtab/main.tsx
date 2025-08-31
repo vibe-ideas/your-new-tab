@@ -2,9 +2,46 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
 
+interface Bookmark {
+  id: string;
+  title: string;
+  url: string;
+  category?: string;
+}
+
+interface BackgroundImage {
+  url: string;
+  timestamp: number;
+}
+
 const NewTab: React.FC = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
+  const [backgroundImage, setBackgroundImage] = React.useState<string>('');
+  const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
+
+  // Default bookmarks as fallback
+  const defaultBookmarks: Bookmark[] = [
+    { id: '1', title: '有道翻译', url: '#' },
+    { id: '2', title: '热门榜单', url: '#' },
+    { id: '3', title: 'labuladong', url: '#' },
+    { id: '4', title: '开发工具箱', url: '#' },
+    { id: '5', title: '常用工具', url: '#' },
+    { id: '6', title: 'stackoverflow', url: '#' },
+    { id: '7', title: 'ShanSan', url: '#' },
+    { id: '8', title: '牛客网', url: '#' },
+    { id: '9', title: 'Discord', url: '#' },
+    { id: '10', title: '通义', url: '#' },
+    { id: '11', title: 'GitHub', url: '#' },
+    { id: '12', title: '语雀', url: '#' },
+    { id: '13', title: 'substack', url: '#' },
+    { id: '14', title: 'telegram web', url: '#' },
+    { id: '15', title: 'daily.dev', url: '#' },
+    { id: '16', title: 'bestblogs', url: '#' },
+    { id: '17', title: '通义听悟', url: '#' },
+    { id: '18', title: 'MyNotion', url: '#' }
+  ];
 
   React.useEffect(() => {
     const timer = setInterval(() => {
@@ -14,6 +51,81 @@ const NewTab: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Load bookmarks URL from localStorage on component mount
+  React.useEffect(() => {
+    const storedUrl = localStorage.getItem('bookmarksUrl');
+    const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    
+    const fetchBookmarks = async () => {
+      try {
+        const response = await fetch(bookmarksUrl);
+        if (response.ok) {
+          const data: Bookmark[] = await response.json();
+          setBookmarks(data);
+        } else {
+          // Fallback to default bookmarks if remote fetch fails
+          setBookmarks(defaultBookmarks);
+        }
+      } catch (error) {
+        // Fallback to default bookmarks if there's an error
+        console.error('Failed to fetch bookmarks:', error);
+        setBookmarks(defaultBookmarks);
+      }
+    };
+
+    fetchBookmarks();
+  }, []);
+
+  // Fetch daily background image from picsum.photos
+  React.useEffect(() => {
+    const fetchBackgroundImage = async () => {
+      try {
+        // Check if we have a cached image from today
+        const storedBackground = localStorage.getItem('backgroundImage');
+        if (storedBackground) {
+          const backgroundImageData: BackgroundImage = JSON.parse(storedBackground);
+          const today = new Date().toDateString();
+          const imageDate = new Date(backgroundImageData.timestamp).toDateString();
+          
+          // If we have today's image, use it
+          if (today === imageDate) {
+            setBackgroundImage(backgroundImageData.url);
+            return;
+          }
+        }
+        
+        // Use picsum.photos to get a random image
+        const imageUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
+        
+        // Preload the image to ensure it's available
+        const img = new Image();
+        img.onload = () => {
+          setBackgroundImage(imageUrl);
+          
+          // Store in localStorage with today's timestamp
+          const imageData: BackgroundImage = {
+            url: imageUrl,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+        };
+        
+        img.onerror = () => {
+          // Fallback to default gradient if image fails to load
+          setBackgroundImage('');
+        };
+        
+        img.src = imageUrl;
+      } catch (error) {
+        console.error('Failed to fetch background image:', error);
+        // Fallback to default gradient if fetch fails
+        setBackgroundImage('');
+      }
+    };
+
+    fetchBackgroundImage();
+  }, []);
+
   const handleSearch = () => {
     if (searchQuery.trim()) {
       const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`;
@@ -21,7 +133,7 @@ const NewTab: React.FC = () => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       handleSearch();
     }
@@ -29,6 +141,12 @@ const NewTab: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+  };
+
+  const handleBookmarkClick = (url: string) => {
+    if (url && url !== '#') {
+      window.open(url, '_blank');
+    }
   };
 
   const formatTime = (date: Date) => {
@@ -50,8 +168,81 @@ const NewTab: React.FC = () => {
     return `${year}年${month}月${day}日 ${weekday}`;
   };
 
+  // Group bookmarks into rows of 6
+  const groupBookmarksIntoRows = (bookmarks: Bookmark[]) => {
+    const rows = [];
+    for (let i = 0; i < bookmarks.length; i += 6) {
+      rows.push(bookmarks.slice(i, i + 6));
+    }
+    return rows;
+  };
+
+  const bookmarkRows = groupBookmarksIntoRows(bookmarks);
+
+  const containerClass = backgroundImage 
+    ? "newtab-container with-background" 
+    : "newtab-container";
+
+  const backgroundStyle = backgroundImage 
+    ? { 
+        backgroundImage: `url(${backgroundImage})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }
+    : {};
+
+  const switchImage = () => {
+    // Set loading state
+    setIsSwitchingImage(true);
+    
+    // Clear the current cached image to force fetching a new one
+    localStorage.removeItem('backgroundImage');
+    
+    // Fetch a new image
+    const fetchNewImage = async () => {
+      try {
+        // Use picsum.photos to get a random image
+        const imageUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
+        
+        // Preload the image to ensure it's available
+        const img = new Image();
+        img.onload = () => {
+          setBackgroundImage(imageUrl);
+          
+          // Store in localStorage with current timestamp
+          const imageData: BackgroundImage = {
+            url: imageUrl,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          
+          // Reset loading state
+          setIsSwitchingImage(false);
+        };
+        
+        img.onerror = () => {
+          // Fallback to default gradient if image fails to load
+          setBackgroundImage('');
+          // Reset loading state
+          setIsSwitchingImage(false);
+        };
+        
+        img.src = imageUrl;
+      } catch (error) {
+        console.error('Failed to fetch background image:', error);
+        // Fallback to default gradient if fetch fails
+        setBackgroundImage('');
+        // Reset loading state
+        setIsSwitchingImage(false);
+      }
+    };
+
+    fetchNewImage();
+  };
+
   return (
-    <div className="newtab-container">
+    <div className={containerClass} style={backgroundStyle}>
       <div className="time-display">
         <div className="time">{formatTime(currentTime)}</div>
         <div className="date">{formatDate(currentTime)}</div>
@@ -66,7 +257,7 @@ const NewTab: React.FC = () => {
             className="search-input"
             value={searchQuery}
             onChange={handleInputChange}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             autoComplete="off"
           />
           <button className="search-button" onClick={handleSearch}>
@@ -84,87 +275,36 @@ const NewTab: React.FC = () => {
       </div>
 
       <div className="shortcuts-grid">
-        <div className="shortcuts-row">
-          <div className="shortcut-item">
-            <div className="shortcut-icon">有道翻译</div>
-            <div className="shortcut-label">有道翻译</div>
+        {bookmarkRows.map((row, rowIndex) => (
+          <div key={rowIndex} className="shortcuts-row">
+            {row.map((bookmark) => (
+              <div 
+                key={bookmark.id} 
+                className="shortcut-item"
+                onClick={() => handleBookmarkClick(bookmark.url)}
+              >
+                <div className="shortcut-icon">{bookmark.title}</div>
+                <div className="shortcut-label">{bookmark.title}</div>
+              </div>
+            ))}
           </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">热门榜单</div>
-            <div className="shortcut-label">热门榜单</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">labuladong</div>
-            <div className="shortcut-label">labuladong...</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">开发工具箱</div>
-            <div className="shortcut-label">开发工具箱</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">常用工具</div>
-            <div className="shortcut-label">常用工具</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">stackoverflow</div>
-            <div className="shortcut-label">stackoverflow</div>
-          </div>
-        </div>
-        
-        <div className="shortcuts-row">
-          <div className="shortcut-item">
-            <div className="shortcut-icon">ShanSan</div>
-            <div className="shortcut-label">ShanSan</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">牛客网</div>
-            <div className="shortcut-label">牛客网</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">Discord</div>
-            <div className="shortcut-label">Discord</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">通义</div>
-            <div className="shortcut-label">通义</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">GitHub</div>
-            <div className="shortcut-label">GitHub</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">语雀</div>
-            <div className="shortcut-label">语雀</div>
-          </div>
-        </div>
-        
-        <div className="shortcuts-row">
-          <div className="shortcut-item">
-            <div className="shortcut-icon">substack</div>
-            <div className="shortcut-label">substack</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">telegram web</div>
-            <div className="shortcut-label">telegram web</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">daily.dev</div>
-            <div className="shortcut-label">daily.dev</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">bestblogs</div>
-            <div className="shortcut-label">bestblogs</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">通义听悟</div>
-            <div className="shortcut-label">通义听悟</div>
-          </div>
-          <div className="shortcut-item">
-            <div className="shortcut-icon">MyNotion</div>
-            <div className="shortcut-label">MyNotion</div>
-          </div>
-        </div>
+        ))}
       </div>
+
+      {/* Windmill button for switching images */}
+      <button 
+        className={`windmill-button ${isSwitchingImage ? 'loading' : ''}`} 
+        onClick={switchImage}
+        disabled={isSwitchingImage}
+      >
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2L15 8L22 9L17 14L18 21L12 18L6 21L7 14L2 9L9 8L12 2Z" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"/>
+        </svg>
+      </button>
     </div>
   );
 };
