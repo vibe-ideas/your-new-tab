@@ -1,0 +1,230 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.newtab-container {
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, 
+    #b8a893 0%,
+    #d4c7b0 25%,
+    #c9b89a 50%,
+    #a89580 75%,
+    #9d8874 100%);
+  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><filter id="blur"><feGaussianBlur stdDeviation="20"/></filter></defs><circle cx="200" cy="300" r="150" fill="rgba(255,255,255,0.1)" filter="url(%23blur)"/><circle cx="800" cy="200" r="100" fill="rgba(255,255,255,0.05)" filter="url(%23blur)"/><circle cx="600" cy="700" r="120" fill="rgba(0,0,0,0.1)" filter="url(%23blur)"/></svg>');
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.time-display {
+  text-align: center;
+  margin-top: 120px;
+  margin-bottom: 60px;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.time {
+  font-size: 80px;
+  font-weight: 300;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.date {
+  font-size: 18px;
+  font-weight: 400;
+  opacity: 0.9;
+  letter-spacing: 1px;
+}
+
+.search-container {
+  margin-bottom: 80px;
+  width: 100%;
+  max-width: 600px;
+  padding: 0 20px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 50px;
+  padding: 12px 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.google-logo {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 16px;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 16px;
+  padding: 8px 12px;
+  color: #333;
+}
+
+.search-input::placeholder {
+  color: #666;
+  opacity: 0.8;
+}
+
+.search-button {
+  background: #007bff;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-button:hover {
+  background: #0056b3;
+}
+
+.shortcuts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  width: 100%;
+  max-width: 900px;
+  padding: 0 40px;
+}
+
+.shortcuts-row {
+  display: flex;
+  justify-content: center;
+  gap: 60px;
+  flex-wrap: wrap;
+}
+
+.shortcut-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  width: 80px;
+}
+
+.shortcut-item:hover {
+  transform: translateY(-5px);
+}
+
+.shortcut-icon {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+  word-wrap: break-word;
+  overflow: hidden;
+  line-height: 1.2;
+  padding: 4px;
+}
+
+.shortcut-item:hover .shortcut-icon {
+  background: rgba(255, 255, 255, 1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.shortcut-label {
+  font-size: 13px;
+  color: white;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  font-weight: 500;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 为不同的快捷方式添加特定颜色 */
+.shortcut-item:nth-child(1) .shortcut-icon { background: rgba(234, 67, 53, 0.9); color: white; }
+.shortcut-item:nth-child(2) .shortcut-icon { background: rgba(66, 133, 244, 0.9); color: white; }
+.shortcut-item:nth-child(3) .shortcut-icon { background: rgba(52, 168, 83, 0.9); color: white; }
+.shortcut-item:nth-child(4) .shortcut-icon { background: rgba(51, 51, 51, 0.9); color: white; }
+.shortcut-item:nth-child(5) .shortcut-icon { background: rgba(51, 51, 51, 0.9); color: white; }
+.shortcut-item:nth-child(6) .shortcut-icon { background: rgba(255, 255, 255, 0.9); color: #333; }
+
+/* 第二行 */
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(1) .shortcut-icon { background: rgba(52, 168, 83, 0.9); color: white; }
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(2) .shortcut-icon { background: rgba(51, 51, 51, 0.9); color: white; }
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(3) .shortcut-icon { background: rgba(114, 137, 218, 0.9); color: white; }
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(4) .shortcut-icon { background: rgba(255, 255, 255, 0.9); color: #333; }
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(5) .shortcut-icon { background: rgba(51, 51, 51, 0.9); color: white; }
+.shortcuts-row:nth-child(2) .shortcut-item:nth-child(6) .shortcut-icon { background: rgba(52, 168, 83, 0.9); color: white; }
+
+/* 第三行 */  
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(1) .shortcut-icon { background: rgba(255, 255, 255, 0.9); color: #333; }
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(2) .shortcut-icon { background: rgba(255, 255, 255, 0.9); color: #333; }
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(3) .shortcut-icon { background: rgba(114, 137, 218, 0.9); color: white; }
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(4) .shortcut-icon { background: rgba(255, 255, 255, 0.9); color: #333; }
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(5) .shortcut-icon { background: rgba(234, 67, 53, 0.9); color: white; }
+.shortcuts-row:nth-child(3) .shortcut-item:nth-child(6) .shortcut-icon { background: rgba(66, 133, 244, 0.9); color: white; }
+
+
+
+@media (max-width: 768px) {
+  .time {
+    font-size: 60px;
+  }
+  
+  .shortcuts-row {
+    gap: 30px;
+  }
+  
+  .shortcuts-grid {
+    gap: 30px;
+    padding: 0 20px;
+  }
+}
