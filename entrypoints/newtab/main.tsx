@@ -94,8 +94,8 @@ const NewTab: React.FC = () => {
           }
         }
         
-        // Use picsum.photos to get a random image
-        const imageUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
+        // Use picsum.photos to get a random image in 4K resolution
+        const imageUrl = `https://picsum.photos/3840/2160?random=${Date.now()}`;
         
         // Preload the image to ensure it's available
         const img = new Image();
@@ -202,8 +202,8 @@ const NewTab: React.FC = () => {
     // Fetch a new image
     const fetchNewImage = async () => {
       try {
-        // Use picsum.photos to get a random image
-        const imageUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
+        // Use picsum.photos to get a random image in 4K resolution
+        const imageUrl = `https://picsum.photos/3840/2160?random=${Date.now()}`;
         
         // Preload the image to ensure it's available
         const img = new Image();

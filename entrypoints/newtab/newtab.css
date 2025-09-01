@@ -14,7 +14,7 @@ body {
 
 .newtab-container {
   width: 100vw;
-  height: 100vh;
+  min-height: 100vh; /* Changed from height to min-height */
   background: linear-gradient(135deg, 
     #b8a893 0%,
     #d4c7b0 25%,
@@ -26,7 +26,10 @@ body {
   flex-direction: column;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow-y: auto; /* Allow vertical scrolling if needed */
+  overflow-x: hidden;
+  padding: 40px 0; /* Add padding to top and bottom */
+  box-sizing: border-box;
 }
 
 .newtab-container.with-background {
@@ -35,8 +38,7 @@ body {
 
 .time-display {
   text-align: center;
-  margin-top: 120px;
-  margin-bottom: 60px;
+  margin: 60px 0 40px 0; /* Reduce top margin */
   color: white;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -57,7 +59,7 @@ body {
 }
 
 .search-container {
-  margin-bottom: 80px;
+  margin-bottom: 40px; /* Reduce bottom margin */
   width: 100%;
   max-width: 600px;
   padding: 0 20px;
@@ -122,17 +124,19 @@ body {
 .shortcuts-grid {
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
   width: 100%;
   max-width: 900px;
   padding: 0 40px;
+  margin-bottom: 80px; /* Add bottom margin to ensure all rows are visible */
 }
 
 .shortcuts-row {
   display: flex;
   justify-content: center;
-  gap: 60px;
+  gap: 40px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .shortcut-item {
@@ -142,6 +146,8 @@ body {
   cursor: pointer;
   transition: transform 0.2s ease;
   width: 80px;
+  min-width: 80px; /* Ensure minimum width */
+  flex-shrink: 0; /* Prevent shrinking */
 }
 
 .shortcut-item:hover {
@@ -286,12 +292,13 @@ body {
   }
   
   .shortcuts-row {
-    gap: 30px;
+    gap: 20px;
   }
   
   .shortcuts-grid {
-    gap: 30px;
+    gap: 20px;
     padding: 0 20px;
+    margin-bottom: 60px;
   }
   
   .windmill-button {
@@ -299,5 +306,47 @@ body {
     right: 20px;
     width: 45px;
     height: 45px;
+  }
+  
+  .shortcut-item {
+    width: 70px;
+    min-width: 70px;
+  }
+  
+  .shortcut-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 9px;
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .shortcuts-row {
+    gap: 15px;
+  }
+  
+  .shortcuts-grid {
+    gap: 15px;
+    padding: 0 15px;
+  }
+  
+  .shortcut-item {
+    width: 60px;
+    min-width: 60px;
+  }
+  
+  .shortcut-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 8px;
+  }
+  
+  .time {
+    font-size: 48px;
+  }
+  
+  .date {
+    font-size: 16px;
   }
 }
