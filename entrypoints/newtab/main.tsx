@@ -21,7 +21,7 @@ const NewTab: React.FC = () => {
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
   const [backgroundImage, setBackgroundImage] = React.useState<string>('');
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
-  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(true); // Start with loading state
+  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false); // Start with false to show default background initially
 
   // Default bookmarks as fallback
   const defaultBookmarks: Bookmark[] = [
@@ -178,24 +178,24 @@ const NewTab: React.FC = () => {
   React.useEffect(() => {
     const fetchBackgroundImage = async () => {
       try {
-        // Check if we have a cached image from today
+        // Check if we have a cached image
         const storedBackground = localStorage.getItem('backgroundImage');
         if (storedBackground) {
           const backgroundImageData: BackgroundImage = JSON.parse(storedBackground);
-          const today = new Date().toDateString();
-          const imageDate = new Date(backgroundImageData.timestamp).toDateString();
-          
-          // If we have today's image, use it
-          if (today === imageDate) {
-            // Use base64 data if available, otherwise use URL
-            if (backgroundImageData.base64) {
-              setBackgroundImage(backgroundImageData.base64);
-            } else {
-              setBackgroundImage(backgroundImageData.url);
-            }
+          // Use base64 data if available, otherwise use URL
+          if (backgroundImageData.base64) {
+            setBackgroundImage(backgroundImageData.base64);
+            setIsImageLoading(false); // Set loading to false when using stored image
+            return;
+          } else if (backgroundImageData.url) {
+            setBackgroundImage(backgroundImageData.url);
+            setIsImageLoading(false); // Set loading to false when using stored image
             return;
           }
         }
+        
+        // If no stored image, set loading state and fetch a new image
+        setIsImageLoading(true);
         
         // Use picsum.photos to get a random image in 2K resolution
         const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
@@ -233,7 +233,6 @@ const NewTab: React.FC = () => {
         };
         
         reader.readAsDataURL(blob);
-        setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
@@ -316,6 +315,7 @@ const NewTab: React.FC = () => {
   const switchImage = () => {
     // Set loading state
     setIsSwitchingImage(true);
+    setIsImageLoading(true); // Set image loading state to true
     
     // Clear the current cached image to force fetching a new one
     localStorage.removeItem('backgroundImage');
@@ -364,7 +364,6 @@ const NewTab: React.FC = () => {
         };
         
         reader.readAsDataURL(blob);
-        setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
