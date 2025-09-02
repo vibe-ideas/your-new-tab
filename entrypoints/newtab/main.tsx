@@ -174,7 +174,7 @@ const NewTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch daily background image from picsum.photos
+  // Fetch daily background image from Unsplash
   React.useEffect(() => {
     const fetchBackgroundImage = async () => {
       try {
@@ -195,11 +195,8 @@ const NewTab: React.FC = () => {
         // If no stored image, set loading state and fetch a new image
         setIsImageLoading(true);
         
-        // Use picsum.photos to get a random image in 2K resolution
-        const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
-        
-        // Use a CORS proxy to fetch the image
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+        // Use Unsplash to get a random image in 2K resolution
+        const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
         
         // Preload the image before setting it as background
         const image = new Image();
@@ -207,7 +204,7 @@ const NewTab: React.FC = () => {
         
         image.onload = async () => {
           // Convert to base64 once loaded
-          const response = await fetch(proxyUrl);
+          const response = await fetch(imageUrl);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -248,7 +245,7 @@ const NewTab: React.FC = () => {
         };
         
         // Start preloading
-        image.src = proxyUrl;
+        image.src = imageUrl;
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
@@ -336,11 +333,8 @@ const NewTab: React.FC = () => {
     // Fetch a new image
     const fetchNewImage = async () => {
       try {
-        // Use picsum.photos to get a random image in 2K resolution
-        const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
-        
-        // Use a CORS proxy to fetch the image
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+        // Use Unsplash to get a random image in 2K resolution
+        const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
         
         // Preload the image before setting it as background
         const image = new Image();
@@ -348,7 +342,7 @@ const NewTab: React.FC = () => {
         
         image.onload = async () => {
           // Convert to base64 once loaded
-          const response = await fetch(proxyUrl);
+          const response = await fetch(imageUrl);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }
@@ -393,7 +387,7 @@ const NewTab: React.FC = () => {
         };
         
         // Start preloading
-        image.src = proxyUrl;
+        image.src = imageUrl;
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
