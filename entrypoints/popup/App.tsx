@@ -91,6 +91,19 @@ function App() {
             测试
           </button>
         </div>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          <button 
+            onClick={() => {
+              // Send message to background script to refresh bookmarks
+              chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
+              setStatus('书签已刷新');
+              setTimeout(() => setStatus(''), 3000);
+            }} 
+            style={{ flex: 1, minWidth: '80px' }}
+          >
+            刷新书签
+          </button>
+        </div>
         {status && (
           <p style={{ 
             marginTop: '10px', 

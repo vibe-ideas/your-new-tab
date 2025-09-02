@@ -11,6 +11,7 @@ interface Bookmark {
 
 interface BackgroundImage {
   url: string;
+  base64?: string;
   timestamp: number;
 }
 
@@ -20,6 +21,7 @@ const NewTab: React.FC = () => {
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
   const [backgroundImage, setBackgroundImage] = React.useState<string>('');
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
+  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(true); // Start with loading state
 
   // Default bookmarks as fallback
   const defaultBookmarks: Bookmark[] = [
@@ -58,10 +60,32 @@ const NewTab: React.FC = () => {
     
     const fetchBookmarks = async () => {
       try {
+        // Check if we have cached bookmarks from today
+        const storedBookmarks = localStorage.getItem('bookmarksData');
+        if (storedBookmarks) {
+          const bookmarksData = JSON.parse(storedBookmarks);
+          const today = new Date().toDateString();
+          const bookmarksDate = new Date(bookmarksData.timestamp).toDateString();
+          
+          // If we have today's bookmarks, use them
+          if (today === bookmarksDate) {
+            setBookmarks(bookmarksData.bookmarks);
+            return;
+          }
+        }
+        
+        // Fetch new bookmarks from remote URL
         const response = await fetch(bookmarksUrl);
         if (response.ok) {
           const data: Bookmark[] = await response.json();
           setBookmarks(data);
+          
+          // Store in localStorage with today's timestamp
+          const bookmarksStorage = {
+            bookmarks: data,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('bookmarksData', JSON.stringify(bookmarksStorage));
         } else {
           // Fallback to default bookmarks if remote fetch fails
           setBookmarks(defaultBookmarks);
@@ -74,6 +98,80 @@ const NewTab: React.FC = () => {
     };
 
     fetchBookmarks();
+  }, []);
+  
+  // Function to manually refresh bookmarks
+  const refreshBookmarks = async () => {
+    const storedUrl = localStorage.getItem('bookmarksUrl');
+    const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    
+    try {
+      const response = await fetch(bookmarksUrl);
+      if (response.ok) {
+        const data: Bookmark[] = await response.json();
+        setBookmarks(data);
+        
+        // Store in localStorage with current timestamp
+        const bookmarksStorage = {
+          bookmarks: data,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('bookmarksData', JSON.stringify(bookmarksStorage));
+      } else {
+        // Fallback to default bookmarks if remote fetch fails
+        setBookmarks(defaultBookmarks);
+      }
+    } catch (error) {
+      // Fallback to default bookmarks if there's an error
+      console.error('Failed to refresh bookmarks:', error);
+      setBookmarks(defaultBookmarks);
+    }
+  };
+
+  // Listen for messages from background script
+  React.useEffect(() => {
+    const handleMessage = (message: any) => {
+      if (message.action === 'refreshBookmarks') {
+        refreshBookmarks();
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    
+    // Cleanup listener on component unmount
+    return () => {
+      chrome.runtime.onMessage.removeListener(handleMessage);
+    };
+  }, []);
+  
+  // Set up daily refresh of bookmarks
+  React.useEffect(() => {
+    // Check if we need to refresh bookmarks (daily)
+    const checkAndRefreshBookmarks = () => {
+      const storedBookmarks = localStorage.getItem('bookmarksData');
+      if (storedBookmarks) {
+        const bookmarksData = JSON.parse(storedBookmarks);
+        const lastRefresh = new Date(bookmarksData.timestamp);
+        const now = new Date();
+        const oneDay = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+        
+        // If more than 24 hours have passed since last refresh
+        if (now.getTime() - lastRefresh.getTime() > oneDay) {
+          refreshBookmarks();
+        }
+      } else {
+        // If no bookmarks data exists, fetch it
+        refreshBookmarks();
+      }
+    };
+    
+    // Check on component mount
+    checkAndRefreshBookmarks();
+    
+    // Set up daily check
+    const interval = setInterval(checkAndRefreshBookmarks, 24 * 60 * 60 * 1000); // 24 hours
+    
+    return () => clearInterval(interval);
   }, []);
 
   // Fetch daily background image from picsum.photos
@@ -89,37 +187,70 @@ const NewTab: React.FC = () => {
           
           // If we have today's image, use it
           if (today === imageDate) {
-            setBackgroundImage(backgroundImageData.url);
+            // Use base64 data if available, otherwise use URL
+            if (backgroundImageData.base64) {
+              setBackgroundImage(backgroundImageData.base64);
+            } else {
+              setBackgroundImage(backgroundImageData.url);
+            }
             return;
           }
         }
         
-        // Use picsum.photos to get a random image in 4K resolution
-        const imageUrl = `https://picsum.photos/3840/2160?random=${Date.now()}`;
+        // Use picsum.photos to get a random image in 2K resolution
+        const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
         
         // Preload the image to ensure it's available
         const img = new Image();
-        img.onload = () => {
-          setBackgroundImage(imageUrl);
+        img.onload = async () => {
+          // Convert image to base64
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
           
-          // Store in localStorage with today's timestamp
-          const imageData: BackgroundImage = {
-            url: imageUrl,
-            timestamp: Date.now()
-          };
-          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // Set background image to base64
+            setBackgroundImage(base64);
+            setIsImageLoading(false); // Set loading to false when image loads successfully
+            
+            // Store in localStorage with today's timestamp and base64 data
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              base64: base64,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          } else {
+            // Fallback to URL if canvas conversion fails
+            setBackgroundImage(imageUrl);
+            setIsImageLoading(false); // Set loading to false when image loads successfully
+            
+            // Store in localStorage with today's timestamp
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          }
         };
         
         img.onerror = () => {
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
+          setIsImageLoading(false); // Set loading to false even if image fails to load
         };
         
         img.src = imageUrl;
+        setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
         setBackgroundImage('');
+        setIsImageLoading(false);
       }
     };
 
@@ -179,9 +310,11 @@ const NewTab: React.FC = () => {
 
   const bookmarkRows = groupBookmarksIntoRows(bookmarks);
 
-  const containerClass = backgroundImage 
-    ? "newtab-container with-background" 
-    : "newtab-container";
+  const containerClass = isImageLoading
+    ? "newtab-container loading" 
+    : backgroundImage 
+      ? "newtab-container with-background" 
+      : "newtab-container";
 
   const backgroundStyle = backgroundImage 
     ? { 
@@ -202,20 +335,45 @@ const NewTab: React.FC = () => {
     // Fetch a new image
     const fetchNewImage = async () => {
       try {
-        // Use picsum.photos to get a random image in 4K resolution
-        const imageUrl = `https://picsum.photos/3840/2160?random=${Date.now()}`;
+        // Use picsum.photos to get a random image in 2K resolution
+        const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
         
         // Preload the image to ensure it's available
         const img = new Image();
-        img.onload = () => {
-          setBackgroundImage(imageUrl);
+        img.onload = async () => {
+          // Convert image to base64
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = img.width;
+          canvas.height = img.height;
           
-          // Store in localStorage with current timestamp
-          const imageData: BackgroundImage = {
-            url: imageUrl,
-            timestamp: Date.now()
-          };
-          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          if (ctx) {
+            ctx.drawImage(img, 0, 0);
+            const base64 = canvas.toDataURL('image/jpeg', 0.7);
+            
+            // Set background image to base64
+            setBackgroundImage(base64);
+            setIsImageLoading(false); // Set loading to false when image loads successfully
+            
+            // Store in localStorage with current timestamp and base64 data
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              base64: base64,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          } else {
+            // Fallback to URL if canvas conversion fails
+            setBackgroundImage(imageUrl);
+            setIsImageLoading(false); // Set loading to false when image loads successfully
+            
+            // Store in localStorage with current timestamp
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          }
           
           // Reset loading state
           setIsSwitchingImage(false);
@@ -224,15 +382,18 @@ const NewTab: React.FC = () => {
         img.onerror = () => {
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
+          setIsImageLoading(false); // Set loading to false even if image fails to load
           // Reset loading state
           setIsSwitchingImage(false);
         };
         
         img.src = imageUrl;
+        setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
         setBackgroundImage('');
+        setIsImageLoading(false);
         // Reset loading state
         setIsSwitchingImage(false);
       }

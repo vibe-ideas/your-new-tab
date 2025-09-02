@@ -15,13 +15,12 @@ body {
 .newtab-container {
   width: 100vw;
   min-height: 100vh; /* Changed from height to min-height */
-  background: linear-gradient(135deg, 
-    #b8a893 0%,
-    #d4c7b0 25%,
-    #c9b89a 50%,
-    #a89580 75%,
-    #9d8874 100%);
-  background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><filter id="blur"><feGaussianBlur stdDeviation="20"/></filter></defs><circle cx="200" cy="300" r="150" fill="rgba(255,255,255,0.1)" filter="url(%23blur)"/><circle cx="800" cy="200" r="100" fill="rgba(255,255,255,0.05)" filter="url(%23blur)"/><circle cx="600" cy="700" r="120" fill="rgba(0,0,0,0.1)" filter="url(%23blur)"/></svg>');
+  background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
+    url('https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/banner/books.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -34,6 +33,17 @@ body {
 
 .newtab-container.with-background {
   background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8));
+}
+
+.newtab-container.loading {
+  background: white;
+}
+
+.newtab-container.loading .time-display,
+.newtab-container.loading .date,
+.newtab-container.loading .shortcut-label {
+  color: #333;
+  text-shadow: none;
 }
 
 .time-display {
