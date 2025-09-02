@@ -35,17 +35,6 @@ body {
   background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8));
 }
 
-.newtab-container.loading {
-  background: white;
-}
-
-.newtab-container.loading .time-display,
-.newtab-container.loading .date,
-.newtab-container.loading .shortcut-label {
-  color: #333;
-  text-shadow: none;
-}
-
 .time-display {
   text-align: center;
   margin: 60px 0 40px 0; /* Reduce top margin */

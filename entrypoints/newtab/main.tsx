@@ -185,11 +185,9 @@ const NewTab: React.FC = () => {
           // Use base64 data if available, otherwise use URL
           if (backgroundImageData.base64) {
             setBackgroundImage(backgroundImageData.base64);
-            setIsImageLoading(false); // Set loading to false when using stored image
             return;
           } else if (backgroundImageData.url) {
             setBackgroundImage(backgroundImageData.url);
-            setIsImageLoading(false); // Set loading to false when using stored image
             return;
           }
         }
@@ -202,37 +200,55 @@ const NewTab: React.FC = () => {
         
         // Use a CORS proxy to fetch the image
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         
-        const blob = await response.blob();
-        const reader = new FileReader();
+        // Preload the image before setting it as background
+        const image = new Image();
+        image.crossOrigin = 'Anonymous';
         
-        reader.onload = () => {
-          const base64Image = reader.result as string;
+        image.onload = async () => {
+          // Convert to base64 once loaded
+          const response = await fetch(proxyUrl);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           
-          // Set background image to base64 data
-          setBackgroundImage(base64Image);
-          setIsImageLoading(false); // Set loading to false when image loads successfully
+          const blob = await response.blob();
+          const reader = new FileReader();
           
-          // Store in localStorage with today's timestamp and base64 data
-          const imageData: BackgroundImage = {
-            url: imageUrl,
-            base64: base64Image,
-            timestamp: Date.now()
+          reader.onload = () => {
+            const base64Image = reader.result as string;
+            
+            // Set background image to base64 data
+            setBackgroundImage(base64Image);
+            setIsImageLoading(false); // Set loading to false when image loads successfully
+            
+            // Store in localStorage with today's timestamp and base64 data
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              base64: base64Image,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
           };
-          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+          
+          reader.onerror = () => {
+            // Fallback to default gradient if image fails to load
+            setBackgroundImage('');
+            setIsImageLoading(false); // Set loading to false even if image fails to load
+          };
+          
+          reader.readAsDataURL(blob);
         };
         
-        reader.onerror = () => {
+        image.onerror = () => {
+          console.error('Failed to preload background image');
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
-          setIsImageLoading(false); // Set loading to false even if image fails to load
+          setIsImageLoading(false);
         };
         
-        reader.readAsDataURL(blob);
+        // Start preloading
+        image.src = proxyUrl;
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
@@ -297,11 +313,9 @@ const NewTab: React.FC = () => {
 
   const bookmarkRows = groupBookmarksIntoRows(bookmarks);
 
-  const containerClass = isImageLoading
-    ? "newtab-container loading" 
-    : backgroundImage 
-      ? "newtab-container with-background" 
-      : "newtab-container";
+  const containerClass = backgroundImage 
+    ? "newtab-container with-background" 
+    : "newtab-container";
 
   const backgroundStyle = backgroundImage 
     ? { 
@@ -315,7 +329,6 @@ const NewTab: React.FC = () => {
   const switchImage = () => {
     // Set loading state
     setIsSwitchingImage(true);
-    setIsImageLoading(true); // Set image loading state to true
     
     // Clear the current cached image to force fetching a new one
     localStorage.removeItem('backgroundImage');
@@ -328,47 +341,63 @@ const NewTab: React.FC = () => {
         
         // Use a CORS proxy to fetch the image
         const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
-        const response = await fetch(proxyUrl);
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         
-        const blob = await response.blob();
-        const reader = new FileReader();
+        // Preload the image before setting it as background
+        const image = new Image();
+        image.crossOrigin = 'Anonymous';
         
-        reader.onload = () => {
-          const base64Image = reader.result as string;
+        image.onload = async () => {
+          // Convert to base64 once loaded
+          const response = await fetch(proxyUrl);
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           
-          // Set background image to base64 data
-          setBackgroundImage(base64Image);
-          setIsImageLoading(false); // Set loading to false when image loads successfully
+          const blob = await response.blob();
+          const reader = new FileReader();
           
-          // Store in localStorage with current timestamp and base64 data
-          const imageData: BackgroundImage = {
-            url: imageUrl,
-            base64: base64Image,
-            timestamp: Date.now()
+          reader.onload = () => {
+            const base64Image = reader.result as string;
+            
+            // Set background image to base64 data (switch happens here after preload)
+            setBackgroundImage(base64Image);
+            
+            // Store in localStorage with current timestamp and base64 data
+            const imageData: BackgroundImage = {
+              url: imageUrl,
+              base64: base64Image,
+              timestamp: Date.now()
+            };
+            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+            
+            // Reset loading state
+            setIsSwitchingImage(false);
           };
-          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
           
-          // Reset loading state
-          setIsSwitchingImage(false);
+          reader.onerror = () => {
+            // Fallback to default gradient if image fails to load
+            setBackgroundImage('');
+            // Reset loading state
+            setIsSwitchingImage(false);
+          };
+          
+          reader.readAsDataURL(blob);
         };
         
-        reader.onerror = () => {
+        image.onerror = () => {
+          console.error('Failed to preload background image');
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
-          setIsImageLoading(false); // Set loading to false even if image fails to load
           // Reset loading state
           setIsSwitchingImage(false);
         };
         
-        reader.readAsDataURL(blob);
+        // Start preloading
+        image.src = proxyUrl;
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
         setBackgroundImage('');
-        setIsImageLoading(false);
         // Reset loading state
         setIsSwitchingImage(false);
       }
