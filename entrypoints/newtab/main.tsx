@@ -196,24 +196,34 @@ const NewTab: React.FC = () => {
         setIsImageLoading(true);
         
         // Use Unsplash to get a random image in 2K resolution
+        // Fallback to Picsum if Unsplash fails
         const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
+        const fallbackUrls = [
+          `https://picsum.photos/2560/1440?random&t=${Date.now()}`,
+          `https://fastly.picsum.photos/id/${Math.floor(Math.random() * 1000)}/2560/1440.jpg`
+        ];
         
-        // Preload the image before setting it as background
-        const image = new Image();
-        image.crossOrigin = 'Anonymous';
-        
-        image.onload = async () => {
-          // Convert to base64 once loaded
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+        // Fetch image through background script to avoid CORS issues
+        try {
+          // Create a promise that rejects after 10 seconds
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Background script response timeout')), 10000);
+          });
           
-          const blob = await response.blob();
-          const reader = new FileReader();
+          // Fetch image through background script
+          console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
+          const fetchPromise = chrome.runtime.sendMessage({ 
+            action: 'fetchBackgroundImage', 
+            url: imageUrl,
+            fallbackUrls: fallbackUrls
+          });
+          console.log('Message sent, waiting for response...');
           
-          reader.onload = () => {
-            const base64Image = reader.result as string;
+          // Race between fetch and timeout
+          const response: any = await Promise.race([fetchPromise, timeoutPromise]);
+          
+          if (response && response.success) {
+            const base64Image = response.data;
             
             // Set background image to base64 data
             setBackgroundImage(base64Image);
@@ -226,26 +236,18 @@ const NewTab: React.FC = () => {
               timestamp: Date.now()
             };
             localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          };
-          
-          reader.onerror = () => {
+          } else {
+            console.error('Failed to fetch background image through background script:', response);
             // Fallback to default gradient if image fails to load
             setBackgroundImage('');
-            setIsImageLoading(false); // Set loading to false even if image fails to load
-          };
-          
-          reader.readAsDataURL(blob);
-        };
-        
-        image.onerror = () => {
-          console.error('Failed to preload background image');
-          // Fallback to default gradient if image fails to load
+            setIsImageLoading(false);
+          }
+        } catch (error) {
+          console.error('Failed to fetch background image through background script:', error);
+          // Fallback to default gradient if fetch fails
           setBackgroundImage('');
           setIsImageLoading(false);
-        };
-        
-        // Start preloading
-        image.src = imageUrl;
+        }
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
@@ -334,24 +336,34 @@ const NewTab: React.FC = () => {
     const fetchNewImage = async () => {
       try {
         // Use Unsplash to get a random image in 2K resolution
+        // Fallback to Picsum if Unsplash fails
         const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
+        const fallbackUrls = [
+          `https://picsum.photos/2560/1440?random&t=${Date.now()}`,
+          `https://fastly.picsum.photos/id/${Math.floor(Math.random() * 1000)}/2560/1440.jpg`
+        ];
         
-        // Preload the image before setting it as background
-        const image = new Image();
-        image.crossOrigin = 'Anonymous';
-        
-        image.onload = async () => {
-          // Convert to base64 once loaded
-          const response = await fetch(imageUrl);
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+        // Fetch image through background script to avoid CORS issues
+        try {
+          // Create a promise that rejects after 10 seconds
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Background script response timeout')), 10000);
+          });
           
-          const blob = await response.blob();
-          const reader = new FileReader();
+          // Fetch image through background script
+          console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
+          const fetchPromise = chrome.runtime.sendMessage({ 
+            action: 'fetchBackgroundImage', 
+            url: imageUrl,
+            fallbackUrls: fallbackUrls
+          });
+          console.log('Message sent, waiting for response...');
           
-          reader.onload = () => {
-            const base64Image = reader.result as string;
+          // Race between fetch and timeout
+          const response: any = await Promise.race([fetchPromise, timeoutPromise]);
+          
+          if (response && response.success) {
+            const base64Image = response.data;
             
             // Set background image to base64 data (switch happens here after preload)
             setBackgroundImage(base64Image);
@@ -366,28 +378,20 @@ const NewTab: React.FC = () => {
             
             // Reset loading state
             setIsSwitchingImage(false);
-          };
-          
-          reader.onerror = () => {
+          } else {
+            console.error('Failed to fetch background image through background script:', response);
             // Fallback to default gradient if image fails to load
             setBackgroundImage('');
             // Reset loading state
             setIsSwitchingImage(false);
-          };
-          
-          reader.readAsDataURL(blob);
-        };
-        
-        image.onerror = () => {
-          console.error('Failed to preload background image');
-          // Fallback to default gradient if image fails to load
+          }
+        } catch (error) {
+          console.error('Failed to fetch background image through background script:', error);
+          // Fallback to default gradient if fetch fails
           setBackgroundImage('');
           // Reset loading state
           setIsSwitchingImage(false);
-        };
-        
-        // Start preloading
-        image.src = imageUrl;
+        }
       } catch (error) {
         console.error('Failed to fetch background image:', error);
         // Fallback to default gradient if fetch fails
