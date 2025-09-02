@@ -7,7 +7,11 @@ export default defineConfig({
     chrome_url_overrides: {
       newtab: '/newtab/index.html'
     },
-    permissions: []
+    permissions: [],
+    host_permissions: [
+      "https://picsum.photos/*",
+      "https://fastly.picsum.photos/*"
+    ]
   },
   vite: () => ({
     server: {

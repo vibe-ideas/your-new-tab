@@ -16,7 +16,7 @@ body {
   width: 100vw;
   min-height: 100vh; /* Changed from height to min-height */
   background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)),
-    url('https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/banner/books.jpg');
+    url('/images/background.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

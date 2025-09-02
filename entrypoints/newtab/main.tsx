@@ -200,51 +200,39 @@ const NewTab: React.FC = () => {
         // Use picsum.photos to get a random image in 2K resolution
         const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
         
-        // Preload the image to ensure it's available
-        const img = new Image();
-        img.onload = async () => {
-          // Convert image to base64
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
+        // Use a CORS proxy to fetch the image
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        reader.onload = () => {
+          const base64Image = reader.result as string;
           
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7);
-            
-            // Set background image to base64
-            setBackgroundImage(base64);
-            setIsImageLoading(false); // Set loading to false when image loads successfully
-            
-            // Store in localStorage with today's timestamp and base64 data
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              base64: base64,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          } else {
-            // Fallback to URL if canvas conversion fails
-            setBackgroundImage(imageUrl);
-            setIsImageLoading(false); // Set loading to false when image loads successfully
-            
-            // Store in localStorage with today's timestamp
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          }
+          // Set background image to base64 data
+          setBackgroundImage(base64Image);
+          setIsImageLoading(false); // Set loading to false when image loads successfully
+          
+          // Store in localStorage with today's timestamp and base64 data
+          const imageData: BackgroundImage = {
+            url: imageUrl,
+            base64: base64Image,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
         };
         
-        img.onerror = () => {
+        reader.onerror = () => {
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
           setIsImageLoading(false); // Set loading to false even if image fails to load
         };
         
-        img.src = imageUrl;
+        reader.readAsDataURL(blob);
         setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
@@ -338,48 +326,36 @@ const NewTab: React.FC = () => {
         // Use picsum.photos to get a random image in 2K resolution
         const imageUrl = `https://picsum.photos/2560/1440?random=${Date.now()}`;
         
-        // Preload the image to ensure it's available
-        const img = new Image();
-        img.onload = async () => {
-          // Convert image to base64
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = img.width;
-          canvas.height = img.height;
+        // Use a CORS proxy to fetch the image
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(imageUrl)}`;
+        const response = await fetch(proxyUrl);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const blob = await response.blob();
+        const reader = new FileReader();
+        
+        reader.onload = () => {
+          const base64Image = reader.result as string;
           
-          if (ctx) {
-            ctx.drawImage(img, 0, 0);
-            const base64 = canvas.toDataURL('image/jpeg', 0.7);
-            
-            // Set background image to base64
-            setBackgroundImage(base64);
-            setIsImageLoading(false); // Set loading to false when image loads successfully
-            
-            // Store in localStorage with current timestamp and base64 data
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              base64: base64,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          } else {
-            // Fallback to URL if canvas conversion fails
-            setBackgroundImage(imageUrl);
-            setIsImageLoading(false); // Set loading to false when image loads successfully
-            
-            // Store in localStorage with current timestamp
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          }
+          // Set background image to base64 data
+          setBackgroundImage(base64Image);
+          setIsImageLoading(false); // Set loading to false when image loads successfully
+          
+          // Store in localStorage with current timestamp and base64 data
+          const imageData: BackgroundImage = {
+            url: imageUrl,
+            base64: base64Image,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('backgroundImage', JSON.stringify(imageData));
           
           // Reset loading state
           setIsSwitchingImage(false);
         };
         
-        img.onerror = () => {
+        reader.onerror = () => {
           // Fallback to default gradient if image fails to load
           setBackgroundImage('');
           setIsImageLoading(false); // Set loading to false even if image fails to load
@@ -387,7 +363,7 @@ const NewTab: React.FC = () => {
           setIsSwitchingImage(false);
         };
         
-        img.src = imageUrl;
+        reader.readAsDataURL(blob);
         setIsImageLoading(true); // Set loading to true when starting to fetch new image
       } catch (error) {
         console.error('Failed to fetch background image:', error);
