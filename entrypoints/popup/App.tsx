@@ -6,12 +6,19 @@ import './App.css';
 function App() {
   const [bookmarksUrl, setBookmarksUrl] = useState('https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json');
   const [inputUrl, setInputUrl] = useState('');
+  const [useDefaultBookmarks, setUseDefaultBookmarks] = useState(false);
   const [status, setStatus] = useState('');
 
   // Load bookmarks URL from localStorage on component mount
   useEffect(() => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
-    if (storedUrl) {
+    const storedUseDefault = localStorage.getItem('useDefaultBookmarks') === 'true';
+    
+    if (storedUseDefault) {
+      setUseDefaultBookmarks(true);
+      setBookmarksUrl('default');
+      setInputUrl('');
+    } else if (storedUrl) {
       setBookmarksUrl(storedUrl);
       setInputUrl(storedUrl);
     } else {
@@ -20,17 +27,27 @@ function App() {
   }, []);
 
   const handleSave = () => {
-    localStorage.setItem('bookmarksUrl', inputUrl);
-    setBookmarksUrl(inputUrl);
-    setStatus('URL 已保存');
+    if (useDefaultBookmarks) {
+      localStorage.setItem('useDefaultBookmarks', 'true');
+      localStorage.setItem('bookmarksUrl', 'default');
+      setBookmarksUrl('default');
+      setStatus('已设置为使用内置书签');
+    } else {
+      localStorage.setItem('useDefaultBookmarks', 'false');
+      localStorage.setItem('bookmarksUrl', inputUrl);
+      setBookmarksUrl(inputUrl);
+      setStatus('URL 已保存');
+    }
     setTimeout(() => setStatus(''), 3000);
   };
 
   const handleReset = () => {
     const defaultUrl = 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    localStorage.setItem('useDefaultBookmarks', 'false');
     localStorage.setItem('bookmarksUrl', defaultUrl);
     setBookmarksUrl(defaultUrl);
     setInputUrl(defaultUrl);
+    setUseDefaultBookmarks(false);
     setStatus('已重置为默认 URL');
     setTimeout(() => setStatus(''), 3000);
   };
@@ -62,23 +79,37 @@ function App() {
       <h1>书签配置</h1>
       <div className="card">
         <div style={{ marginBottom: '15px' }}>
-          <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '5px' }}>
-            书签 JSON URL:
+          <label style={{ display: 'block', marginBottom: '10px' }}>
+            <input
+              type="checkbox"
+              checked={useDefaultBookmarks}
+              onChange={(e) => setUseDefaultBookmarks(e.target.checked)}
+              style={{ marginRight: '8px' }}
+            />
+            使用内置书签
           </label>
-          <input
-            id="bookmarksUrl"
-            type="text"
-            value={inputUrl}
-            onChange={(e) => setInputUrl(e.target.value)}
-            placeholder="输入书签 JSON 文件的 URL"
-            style={{
-              width: '100%',
-              padding: '8px',
-              borderRadius: '4px',
-              border: '1px solid #ccc',
-              marginBottom: '10px'
-            }}
-          />
+          
+          {!useDefaultBookmarks && (
+            <>
+              <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '5px' }}>
+                书签 JSON URL:
+              </label>
+              <input
+                id="bookmarksUrl"
+                type="text"
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                placeholder="输入书签 JSON 文件的 URL"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid #ccc',
+                  marginBottom: '10px'
+                }}
+              />
+            </>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <button onClick={handleSave} style={{ flex: 1, minWidth: '80px' }}>
@@ -87,9 +118,11 @@ function App() {
           <button onClick={handleReset} style={{ flex: 1, minWidth: '80px' }}>
             重置
           </button>
-          <button onClick={handleTest} style={{ flex: 1, minWidth: '80px' }}>
-            测试
-          </button>
+          {!useDefaultBookmarks && (
+            <button onClick={handleTest} style={{ flex: 1, minWidth: '80px' }}>
+              测试
+            </button>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
           <button 
@@ -117,12 +150,16 @@ function App() {
           </p>
         )}
         <p style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
-          当前使用的 URL: <br />
-          <code style={{ wordBreak: 'break-all' }}>{bookmarksUrl}</code>
+          当前使用: <br />
+          <code style={{ wordBreak: 'break-all' }}>
+            {useDefaultBookmarks ? '内置书签' : bookmarksUrl}
+          </code>
         </p>
       </div>
       <p className="read-the-docs">
-        配置书签 JSON 文件的 URL
+        {useDefaultBookmarks 
+          ? '使用浏览器内置的快捷书签' 
+          : '配置书签 JSON 文件的 URL'}
       </p>
     </>
   );

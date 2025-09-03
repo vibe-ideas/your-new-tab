@@ -7,6 +7,7 @@ interface Bookmark {
   title: string;
   url: string;
   category?: string;
+  icon?: string; // SVG icon as XML string or URL
 }
 
 interface BackgroundImage {
@@ -25,24 +26,24 @@ const NewTab: React.FC = () => {
 
   // Default bookmarks as fallback
   const defaultBookmarks: Bookmark[] = [
-    { id: '1', title: '有道翻译', url: '#' },
-    { id: '2', title: '热门榜单', url: '#' },
-    { id: '3', title: 'labuladong', url: '#' },
-    { id: '4', title: '开发工具箱', url: '#' },
-    { id: '5', title: '常用工具', url: '#' },
-    { id: '6', title: 'stackoverflow', url: '#' },
-    { id: '7', title: 'ShanSan', url: '#' },
-    { id: '8', title: '牛客网', url: '#' },
-    { id: '9', title: 'Discord', url: '#' },
-    { id: '10', title: '通义', url: '#' },
-    { id: '11', title: 'GitHub', url: '#' },
-    { id: '12', title: '语雀', url: '#' },
-    { id: '13', title: 'substack', url: '#' },
-    { id: '14', title: 'telegram web', url: '#' },
-    { id: '15', title: 'daily.dev', url: '#' },
-    { id: '16', title: 'bestblogs', url: '#' },
-    { id: '17', title: '通义听悟', url: '#' },
-    { id: '18', title: 'MyNotion', url: '#' }
+    { id: '1', title: '有道翻译', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20l9-9-9-9-9 9 9 9z"/></svg>' },
+    { id: '2', title: '热门榜单', url: '#', icon: 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/icons/trending.svg' },
+    { id: '3', title: 'labuladong', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20v18H2V3z"/><path d="M9 13v-2h6v2M9 17v-2h6v2M9 9V7h6v2"/></svg>' },
+    { id: '4', title: '开发工具箱', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' },
+    { id: '5', title: '常用工具', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>' },
+    { id: '6', title: 'stackoverflow', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M4 12h16M8 8l4-4 4 4M8 16l4 4 4-4"/></svg>' },
+    { id: '7', title: 'ShanSan', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' },
+    { id: '8', title: '牛客网', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' },
+    { id: '9', title: 'Discord', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a5 5 0 0 0-5-5H9a5 5 0 0 0-5 5v6a5 5 0 0 0 5 5h4a5 5 0 0 0 5-5V9z"/><circle cx="15" cy="10" r="1"/><circle cx="9" cy="10" r="1"/></svg>' },
+    { id: '10', title: '通义', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' },
+    { id: '11', title: 'GitHub', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>' },
+    { id: '12', title: '语雀', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12H4M12 4v16"/></svg>' },
+    { id: '13', title: 'substack', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><path d="M3 9h18M9 21V9"/></svg>' },
+    { id: '14', title: 'telegram web', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3L3 10.53v.92L21 21l-4.37-9.16L21 3z"/></svg>' },
+    { id: '15', title: 'daily.dev', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>' },
+    { id: '16', title: 'bestblogs', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' },
+    { id: '17', title: '通义听悟', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v4"/><path d="M8 23h8"/></svg>' },
+    { id: '18', title: 'MyNotion', url: '#', icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' }
   ];
 
   React.useEffect(() => {
@@ -56,10 +57,17 @@ const NewTab: React.FC = () => {
   // Load bookmarks URL from localStorage on component mount
   React.useEffect(() => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
+    const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
     const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
     
     const fetchBookmarks = async () => {
       try {
+        // Check if we should use default bookmarks
+        if (useDefaultBookmarks) {
+          setBookmarks(defaultBookmarks);
+          return;
+        }
+        
         // Check if we have cached bookmarks from today
         const storedBookmarks = localStorage.getItem('bookmarksData');
         if (storedBookmarks) {
@@ -103,7 +111,14 @@ const NewTab: React.FC = () => {
   // Function to manually refresh bookmarks
   const refreshBookmarks = async () => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
+    const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
     const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    
+    // If using default bookmarks, just set them directly
+    if (useDefaultBookmarks) {
+      setBookmarks(defaultBookmarks);
+      return;
+    }
     
     try {
       const response = await fetch(bookmarksUrl);
@@ -446,7 +461,20 @@ const NewTab: React.FC = () => {
                 className="shortcut-item"
                 onClick={() => handleBookmarkClick(bookmark.url)}
               >
-                <div className="shortcut-icon">{bookmark.title}</div>
+                <div className="shortcut-icon">
+                  {bookmark.icon ? (
+                    bookmark.icon.startsWith('<svg') ? (
+                      // Render SVG XML directly
+                      <div dangerouslySetInnerHTML={{ __html: bookmark.icon }} />
+                    ) : (
+                      // Render icon as URL
+                      <img src={bookmark.icon} alt={bookmark.title} />
+                    )
+                  ) : (
+                    // Fallback to first letter of title
+                    bookmark.title.charAt(0)
+                  )}
+                </div>
                 <div className="shortcut-label">{bookmark.title}</div>
               </div>
             ))}
