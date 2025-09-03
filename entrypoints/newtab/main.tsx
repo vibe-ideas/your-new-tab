@@ -58,6 +58,7 @@ const NewTab: React.FC = () => {
   React.useEffect(() => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
     const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
+    const useDirectJson = localStorage.getItem('useDirectJson') === 'true';
     const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
     
     const fetchBookmarks = async () => {
@@ -66,6 +67,27 @@ const NewTab: React.FC = () => {
         if (useDefaultBookmarks) {
           setBookmarks(defaultBookmarks);
           return;
+        }
+        
+        // Check if we should use direct JSON
+        if (useDirectJson) {
+          const storedJson = localStorage.getItem('bookmarksJson');
+          if (storedJson) {
+            try {
+              const data: Bookmark[] = JSON.parse(storedJson);
+              setBookmarks(data);
+              
+              // Store in localStorage with today's timestamp
+              const bookmarksStorage = {
+                bookmarks: data,
+                timestamp: Date.now()
+              };
+              localStorage.setItem('bookmarksData', JSON.stringify(bookmarksStorage));
+              return;
+            } catch (error) {
+              console.error('Failed to parse direct JSON bookmarks:', error);
+            }
+          }
         }
         
         // Check if we have cached bookmarks from today
@@ -112,12 +134,34 @@ const NewTab: React.FC = () => {
   const refreshBookmarks = async () => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
     const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
+    const useDirectJson = localStorage.getItem('useDirectJson') === 'true';
     const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
     
     // If using default bookmarks, just set them directly
     if (useDefaultBookmarks) {
       setBookmarks(defaultBookmarks);
       return;
+    }
+    
+    // If using direct JSON, use the stored JSON
+    if (useDirectJson) {
+      const storedJson = localStorage.getItem('bookmarksJson');
+      if (storedJson) {
+        try {
+          const data: Bookmark[] = JSON.parse(storedJson);
+          setBookmarks(data);
+          
+          // Store in localStorage with current timestamp
+          const bookmarksStorage = {
+            bookmarks: data,
+            timestamp: Date.now()
+          };
+          localStorage.setItem('bookmarksData', JSON.stringify(bookmarksStorage));
+          return;
+        } catch (error) {
+          console.error('Failed to parse direct JSON bookmarks:', error);
+        }
+      }
     }
     
     try {
