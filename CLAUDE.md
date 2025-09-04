@@ -10,6 +10,8 @@ This is a browser extension built with WXT (Web Extension Framework) and React t
 - Grid of shortcuts to frequently visited websites
 - Daily rotating background images from Unsplash and Picsum
 - Manual background image switching with windmill button
+- Customizable bookmarks via popup configuration
+- Responsive design for all screen sizes
 
 ## Project Structure
 
@@ -39,6 +41,11 @@ This is a browser extension built with WXT (Web Extension Framework) and React t
 
 ## Common Development Commands
 
+### Setup
+```bash
+npm install          # Install dependencies
+```
+
 ### Development
 ```bash
 npm run dev          # Start development server for Chrome
@@ -57,6 +64,10 @@ npm run zip:firefox  # Create zip file for Firefox Add-ons
 ```bash
 npm run compile      # Run TypeScript compilation without emitting files
 ```
+
+## Recommended IDE Setup
+
+- [VS Code](https://code.visualstudio.com/) + [WXT Extension](https://marketplace.visualstudio.com/items?itemName=wxt-dev.wxt)
 
 ## Architecture Overview
 

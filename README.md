@@ -2,22 +2,56 @@
 
 A customizable browser extension that replaces your new tab page with a beautiful, functional interface.
 
+<div align="center">
+<img src="demo.jpg" alt="New Tab Extension Screenshot" />
+</div>
+
 ## Features
 
-- Real-time clock and date display
-- Quick Google search functionality
-- Customizable website shortcuts grid
-- Daily rotating background images from picsum.photos
-- Manual background image switching with windmill button
-- Customizable bookmarks via popup configuration
-- Responsive design for all screen sizes
+- **Real-time Clock & Date Display**: Always know the current time and date at a glance
+- **Quick Google Search**: Search the web without navigating away from your new tab
+- **Customizable Website Shortcuts**: Access your favorite websites with a single click
+- **Daily Rotating Backgrounds**: Enjoy fresh, beautiful images every day from Unsplash and Picsum
+- **Manual Background Switching**: Use the windmill button to change backgrounds on demand
+- **Customizable Bookmarks**: Configure your bookmarks via the extension popup
+- **Responsive Design**: Works beautifully on all screen sizes
+- **Robust Error Handling**: Graceful fallbacks when images or bookmarks fail to load
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/newtab-extension.git
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Build the extension:
+   ```bash
+   npm run build
+   ```
+
+4. Load the extension in your browser:
+   - **Chrome/Edge**: 
+     1. Navigate to `chrome://extensions`
+     2. Enable "Developer mode"
+     3. Click "Load unpacked"
+     4. Select the `.output/chrome-mv3` directory
+   - **Firefox**:
+     1. Navigate to `about:debugging`
+     2. Click "This Firefox"
+     3. Click "Load Temporary Add-on"
+     4. Select the `.output/firefox-mv2/manifest.json` file
 
 ## Development
 
 This extension is built with:
 
 - [WXT](https://wxt.dev) - Web Extension Framework
-- [React](https://react.dev) - UI Library
+- [React 19](https://react.dev) - UI Library
 - [TypeScript](https://www.typescriptlang.org/) - Typed JavaScript
 
 ### Recommended IDE Setup
@@ -26,14 +60,23 @@ This extension is built with:
 
 ### Project Structure
 
-```bash
+```
 ├── entrypoints/
-│   ├── newtab/          # Main new tab page
+│   ├── newtab/          # Main new tab page (React app)
+│   │   ├── index.html   # HTML entry point
+│   │   ├── main.tsx     # React component and initialization
+│   │   └── newtab.css   # Styling
 │   ├── popup/           # Extension popup for configuration
+│   │   ├── index.html   # HTML entry point
+│   │   ├── App.tsx      # Popup configuration UI
+│   │   ├── main.tsx     # React component initialization
+│   │   ├── App.css      # Popup styling
+│   │   └── style.css    # Additional popup styling
 │   ├── background.ts    # Background script
-│   └── content.ts       # Content script
+│   └── content.ts       # Content script (runs on Google pages)
 ├── public/              # Static assets
-└── assets/              # Extension icons
+├── assets/              # Extension icons
+└── wxt.config.ts        # WXT configuration
 ```
 
 ### Development Commands
@@ -42,16 +85,77 @@ This extension is built with:
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server for Chrome
 npm run dev
 
-# Build for production
+# Start development server for Firefox
+npm run dev:firefox
+
+# Build for production (Chrome)
 npm run build
 
-# Create zip for distribution
+# Build for production (Firefox)
+npm run build:firefox
+
+# Create zip for Chrome Web Store
 npm run zip
+
+# Create zip for Firefox Add-ons
+npm run zip:firefox
+
+# Run TypeScript compilation without emitting files
+npm run compile
 ```
+
+### Development Workflow
+
+1. Run `npm run dev` to start the development server
+2. Load the extension in the browser using the provided instructions
+3. Make changes to files in `entrypoints/newtab/` for UI updates
+4. Build with `npm run build` when ready to package
+5. Use `npm run zip` to create a distributable package
+
+## Architecture Overview
+
+### Entry Points
+
+- **New Tab Page**: The main user interface located in `entrypoints/newtab/`. It's a React application that displays time, date, search functionality, and website shortcuts.
+- **Popup**: Configuration interface located in `entrypoints/popup/`. Allows users to customize bookmark sources and refresh bookmarks manually.
+- **Background Script**: Located in `entrypoints/background.ts`. Runs in the background and handles:
+  - Bookmark refreshing across all tabs
+  - Background image fetching to avoid CORS issues
+  - Communication between content scripts and UI components
+- **Content Script**: Located in `entrypoints/content.ts`. Runs on specific web pages (currently Google sites) to interact with web content.
+
+### Data Flow
+
+1. **Bookmark Management**:
+   - Bookmarks are fetched from a customizable JSON URL
+   - Data is cached in localStorage with daily refresh logic
+   - Manual refresh available through popup interface
+   - Background script broadcasts refresh messages to all tabs
+
+2. **Background Image Handling**:
+   - Daily rotation using Unsplash with Picsum fallbacks
+   - Images fetched through background script to avoid CORS issues
+   - Base64 encoding for better performance and reliability
+   - localStorage caching with timestamp validation
+   - Manual switching via windmill button
 
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed information about updates and changes.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
