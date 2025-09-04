@@ -20,22 +20,25 @@ A customizable browser extension that replaces your new tab page with a beautifu
 ## Installation
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/your-username/newtab-extension.git
+   git clone https://github.com/vibe-ideas/your-new-tab.git
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Build the extension:
+
    ```bash
    npm run build
    ```
 
 4. Load the extension in your browser:
-   - **Chrome/Edge**: 
+   - **Chrome/Edge**:
      1. Navigate to `chrome://extensions`
      2. Enable "Developer mode"
      3. Click "Load unpacked"
