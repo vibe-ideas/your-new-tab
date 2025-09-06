@@ -12,7 +12,14 @@ export default defineConfig({
       "https://source.unsplash.com/*",
       "https://picsum.photos/*",
       "https://fastly.picsum.photos/*"
-    ]
+    ],
+    // Firefox-specific configuration
+    browser_specific_settings: {
+      gecko: {
+        id: "your-new-tab@yeshan333.com",
+        strict_min_version: "109.0"
+      }
+    }
   },
   vite: () => ({
     server: {

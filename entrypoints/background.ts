@@ -1,17 +1,26 @@
 export default defineBackground(() => {
   console.log('Background script loaded!');
 
+  // Use browser.runtime for Firefox compatibility, fallback to chrome.runtime
+  const runtime = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime : chrome.runtime;
+  
+  if (!runtime) {
+    console.error('Browser runtime API not available');
+    return;
+  }
+
   // Listen for messages from popup
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  runtime.onMessage.addListener((message, _sender, sendResponse) => {
     console.log('Background script received message:', message);
     
     if (message.action === 'refreshBookmarks') {
       console.log('Handling refreshBookmarks action');
       // Send message to all tabs to refresh bookmarks
-      chrome.tabs.query({}, (tabs) => {
+      const tabsAPI = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs : chrome.tabs;
+      tabsAPI.query({}, (tabs) => {
         tabs.forEach((tab) => {
           if (tab.id) {
-            chrome.tabs.sendMessage(tab.id, { action: 'refreshBookmarks' });
+            tabsAPI.sendMessage(tab.id, { action: 'refreshBookmarks' });
           }
         });
       });

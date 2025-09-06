@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
+import { getRuntime, sendMessage } from '../../utils/browser';
 
 interface Bookmark {
   id: string;
@@ -195,12 +196,18 @@ const NewTab: React.FC = () => {
       }
     };
 
-    chrome.runtime.onMessage.addListener(handleMessage);
-    
-    // Cleanup listener on component unmount
-    return () => {
-      chrome.runtime.onMessage.removeListener(handleMessage);
-    };
+    try {
+      const runtime = getRuntime();
+      runtime.onMessage.addListener(handleMessage);
+      
+      // Cleanup listener on component unmount
+      return () => {
+        runtime.onMessage.removeListener(handleMessage);
+      };
+    } catch (error) {
+      console.error('Failed to set up message listener:', error);
+      return () => {}; // Return empty cleanup function
+    }
   }, []);
   
   // Set up daily refresh of bookmarks
@@ -271,7 +278,8 @@ const NewTab: React.FC = () => {
           
           // Fetch image through background script
           console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
-          const fetchPromise = chrome.runtime.sendMessage({ 
+          // Use the browser utility for better compatibility
+          const fetchPromise = sendMessage({ 
             action: 'fetchBackgroundImage', 
             url: imageUrl,
             fallbackUrls: fallbackUrls
@@ -411,7 +419,8 @@ const NewTab: React.FC = () => {
           
           // Fetch image through background script
           console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
-          const fetchPromise = chrome.runtime.sendMessage({ 
+          // Use the browser utility for better compatibility
+          const fetchPromise = sendMessage({ 
             action: 'fetchBackgroundImage', 
             url: imageUrl,
             fallbackUrls: fallbackUrls
