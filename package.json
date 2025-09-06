@@ -1,5 +1,5 @@
 {
-  "name": "newtab-extension",
+  "name": "your-new-tab",
   "description": "A customizable browser extension that replaces your new tab page with a beautiful, functional interface",
   "private": true,
   "version": "0.1.0",
@@ -24,12 +24,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vibe-ideas/newtab-extension.git"
+    "url": "https://github.com/vibe-ideas/your-new-tab.git"
   },
   "bugs": {
-    "url": "https://github.com/vibe-ideas/newtab-extension/issues"
+    "url": "https://github.com/vibe-ideas/your-new-tab/issues"
   },
-  "homepage": "https://github.com/vibe-ideas/newtab-extension#readme",
+  "homepage": "https://github.com/vibe-ideas/your-new-tab",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
