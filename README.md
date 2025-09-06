@@ -8,14 +8,14 @@ A customizable browser extension that replaces your new tab page with a beautifu
 
 ## Features
 
-- **Real-time Clock & Date Display**: Always know the current time and date at a glance
-- **Quick Google Search**: Search the web without navigating away from your new tab
-- **Customizable Website Shortcuts**: Access your favorite websites with a single click
-- **Daily Rotating Backgrounds**: Enjoy fresh, beautiful images every day from Unsplash and Picsum
-- **Manual Background Switching**: Use the windmill button to change backgrounds on demand
-- **Customizable Bookmarks**: Configure your bookmarks via the extension popup
-- **Responsive Design**: Works beautifully on all screen sizes
-- **Robust Error Handling**: Graceful fallbacks when images or bookmarks fail to load
+- **Live Clock & Date**: Real-time display with elegant typography
+- **Instant Search**: Quick Google searches from your new tab
+- **Personalized Shortcuts**: One-click access to your favorite sites
+- **Dynamic Backgrounds**: Daily rotation from Unsplash & Picsum APIs
+- **On-Demand Refresh**: Windmill button for instant background changes
+- **Bookmark Management**: Customize via extension popup interface & private first class storage
+- **Adaptive Layout**: Perfectly responsive across all devices
+- **Smart Fallbacks**: Graceful error handling for all components
 
 ## Changelog
 

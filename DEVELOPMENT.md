@@ -1,34 +1,38 @@
 # Installation
 
-1. Clone the repository:
+- Step 1. Clone the repository:
 
 ```bash
 git clone https://github.com/vibe-ideas/your-new-tab.git
 ```
 
-2. Install dependencies:
+- Step 2. Install dependencies:
 
 ```bash
-npm install
+pnpm install
 ```
 
-3. Build the extension:
+- Step 3. debug the extension:
 
 ```bash
-npm run build
+pnpm run dev
+
+# known firefox manifest v3 bug: https://github.com/wxt-dev/wxt/issues/230
+# running in v2
+pnpm run dev:firefox
 ```
 
-4. Load the extension in your browser:
-   - **Chrome/Edge**:
-     1. Navigate to `chrome://extensions`
-     2. Enable "Developer mode"
-     3. Click "Load unpacked"
-     4. Select the `.output/chrome-mv3` directory
-   - **Firefox**:
-     1. Navigate to `about:debugging`
-     2. Click "This Firefox"
-     3. Click "Load Temporary Add-on"
-     4. Select the `.output/firefox-mv2/manifest.json` file
+- Step 4. Load the extension in your browser:
+  - **Chrome/Edge**:
+    1. Navigate to `chrome://extensions`
+    2. Enable "Developer mode"
+    3. Click "Load unpacked"
+    4. Select the `.output/chrome-mv3` directory
+  - **Firefox**:
+    1. Navigate to `about:debugging`
+    2. Click "This Firefox"
+    3. Click "Load Temporary Add-on"
+    4. Select the `.output/firefox-mv2/manifest.json` file
 
 ## Development
 
