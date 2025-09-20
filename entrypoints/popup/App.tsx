@@ -5,6 +5,7 @@ import AceEditor from 'react-ace';
 import 'ace-builds/src-noconflict/mode-json';
 import 'ace-builds/src-noconflict/theme-monokai';
 import 'ace-builds/src-noconflict/ext-language_tools';
+import { i18n, t } from '@/utils/i18n';
 import './App.css';
 
 // 默认内置书签数据 - 来自 example-bookmarks-with-icons.json
@@ -54,6 +55,7 @@ function App() {
   const [useDirectJson, setUseDirectJson] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [status, setStatus] = useState('');
+  const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
 
   // Load bookmarks URL from localStorage on component mount
   useEffect(() => {
@@ -94,13 +96,13 @@ function App() {
       localStorage.setItem('bookmarksUrl', 'default');
       localStorage.removeItem('bookmarksJson');
       setBookmarksUrl('default');
-      setStatus('已设置为使用内置书签');
+      setStatus(t('usingDefaultBookmarks'));
     } else if (useDirectJson) {
       try {
         // Validate JSON input
         const parsed = JSON.parse(jsonInput);
         if (!Array.isArray(parsed)) {
-          setStatus('JSON 格式错误: 书签数据应该是数组');
+          setStatus(t('jsonShouldBeArray'));
           setTimeout(() => setStatus(''), 3000);
           return;
         }
@@ -109,9 +111,9 @@ function App() {
         localStorage.setItem('useDirectJson', 'true');
         localStorage.setItem('bookmarksJson', jsonInput);
         localStorage.removeItem('bookmarksUrl');
-        setStatus('JSON 已保存');
+        setStatus(t('saved'));
       } catch (error) {
-        setStatus('JSON 格式错误: ' + (error as Error).message);
+        setStatus(t('jsonInvalid') + ': ' + (error as Error).message);
         setTimeout(() => setStatus(''), 3000);
         return;
       }
@@ -121,7 +123,7 @@ function App() {
       localStorage.setItem('bookmarksUrl', inputUrl);
       localStorage.removeItem('bookmarksJson');
       setBookmarksUrl(inputUrl);
-      setStatus('URL 已保存');
+      setStatus(t('saved'));
     }
     setTimeout(() => setStatus(''), 3000);
   };
@@ -137,7 +139,7 @@ function App() {
     setUseDefaultBookmarks(false);
     setUseDirectJson(false);
     setJsonInput('');
-    setStatus('已重置为默认 URL');
+    setStatus(t('resetToDefault'));
     setTimeout(() => setStatus(''), 3000);
   };
 
@@ -146,23 +148,23 @@ function App() {
       try {
         const parsed = JSON.parse(jsonInput);
         if (!Array.isArray(parsed)) {
-          setStatus('JSON 格式错误: 书签数据应该是数组');
+          setStatus(t('jsonShouldBeArray'));
         } else {
-          setStatus('JSON 格式正确');
+          setStatus(t('jsonValid'));
         }
       } catch (error) {
-        setStatus('JSON 格式错误: ' + (error as Error).message);
+        setStatus(t('jsonInvalid') + ': ' + (error as Error).message);
       }
     } else {
       try {
         const response = await fetch(inputUrl);
         if (response.ok) {
-          setStatus('URL 可访问');
+          setStatus(t('urlAccessible'));
         } else {
-          setStatus('URL 无法访问');
+          setStatus(t('urlNotAccessible'));
         }
       } catch (error) {
-        setStatus('URL 无法访问');
+        setStatus(t('urlNotAccessible'));
       }
     }
     setTimeout(() => setStatus(''), 3000);
@@ -173,9 +175,9 @@ function App() {
       const parsed = JSON.parse(jsonInput);
       const formatted = JSON.stringify(parsed, null, 2);
       setJsonInput(formatted);
-      setStatus('JSON 已格式化');
+      setStatus(t('formatted'));
     } catch (error) {
-      setStatus('格式化失败: ' + (error as Error).message);
+      setStatus(t('formatFailed') + ': ' + (error as Error).message);
     }
     setTimeout(() => setStatus(''), 3000);
   };
@@ -185,11 +187,19 @@ function App() {
       const parsed = JSON.parse(jsonInput);
       const minified = JSON.stringify(parsed);
       setJsonInput(minified);
-      setStatus('JSON 已压缩');
+      setStatus(t('minified'));
     } catch (error) {
-      setStatus('压缩失败: ' + (error as Error).message);
+      setStatus(t('minifyFailed') + ': ' + (error as Error).message);
     }
     setTimeout(() => setStatus(''), 3000);
+  };
+
+  const handleLanguageChange = (language: 'zh-CN' | 'en') => {
+    i18n.setLanguage(language);
+    setCurrentLanguage(language);
+    // 强制重新渲染
+    setStatus(t('saved'));
+    setTimeout(() => setStatus(''), 1000);
   };
 
   return (
@@ -202,7 +212,42 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>书签配置</h1>
+      <h1 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>{t('title')}</h1>
+      
+      {/* 语言切换器 */}
+      <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <button
+          onClick={() => handleLanguageChange('zh-CN')}
+          style={{
+            padding: '4px 8px',
+            fontSize: '12px',
+            border: currentLanguage === 'zh-CN' ? '2px solid #646cff' : '1px solid #444',
+            backgroundColor: currentLanguage === 'zh-CN' ? '#646cff' : 'transparent',
+            color: currentLanguage === 'zh-CN' ? 'white' : 'inherit',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            minWidth: 'auto'
+          }}
+        >
+          中文
+        </button>
+        <button
+          onClick={() => handleLanguageChange('en')}
+          style={{
+            padding: '4px 8px',
+            fontSize: '12px',
+            border: currentLanguage === 'en' ? '2px solid #646cff' : '1px solid #444',
+            backgroundColor: currentLanguage === 'en' ? '#646cff' : 'transparent',
+            color: currentLanguage === 'en' ? 'white' : 'inherit',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            minWidth: 'auto'
+          }}
+        >
+          English
+        </button>
+      </div>
+      
       <div className="card">
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
@@ -217,7 +262,7 @@ function App() {
               }}
               style={{ marginRight: '10px', transform: 'scale(1.1)' }}
             />
-            <span>使用内置书签</span>
+            <span>{t('useDefaultBookmarks')}</span>
           </label>
           
           <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
@@ -232,14 +277,14 @@ function App() {
               }}
               style={{ marginRight: '10px', transform: 'scale(1.1)' }}
             />
-            <span>直接粘贴书签 JSON</span>
+            <span>{t('useDirectJson')}</span>
           </label>
           
           {!useDefaultBookmarks && useDirectJson && (
             <>
               <div style={{ marginBottom: '8px' }}>
                 <label htmlFor="bookmarksJson" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  书签 JSON:
+                  {t('bookmarksJson')}
                 </label>
               </div>
               <div className="json-editor-container">
@@ -248,7 +293,7 @@ function App() {
                   theme="monokai"
                   value={jsonInput}
                   onChange={(value) => setJsonInput(value)}
-                  placeholder="粘贴完整的书签 JSON 数据"
+                  placeholder={t('jsonInputPlaceholder')}
                   name="bookmarksJson"
                   editorProps={{ $blockScrolling: true }}
                   setOptions={{
@@ -273,14 +318,14 @@ function App() {
                   style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
                   type="button"
                 >
-                  格式化
+                  {t('format')}
                 </button>
                 <button 
                   onClick={handleMinifyJson} 
                   style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
                   type="button"
                 >
-                  压缩
+                  {t('minify')}
                 </button>
               </div>
             </>
@@ -290,33 +335,33 @@ function App() {
             <>
               <div style={{ marginBottom: '20px' }}>
                 <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  书签 JSON URL:
+                  {t('bookmarksUrl')}
                 </label>
                 <input
                   id="bookmarksUrl"
                   type="text"
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder="输入书签 JSON 文件的 URL"
+                  placeholder={t('urlInputPlaceholder')}
                   className="input-field"
                 />
               </div>
               <div className="config-info">
-                💡 提示：输入包含书签数据的 JSON 文件 URL，支持跨域访问
+                {t('urlInputTip')}
               </div>
             </>
           )}
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
           <button onClick={handleSave} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-            保存
+            {t('save')}
           </button>
           <button onClick={handleReset} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-            重置
+            {t('reset')}
           </button>
           {(!useDefaultBookmarks || useDirectJson) && (
             <button onClick={handleTest} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-              测试
+              {t('test')}
             </button>
           )}
         </div>
@@ -325,12 +370,12 @@ function App() {
             onClick={() => {
               // Send message to background script to refresh bookmarks
               chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
-              setStatus('书签已刷新');
+              setStatus(t('bookmarksRefreshed'));
               setTimeout(() => setStatus(''), 3000);
             }} 
             style={{ flex: 1, minWidth: '80px', padding: '10px' }}
           >
-            刷新书签
+            {t('refreshBookmarks')}
           </button>
         </div>
         {status && (
@@ -339,18 +384,18 @@ function App() {
           </div>
         )}
         <div className="config-info">
-          <div className="label">当前配置：</div>
+          <div className="label">{t('currentConfig')}</div>
           <code>
-            {useDefaultBookmarks ? '🔖 内置书签' : useDirectJson ? '📋 直接 JSON' : '🌐 ' + bookmarksUrl}
+            {useDefaultBookmarks ? t('builtInBookmarks') : useDirectJson ? t('directJsonLabel') : t('urlLabel') + bookmarksUrl}
           </code>
         </div>
       </div>
       <p className="read-the-docs">
         {useDefaultBookmarks 
-          ? '使用精选的开发者书签：ShanSan、VS Code、Telegram、daily.dev、GitHub、Stack Overflow 等' 
+          ? t('defaultBookmarksDescription') 
           : useDirectJson 
-            ? '使用直接粘贴的 JSON 数据' 
-            : '配置书签 JSON 文件的 URL'}
+            ? t('directJsonDescription') 
+            : t('urlBookmarksDescription')}
       </p>
     </>
   );
