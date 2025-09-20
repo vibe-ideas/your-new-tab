@@ -1,7 +1,51 @@
 import { useState, useEffect } from 'react';
 import reactLogo from '@/assets/react.svg';
 import wxtLogo from '/wxt.svg';
+import AceEditor from 'react-ace';
+import 'ace-builds/src-noconflict/mode-json';
+import 'ace-builds/src-noconflict/theme-monokai';
+import 'ace-builds/src-noconflict/ext-language_tools';
 import './App.css';
+
+// 默认内置书签数据 - 来自 example-bookmarks-with-icons.json
+const DEFAULT_BOOKMARKS = [
+  {
+    id: '1',
+    title: 'ShanSan',
+    url: 'https://shansan.top/',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+  },
+  {
+    id: '2',
+    title: 'vscode-blog',
+    url: 'https://code.visualstudio.com/blogs',
+    icon: '<svg t="1756912815338" class="icon" viewBox="0 0 1027 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10955" width="200" height="200"><path d="M769.853003 0v879.449982L1.953432 765.394768l767.899571 258.573725 255.994093-106.489604V122.365176l0.082706-0.039384-0.082706-0.165411v-15.6629l-255.994093-106.493543z" fill="#007ACC" p-id="10956"></path><path d="M501.126159 149.827435L265.926663 382.32127 124.31467 275.678069l-58.358777 19.494935 144.065599 142.411483-144.065599 142.403606 58.358777 19.494934 141.604116-106.651077h0.007877l235.187681 232.48202 140.867641-59.851419V209.678854l-140.859765-59.851419z m-0.007877 165.88811v243.706376l-161.811897-121.853188 161.811897-121.853188z" fill="#007ACC" p-id="10957"></path></svg>'
+  },
+  {
+    id: '3',
+    title: 'Telegram',
+    url: 'https://web.telegram.org/a/',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 64 64"><path d="M32,10c12.15,0,22,9.85,22,22s-9.85,22-22,22s-22-9.85-22-22S19.85,10,32,10z M39.589,40.968c0.404-1.241,2.301-13.615,2.534-16.054c0.071-0.738-0.163-1.229-0.619-1.449c-0.553-0.265-1.371-0.133-2.322,0.21c-1.303,0.47-17.958,7.541-18.92,7.951c-0.912,0.388-1.775,0.81-1.775,1.423c0,0.431,0.256,0.673,0.96,0.924c0.732,0.261,2.577,0.82,3.668,1.121c1.05,0.29,2.243,0.038,2.913-0.378c0.709-0.441,8.901-5.921,9.488-6.402c0.587-0.48,1.056,0.135,0.576,0.616c-0.48,0.48-6.102,5.937-6.844,6.693c-0.901,0.917-0.262,1.868,0.343,2.249c0.689,0.435,5.649,3.761,6.396,4.295c0.747,0.534,1.504,0.776,2.198,0.776C38.879,42.942,39.244,42.028,39.589,40.968z"></path></svg>'
+  },
+  {
+    id: '4',
+    title: 'daily.dev',
+    url: 'https://app.daily.dev/',
+    icon: '<svg t="1756912723086" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="9967" width="200" height="200"><path d="M512 512m-512 0a512 512 0 1 0 1024 0 512 512 0 1 0-1024 0Z" fill="#8CA8E6" p-id="9968"></path><path d="M350.464 325.412571c14.628571 0 26.441143-9.947429 26.441143-22.125714V241.517714c0-12.178286-11.812571-22.089143-26.441143-22.089143-14.628571 0-26.404571 9.874286-26.404571 22.089143v61.769143c0 12.178286 11.849143 22.125714 26.404571 22.125714z m162.121143 0c14.628571 0 26.404571-9.947429 26.404571-22.125714V241.517714c0-12.178286-11.849143-22.089143-26.404571-22.089143-14.628571 0-26.441143 9.874286-26.441143 22.089143v61.769143c0 12.178286 11.812571 22.125714 26.441143 22.125714z m207.250286-49.115428c5.010286 6.765714 7.936 14.701714 7.936 23.222857 0 24.502857-23.771429 44.397714-53.138286 44.397714s-53.138286-19.858286-53.138286-44.397714c0-8.521143 2.925714-16.457143 7.936-23.222857v-32.182857h-71.68v32.182857c5.010286 6.765714 7.936 14.701714 7.936 23.222857 0 24.502857-23.771429 44.397714-53.101714 44.397714-29.366857 0-53.174857-19.858286-53.174857-44.397714 0-8.521143 2.925714-16.457143 7.936-23.222857v-32.182857h-71.68v32.182857c4.973714 6.765714 7.936 14.701714 7.936 23.222857 0 24.502857-23.808 44.397714-53.174857 44.397714-29.330286 0-53.065143-19.894857-53.065143-44.397714 0-8.521143 2.925714-16.457143 7.899428-23.222857v-32.182857H292.571429a36.571429 36.571429 0 0 0-36.571429 36.571428V768a36.571429 36.571429 0 0 0 36.937143 36.571429l438.857143-4.498286a36.571429 36.571429 0 0 0 36.205714-36.571429V280.649143a36.571429 36.571429 0 0 0-36.571429-36.571429h-11.593142v32.219429zM341.321143 652.178286c0-14.08 11.410286-25.453714 25.490286-25.453715h290.377142a25.453714 25.453714 0 0 1 0 50.907429h-290.377142a25.453714 25.453714 0 0 1-25.453715-25.453714z m0-101.814857c0-14.08 11.410286-25.490286 25.490286-25.490286h290.377142a25.453714 25.453714 0 1 1 0 50.907429h-290.377142a25.453714 25.453714 0 0 1-25.453715-25.453714z m0-101.778286c0-14.08 11.410286-25.490286 25.490286-25.490285h290.377142a25.453714 25.453714 0 1 1 0 50.907428h-290.377142a25.453714 25.453714 0 0 1-25.453715-25.453714zM365.811429 447.634286h290.377142a25.453714 25.453714 0 1 1 0 50.907428h-290.377142a25.453714 25.453714 0 0 1 0-50.907428z" fill="#FFFFFF" p-id="9969"></path></svg>'
+  },
+  {
+    id: '5',
+    title: 'GitHub',
+    url: 'https://github.com',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>'
+  },
+  {
+    id: '6',
+    title: 'Stack Overflow',
+    url: 'https://stackoverflow.com',
+    icon: '<svg xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="100" height="100" viewBox="0 0 48 48"><path fill="#607D8B" d="M9 28H12V42H9z"></path><path fill="#607D8B" d="M9 39H35V42H9z"></path><path fill="#607D8B" d="M32 28H35V42H32zM15 34H29V37H15z"></path><path fill="#A68A6E" d="M14.88 29H28.880000000000003V32H14.88z" transform="rotate(6.142 21.88 30.5)"></path><path fill="#EF6C00" d="M29.452 11.646H43.451V14.647H29.452z" transform="rotate(81.234 36.453 13.148)"></path><path fill="#FF9800" d="M23.576 13.578H37.574V16.579H23.576z" transform="rotate(60.79 30.576 15.079)"></path><path fill="#D38B28" d="M18.395 18.275H32.393V21.276H18.395z" transform="rotate(34.765 25.396 19.777)"></path><path fill="#C09553" d="M15.977 23.499H29.976V26.5H15.977z" transform="rotate(19.785 22.978 25.003)"></path></svg>'
+  }
+];
 
 function App() {
   const [bookmarksUrl, setBookmarksUrl] = useState('https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json');
@@ -124,6 +168,30 @@ function App() {
     setTimeout(() => setStatus(''), 3000);
   };
 
+  const handleFormatJson = () => {
+    try {
+      const parsed = JSON.parse(jsonInput);
+      const formatted = JSON.stringify(parsed, null, 2);
+      setJsonInput(formatted);
+      setStatus('JSON 已格式化');
+    } catch (error) {
+      setStatus('格式化失败: ' + (error as Error).message);
+    }
+    setTimeout(() => setStatus(''), 3000);
+  };
+
+  const handleMinifyJson = () => {
+    try {
+      const parsed = JSON.parse(jsonInput);
+      const minified = JSON.stringify(parsed);
+      setJsonInput(minified);
+      setStatus('JSON 已压缩');
+    } catch (error) {
+      setStatus('压缩失败: ' + (error as Error).message);
+    }
+    setTimeout(() => setStatus(''), 3000);
+  };
+
   return (
     <>
       <div>
@@ -134,10 +202,10 @@ function App() {
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
       </div>
-      <h1>书签配置</h1>
+      <h1 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>书签配置</h1>
       <div className="card">
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '10px' }}>
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={useDefaultBookmarks}
@@ -147,12 +215,12 @@ function App() {
                   setUseDirectJson(false);
                 }
               }}
-              style={{ marginRight: '8px' }}
+              style={{ marginRight: '10px', transform: 'scale(1.1)' }}
             />
-            使用内置书签
+            <span>使用内置书签</span>
           </label>
           
-          <label style={{ display: 'block', marginBottom: '10px' }}>
+          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
             <input
               type="checkbox"
               checked={useDirectJson}
@@ -162,71 +230,111 @@ function App() {
                   setUseDefaultBookmarks(false);
                 }
               }}
-              style={{ marginRight: '8px' }}
+              style={{ marginRight: '10px', transform: 'scale(1.1)' }}
             />
-            直接粘贴书签 JSON
+            <span>直接粘贴书签 JSON</span>
           </label>
           
           {!useDefaultBookmarks && useDirectJson && (
             <>
-              <label htmlFor="bookmarksJson" style={{ display: 'block', marginBottom: '5px' }}>
-                书签 JSON:
-              </label>
-              <textarea
-                id="bookmarksJson"
-                value={jsonInput}
-                onChange={(e) => setJsonInput(e.target.value)}
-                placeholder="粘贴完整的书签 JSON 数据"
-                rows={10}
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  marginBottom: '10px',
-                  fontFamily: 'monospace',
-                  fontSize: '12px'
-                }}
-              />
+              <div style={{ marginBottom: '8px' }}>
+                <label htmlFor="bookmarksJson" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                  书签 JSON:
+                </label>
+              </div>
+              <div className="json-editor-container">
+                <AceEditor
+                  mode="json"
+                  theme="monokai"
+                  value={jsonInput}
+                  onChange={(value) => setJsonInput(value)}
+                  placeholder="粘贴完整的书签 JSON 数据"
+                  name="bookmarksJson"
+                  editorProps={{ $blockScrolling: true }}
+                  setOptions={{
+                    enableBasicAutocompletion: true,
+                    enableLiveAutocompletion: true,
+                    enableSnippets: true,
+                    showLineNumbers: true,
+                    tabSize: 2,
+                    useSoftTabs: true,
+                    wrap: true
+                  }}
+                  style={{
+                    width: '100%',
+                    minHeight: '400px',
+                    fontSize: '13px'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                <button 
+                  onClick={handleFormatJson} 
+                  style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
+                  type="button"
+                >
+                  格式化
+                </button>
+                <button 
+                  onClick={handleMinifyJson} 
+                  style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
+                  type="button"
+                >
+                  压缩
+                </button>
+              </div>
             </>
           )}
           
           {!useDefaultBookmarks && !useDirectJson && (
             <>
-              <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '5px' }}>
-                书签 JSON URL:
-              </label>
-              <input
-                id="bookmarksUrl"
-                type="text"
-                value={inputUrl}
-                onChange={(e) => setInputUrl(e.target.value)}
-                placeholder="输入书签 JSON 文件的 URL"
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid #ccc',
-                  marginBottom: '10px'
-                }}
-              />
+              <div style={{ marginBottom: '20px' }}>
+                <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
+                  书签 JSON URL:
+                </label>
+                <input
+                  id="bookmarksUrl"
+                  type="text"
+                  value={inputUrl}
+                  onChange={(e) => setInputUrl(e.target.value)}
+                  placeholder="输入书签 JSON 文件的 URL"
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    fontSize: '14px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+              <div style={{ 
+                padding: '15px', 
+                backgroundColor: '#f8f9fa', 
+                borderRadius: '4px',
+                marginBottom: '15px',
+                fontSize: '13px',
+                color: '#666'
+              }}>
+                💡 提示：输入包含书签数据的 JSON 文件 URL，支持跨域访问
+              </div>
             </>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <button onClick={handleSave} style={{ flex: 1, minWidth: '80px' }}>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
+          <button onClick={handleSave} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
             保存
           </button>
-          <button onClick={handleReset} style={{ flex: 1, minWidth: '80px' }}>
+          <button onClick={handleReset} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
             重置
           </button>
           {(!useDefaultBookmarks || useDirectJson) && (
-            <button onClick={handleTest} style={{ flex: 1, minWidth: '80px' }}>
+            <button onClick={handleTest} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
               测试
             </button>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
           <button 
             onClick={() => {
               // Send message to background script to refresh bookmarks
@@ -234,33 +342,42 @@ function App() {
               setStatus('书签已刷新');
               setTimeout(() => setStatus(''), 3000);
             }} 
-            style={{ flex: 1, minWidth: '80px' }}
+            style={{ flex: 1, minWidth: '80px', padding: '10px' }}
           >
             刷新书签
           </button>
         </div>
         {status && (
-          <p style={{ 
-            marginTop: '10px', 
-            padding: '8px', 
+          <div style={{ 
+            marginBottom: '15px', 
+            padding: '12px', 
             borderRadius: '4px', 
             backgroundColor: status.includes('错误') || status.includes('无法') ? '#f8d7da' : '#d4edda',
             color: status.includes('错误') || status.includes('无法') ? '#721c24' : '#155724',
-            textAlign: 'center'
+            textAlign: 'center',
+            fontSize: '14px',
+            fontWeight: '500'
           }}>
             {status}
-          </p>
+          </div>
         )}
-        <p style={{ marginTop: '15px', fontSize: '14px', color: '#666' }}>
-          当前使用: <br />
-          <code style={{ wordBreak: 'break-all' }}>
-            {useDefaultBookmarks ? '内置书签' : useDirectJson ? '直接 JSON' : bookmarksUrl}
+        <div style={{ 
+          marginTop: '15px', 
+          padding: '12px', 
+          backgroundColor: '#f8f9fa', 
+          borderRadius: '4px',
+          fontSize: '13px',
+          color: '#495057'
+        }}>
+          <div style={{ marginBottom: '5px', fontWeight: '500' }}>当前配置：</div>
+          <code style={{ wordBreak: 'break-all', fontSize: '12px' }}>
+            {useDefaultBookmarks ? '🔖 内置书签' : useDirectJson ? '📋 直接 JSON' : '🌐 ' + bookmarksUrl}
           </code>
-        </p>
+        </div>
       </div>
       <p className="read-the-docs">
         {useDefaultBookmarks 
-          ? '使用浏览器内置的快捷书签' 
+          ? '使用精选的开发者书签：ShanSan、VS Code、Telegram、daily.dev、GitHub、Stack Overflow 等' 
           : useDirectJson 
             ? '使用直接粘贴的 JSON 数据' 
             : '配置书签 JSON 文件的 URL'}

@@ -13,6 +13,11 @@ export default defineConfig({
       "https://picsum.photos/*",
       "https://fastly.picsum.photos/*"
     ],
+    // Configure popup size
+    action: {
+      default_title: "书签配置",
+      default_popup: "/popup/index.html"
+    },
     // Firefox-specific configuration
     browser_specific_settings: {
       gecko: {

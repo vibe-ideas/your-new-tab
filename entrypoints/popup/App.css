@@ -1,13 +1,18 @@
 #root {
-  max-width: 1280px;
+  max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
+  min-width: 600px;
+  min-height: 500px; /* 添加最小高度 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* 内容分散对齐 */
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
+  height: 3em;
+  padding: 0.5em;
   will-change: filter;
   transition: filter 300ms;
 }
@@ -34,9 +39,51 @@
 }
 
 .card {
-  padding: 2em;
+  padding: 1.5em; /* 增加内边距 */
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  flex: 1; /* 让卡片占满剩余空间 */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* 内容分散对齐 */
 }
 
 .read-the-docs {
   color: #888;
+  font-size: 0.9em;
+  margin-top: 1em;
+}
+
+/* Ace Editor 样式优化 */
+.ace_editor {
+  border-radius: 4px;
+}
+
+.ace-monokai {
+  background-color: #272822;
+}
+
+/* JSON 编辑器容器样式 */
+.json-editor-container {
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* 响应式设计 */
+@media (max-width: 400px) {
+  #root {
+    padding: 0.5rem;
+    min-width: 350px;
+  }
+  
+  .card {
+    padding: 0.8em;
+  }
+  
+  h1 {
+    font-size: 1.5em;
+  }
 }
