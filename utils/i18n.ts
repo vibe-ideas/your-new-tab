@@ -1,16 +1,16 @@
 export type Language = 'zh-CN' | 'en';
 
 export interface TranslationKeys {
-  // 标题
+  // Title
   title: string;
   
-  // 选项标签
+  // Option labels
   useDefaultBookmarks: string;
   useDirectJson: string;
   bookmarksJson: string;
   bookmarksUrl: string;
   
-  // 按钮文本
+  // Button text
   save: string;
   reset: string;
   test: string;
@@ -18,7 +18,7 @@ export interface TranslationKeys {
   minify: string;
   refreshBookmarks: string;
   
-  // 状态消息
+  // Status messages
   saved: string;
   resetToDefault: string;
   urlAccessible: string;
@@ -35,7 +35,7 @@ export interface TranslationKeys {
   usingDirectJson: string;
   usingUrl: string;
   
-  // 提示信息
+  // Placeholder text
   urlInputPlaceholder: string;
   jsonInputPlaceholder: string;
   urlInputTip: string;
@@ -43,7 +43,7 @@ export interface TranslationKeys {
   directJsonDescription: string;
   urlBookmarksDescription: string;
   
-  // 配置信息
+  // Configuration info
   currentConfig: string;
   builtInBookmarks: string;
   directJsonLabel: string;
@@ -52,16 +52,16 @@ export interface TranslationKeys {
 
 const translations: Record<Language, TranslationKeys> = {
   'zh-CN': {
-    // 标题
+    // Title
     title: '书签配置',
     
-    // 选项标签
+    // Option labels
     useDefaultBookmarks: '使用内置书签',
     useDirectJson: '直接粘贴书签 JSON',
     bookmarksJson: '书签 JSON:',
     bookmarksUrl: '书签 JSON URL:',
     
-    // 按钮文本
+    // Button text
     save: '保存',
     reset: '重置',
     test: '测试',
@@ -69,7 +69,7 @@ const translations: Record<Language, TranslationKeys> = {
     minify: '压缩',
     refreshBookmarks: '刷新书签',
     
-    // 状态消息
+    // Status messages
     saved: '已保存',
     resetToDefault: '已重置为默认 URL',
     urlAccessible: 'URL 可访问',
@@ -84,17 +84,17 @@ const translations: Record<Language, TranslationKeys> = {
     bookmarksRefreshed: '书签已刷新',
     usingDefaultBookmarks: '已设置为使用内置书签',
     
-    // 提示信息
+    // Placeholder text
     urlInputPlaceholder: '输入书签 JSON 文件的 URL',
     jsonInputPlaceholder: '粘贴完整的书签 JSON 数据',
     urlInputTip: '💡 提示：输入包含书签数据的 JSON 文件 URL，支持跨域访问',
     
-    // 描述信息
+    // Description info
     defaultBookmarksDescription: '使用精选的开发者书签：ShanSan、VS Code、Telegram、daily.dev、GitHub、Stack Overflow 等',
     directJsonDescription: '使用直接粘贴的 JSON 数据',
     urlBookmarksDescription: '配置书签 JSON 文件的 URL',
     
-    // 配置信息
+    // Configuration info
     currentConfig: '当前配置：',
     builtInBookmarks: '🔖 内置书签',
     directJsonLabel: '📋 直接 JSON',
@@ -103,16 +103,16 @@ const translations: Record<Language, TranslationKeys> = {
     usingUrl: '已设置为使用 URL'
   },
   'en': {
-    // 标题
+    // Title
     title: 'Bookmarks Configuration',
     
-    // 选项标签
+    // Option labels
     useDefaultBookmarks: 'Use Built-in Bookmarks',
     useDirectJson: 'Paste Bookmarks JSON Directly',
     bookmarksJson: 'Bookmarks JSON:',
     bookmarksUrl: 'Bookmarks JSON URL:',
     
-    // 按钮文本
+    // Button text
     save: 'Save',
     reset: 'Reset',
     test: 'Test',
@@ -120,7 +120,7 @@ const translations: Record<Language, TranslationKeys> = {
     minify: 'Minify',
     refreshBookmarks: 'Refresh Bookmarks',
     
-    // 状态消息
+    // Status messages
     saved: 'Saved',
     resetToDefault: 'Reset to default URL',
     urlAccessible: 'URL is accessible',
@@ -135,17 +135,17 @@ const translations: Record<Language, TranslationKeys> = {
     bookmarksRefreshed: 'Bookmarks refreshed',
     usingDefaultBookmarks: 'Set to use built-in bookmarks',
     
-    // 提示信息
+    // Placeholder text
     urlInputPlaceholder: 'Enter URL of bookmarks JSON file',
     jsonInputPlaceholder: 'Paste complete bookmarks JSON data',
     urlInputTip: '💡 Tip: Enter URL of JSON file containing bookmarks data, supports cross-domain access',
     
-    // 描述信息
+    // Description info
     defaultBookmarksDescription: 'Use curated developer bookmarks: ShanSan, VS Code, Telegram, daily.dev, GitHub, Stack Overflow, etc.',
     directJsonDescription: 'Use directly pasted JSON data',
     urlBookmarksDescription: 'Configure URL of bookmarks JSON file',
     
-    // 配置信息
+    // Configuration info
     currentConfig: 'Current configuration:',
     builtInBookmarks: '🔖 Built-in Bookmarks',
     directJsonLabel: '📋 Direct JSON',
@@ -159,12 +159,12 @@ class I18n {
   private currentLanguage: Language = 'zh-CN';
   
   constructor() {
-    // 从localStorage获取保存的语言设置，默认使用中文
+    // Get saved language setting from localStorage, default to Chinese
     const savedLanguage = localStorage.getItem('language') as Language;
     if (savedLanguage && (savedLanguage === 'zh-CN' || savedLanguage === 'en')) {
       this.currentLanguage = savedLanguage;
     } else {
-      // 检测浏览器语言
+      // Detect browser language
       const browserLanguage = navigator.language.toLowerCase();
       if (browserLanguage.startsWith('en')) {
         this.currentLanguage = 'en';
@@ -192,12 +192,12 @@ class I18n {
     localStorage.setItem('language', this.currentLanguage);
   }
   
-  // 获取所有支持的语言
+  // Get all supported languages
   getSupportedLanguages(): Language[] {
     return ['zh-CN', 'en'];
   }
   
-  // 获取语言显示名称
+  // Get language display name
   getLanguageDisplayName(language: Language): string {
     const names = {
       'zh-CN': '简体中文',
@@ -207,10 +207,10 @@ class I18n {
   }
 }
 
-// 创建全局单例实例
+// Create global singleton instance
 export const i18n = new I18n();
 
-// 导出一个便捷的翻译函数
+// Export a convenient translation function
 export const t = (key: keyof TranslationKeys): string => {
   return i18n.t(key);
 };
