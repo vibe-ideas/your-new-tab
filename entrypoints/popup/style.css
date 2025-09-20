@@ -67,3 +67,24 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+  }
+  a {
+    color: #8e9afe;
+  }
+  a:hover {
+    color: #a8b3ff;
+  }
+  button {
+    background-color: #2a2a2a;
+    color: rgba(255, 255, 255, 0.87);
+    border-color: #444;
+  }
+  button:hover {
+    border-color: #8e9afe;
+  }
+}

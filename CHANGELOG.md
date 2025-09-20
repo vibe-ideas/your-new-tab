@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.2.0 - 2025-09-20
+
+### Added
+
+- Enhanced popup interface with Ace Editor for JSON bookmark editing
+- Real bookmark data integration in popup interface
+- Support for importing bookmarks from JSON format
+- Example bookmarks configuration file with icons
+- GitHub Actions workflow for automated building and releasing
+- Firefox MV3 compatibility support
+- Enhanced development documentation
+
+### Changed
+
+- Improved popup UI with better bookmark management interface
+- Updated build configuration for cross-browser compatibility
+- Enhanced background script messaging system
+- Updated Node.js version requirements to 23
+- Renamed project from "newtab-extension" to "your-new-tab"
+
+### Fixed
+
+- Improved cross-browser runtime API compatibility
+- Enhanced error handling for bookmark loading
+- Fixed build and deployment processes
+
 ## 0.1.0
 
 ### Added

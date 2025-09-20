@@ -298,24 +298,10 @@ function App() {
                   value={inputUrl}
                   onChange={(e) => setInputUrl(e.target.value)}
                   placeholder="输入书签 JSON 文件的 URL"
-                  style={{
-                    width: '100%',
-                    padding: '10px',
-                    borderRadius: '4px',
-                    border: '1px solid #ccc',
-                    fontSize: '14px',
-                    boxSizing: 'border-box'
-                  }}
+                  className="input-field"
                 />
               </div>
-              <div style={{ 
-                padding: '15px', 
-                backgroundColor: '#f8f9fa', 
-                borderRadius: '4px',
-                marginBottom: '15px',
-                fontSize: '13px',
-                color: '#666'
-              }}>
+              <div className="config-info">
                 💡 提示：输入包含书签数据的 JSON 文件 URL，支持跨域访问
               </div>
             </>
@@ -348,29 +334,13 @@ function App() {
           </button>
         </div>
         {status && (
-          <div style={{ 
-            marginBottom: '15px', 
-            padding: '12px', 
-            borderRadius: '4px', 
-            backgroundColor: status.includes('错误') || status.includes('无法') ? '#f8d7da' : '#d4edda',
-            color: status.includes('错误') || status.includes('无法') ? '#721c24' : '#155724',
-            textAlign: 'center',
-            fontSize: '14px',
-            fontWeight: '500'
-          }}>
+          <div className={`status-message ${status.includes('错误') || status.includes('无法') ? 'error' : 'success'}`}>
             {status}
           </div>
         )}
-        <div style={{ 
-          marginTop: '15px', 
-          padding: '12px', 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '4px',
-          fontSize: '13px',
-          color: '#495057'
-        }}>
-          <div style={{ marginBottom: '5px', fontWeight: '500' }}>当前配置：</div>
-          <code style={{ wordBreak: 'break-all', fontSize: '12px' }}>
+        <div className="config-info">
+          <div className="label">当前配置：</div>
+          <code>
             {useDefaultBookmarks ? '🔖 内置书签' : useDirectJson ? '📋 直接 JSON' : '🌐 ' + bookmarksUrl}
           </code>
         </div>
