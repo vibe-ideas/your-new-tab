@@ -3,7 +3,7 @@
 A customizable browser extension that replaces your new tab page with a beautiful, functional interface.
 
 <div align="center">
-<img src="demo.jpg" alt="New Tab Extension Screenshot" />
+<img src="demo.gif" alt="New Tab Extension Screenshot" />
 </div>
 
 ## Features
