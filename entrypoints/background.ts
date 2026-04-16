@@ -25,6 +25,18 @@ export default defineBackground(() => {
         });
       });
       return false; // Synchronous response
+    } else if (message.action === 'refreshSearchConfig') {
+      console.log('Handling refreshSearchConfig action');
+      // Send message to all tabs to refresh search config
+      const tabsAPI = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs : chrome.tabs;
+      tabsAPI.query({}, (tabs) => {
+        tabs.forEach((tab) => {
+          if (tab.id) {
+            tabsAPI.sendMessage(tab.id, { action: 'refreshSearchConfig' });
+          }
+        });
+      });
+      return false;
     } else if (message.action === 'fetchBackgroundImage') {
       console.log('Handling fetchBackgroundImage action with URL:', message.url);
       // Handle background image fetching in the background script to avoid CORS issues
@@ -149,6 +161,32 @@ export default defineBackground(() => {
         });
       // Return true to indicate we'll send a response asynchronously
       console.log('Returning true to indicate async response');
+      return true;
+    } else if (message.action === 'fetchSearchProxy') {
+      console.log('Handling fetchSearchProxy for URL:', message.url);
+      const url = message.url;
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      fetch(url, { signal: controller.signal, headers: { 'User-Agent': 'Mozilla/5.0' } })
+        .then(async (resp) => {
+          clearTimeout(timeoutId);
+          if (!resp.ok) {
+            sendResponse({ success: false, status: resp.status, error: `HTTP ${resp.status}` });
+            return;
+          }
+          const text = await resp.text();
+          // Return HTML text (may be client-rendered). Caller will decide how to use it.
+          sendResponse({ success: true, data: text });
+        })
+        .catch((err) => {
+          clearTimeout(timeoutId);
+          console.error('fetchSearchProxy error:', err);
+          sendResponse({ success: false, error: err.message || String(err) });
+        });
+
+      // Indicate async response
       return true;
     } else {
       console.log('Unrecognized message action:', message.action);

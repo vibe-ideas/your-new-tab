@@ -56,6 +56,33 @@ function App() {
   const [jsonInput, setJsonInput] = useState('');
   const [status, setStatus] = useState('');
   const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
+  // Search providers config
+  type SearchProvider = {
+    id: string;
+    name: string;
+    urlTemplate?: string;
+    capability?: 'stable'|'experimental'|'manual';
+    enabled?: boolean;
+    useProxy?: boolean;
+  };
+
+  const [providers, setProviders] = useState<SearchProvider[]>(() => {
+    try {
+      const raw = localStorage.getItem('searchProviders');
+      if (raw) return JSON.parse(raw) as SearchProvider[];
+    } catch (e) {
+      console.warn('Failed to parse searchProviders from localStorage', e);
+    }
+    return [ { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false } ];
+  });
+
+  const [defaultSearchProvider, setDefaultSearchProvider] = useState<string>(() => {
+    try {
+      return localStorage.getItem('defaultSearchProvider') || (providers[0] && providers[0].id) || 'metaso';
+    } catch (e) {
+      return 'metaso';
+    }
+  });
 
   // Load bookmarks URL from localStorage on component mount
   useEffect(() => {
@@ -126,6 +153,25 @@ function App() {
       setStatus(t('saved'));
     }
     setTimeout(() => setStatus(''), 3000);
+    try {
+      // Also save default search provider if not present
+      const rawProviders = localStorage.getItem('searchProviders');
+      if (!rawProviders) {
+        const defaultProviders = [
+          { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false }
+        ];
+        localStorage.setItem('searchProviders', JSON.stringify(defaultProviders));
+      }
+
+      // Notify background to refresh search config
+      try {
+        chrome.runtime.sendMessage({ action: 'refreshSearchConfig' });
+      } catch (e) {
+        console.warn('Failed to send refreshSearchConfig message', e);
+      }
+    } catch (e) {
+      console.warn('Failed to save searchProviders default or notify background', e);
+    }
   };
 
   const handleReset = () => {
@@ -141,6 +187,20 @@ function App() {
     setJsonInput('');
     setStatus(t('resetToDefault'));
     setTimeout(() => setStatus(''), 3000);
+  };
+
+  const handleSaveProviders = () => {
+    try {
+      localStorage.setItem('searchProviders', JSON.stringify(providers));
+      localStorage.setItem('defaultSearchProvider', defaultSearchProvider);
+      // Notify background to refresh search config
+      try { chrome.runtime.sendMessage({ action: 'refreshSearchConfig' }); } catch (e) {}
+      setStatus(t('saved'));
+    } catch (e) {
+      console.warn('Failed to save providers', e);
+      setStatus(t('jsonInvalid'));
+    }
+    setTimeout(() => setStatus(''), 2000);
   };
 
   const handleTest = async () => {
@@ -351,6 +411,62 @@ function App() {
               </div>
             </>
           )}
+        </div>
+        {/* Search providers configuration */}
+        <div style={{ marginTop: '12px', marginBottom: '12px' }}>
+          <h3 style={{ marginBottom: '8px' }}>{t('selectSearchProviderLabel')}</h3>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+            <select
+              value={defaultSearchProvider}
+              onChange={(e) => setDefaultSearchProvider(e.target.value)}
+              style={{ flex: 1, padding: '6px' }}
+            >
+              {providers.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+            <button onClick={handleSaveProviders} style={{ padding: '6px 10px' }}>{t('save')}</button>
+          </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {providers.map((p, idx) => (
+              <div key={p.id} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input type="checkbox" checked={p.enabled !== false} onChange={(e) => {
+                  const next = [...providers];
+                  next[idx] = { ...p, enabled: e.target.checked };
+                  setProviders(next);
+                }} />
+                <input style={{ flex: 1, padding: '6px' }} value={p.name} onChange={(e) => {
+                  const next = [...providers]; next[idx] = { ...p, name: e.target.value }; setProviders(next);
+                }} />
+                <input style={{ flex: 2, padding: '6px' }} value={p.urlTemplate || ''} onChange={(e) => {
+                  const next = [...providers]; next[idx] = { ...p, urlTemplate: e.target.value }; setProviders(next);
+                }} />
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Fetch provider HTML via background proxy">
+                  <input type="checkbox" checked={!!p.useProxy} onChange={(e) => {
+                    const next = [...providers]; next[idx] = { ...p, useProxy: e.target.checked }; setProviders(next);
+                  }} />
+                  <span style={{ fontSize: '12px' }}>Use proxy</span>
+                </label>
+                <button onClick={() => {
+                  const next = providers.filter((pp) => pp.id !== p.id);
+                  setProviders(next);
+                }}>{t('reset')}</button>
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button onClick={() => {
+                const id = `custom_${Date.now()}`;
+                const next = [...providers, { id, name: 'Custom', urlTemplate: '', capability: 'experimental' as const, enabled: true }];
+                setProviders(next);
+              }}>{t('format') /* reuse label as 'Add' fallback */}</button>
+              <div className="config-info" style={{ fontSize: '12px' }}>{t('copiedToClipboard')}</div>
+            </div>
+          </div>
+          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+            <strong>Proxy 提示：</strong> 如果为某个搜索提供者启用了 "Use proxy"，扩展会通过后台脚本替你抓取该提供者的页面 HTML 再返回到页面（避免客户端跨域或渲染问题）。启用代理会将该次请求的目标 URL 发送到后台并由本机浏览器进程发起请求，可能会触及隐私/法律边界，请谨慎使用。更多信息见 README 的 "Search proxy" 部分。
+          </div>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
           <button onClick={handleSave} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>

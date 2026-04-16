@@ -48,6 +48,9 @@ export interface TranslationKeys {
   builtInBookmarks: string;
   directJsonLabel: string;
   urlLabel: string;
+  // Search provider related
+  selectSearchProviderLabel: string;
+  copiedToClipboard: string;
 }
 
 const translations: Record<Language, TranslationKeys> = {
@@ -101,6 +104,10 @@ const translations: Record<Language, TranslationKeys> = {
     urlLabel: '🌐 ',
     usingDirectJson: '已设置为使用直接 JSON',
     usingUrl: '已设置为使用 URL'
+    ,
+    // Search provider
+    selectSearchProviderLabel: '选择搜索提供商',
+    copiedToClipboard: '已复制查询内容到剪贴板，请在目标站点粘贴并搜索'
   },
   'en': {
     // Title
@@ -152,6 +159,10 @@ const translations: Record<Language, TranslationKeys> = {
     urlLabel: '🌐 ',
     usingDirectJson: 'Set to use direct JSON',
     usingUrl: 'Set to use URL'
+    ,
+    // Search provider
+    selectSearchProviderLabel: 'Select search provider',
+    copiedToClipboard: 'Query copied to clipboard. Paste it in the target site and search.'
   }
 };
 

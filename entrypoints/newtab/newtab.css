@@ -119,6 +119,21 @@ body {
   transition: background-color 0.2s;
 }
 
+.search-provider-select {
+  margin-left: 8px;
+  margin-right: 8px;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  color: #333;
+}
+
+.search-provider-badge {
+  font-size: 12px;
+  color: #666;
+  margin-left: 6px;
+}
+
 
 .shortcuts-grid {
   display: flex;

@@ -24,6 +24,47 @@ const NewTab: React.FC = () => {
   const [backgroundImage, setBackgroundImage] = React.useState<string>('');
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
   const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false); // Start with false to show default background initially
+  // Search providers state
+  interface SearchProvider {
+    id: string;
+    name: string;
+    urlTemplate?: string; // e.g. 'https://metaso.cn/?q={query}'
+    baseUrl?: string; // legacy support
+    capability?: 'stable' | 'experimental' | 'manual';
+    enabled?: boolean;
+    autoSubmit?: boolean;
+    useProxy?: boolean;
+  }
+
+  const defaultProviders: SearchProvider[] = [
+    {
+      id: 'metaso',
+      name: 'Metaso',
+      urlTemplate: 'https://metaso.cn/?q={query}',
+      capability: 'stable',
+      enabled: true,
+      autoSubmit: true,
+      useProxy: false
+    }
+  ];
+
+  const [providers, setProviders] = React.useState<SearchProvider[]>(() => {
+    try {
+      const raw = localStorage.getItem('searchProviders');
+      if (raw) return JSON.parse(raw) as SearchProvider[];
+    } catch (e) {
+      console.warn('Failed to parse searchProviders from localStorage', e);
+    }
+    return defaultProviders;
+  });
+
+  const [selectedProviderId, setSelectedProviderId] = React.useState<string>(() => {
+    try {
+      return localStorage.getItem('lastSearchProvider') || localStorage.getItem('defaultSearchProvider') || 'metaso';
+    } catch (e) {
+      return 'metaso';
+    }
+  });
 
   // Default bookmarks as fallback - using example-bookmarks-with-icons.json data
   const defaultBookmarks: Bookmark[] = [
@@ -211,6 +252,19 @@ const NewTab: React.FC = () => {
     const handleMessage = (message: any) => {
       if (message.action === 'refreshBookmarks') {
         refreshBookmarks();
+      } else if (message.action === 'refreshSearchConfig') {
+        // Reload providers from localStorage
+        try {
+          const raw = localStorage.getItem('searchProviders');
+          if (raw) {
+            const parsed = JSON.parse(raw) as SearchProvider[];
+            setProviders(parsed);
+          }
+          const last = localStorage.getItem('lastSearchProvider');
+          if (last) setSelectedProviderId(last);
+        } catch (e) {
+          console.warn('Failed to reload searchProviders from localStorage', e);
+        }
       }
     };
 
@@ -344,10 +398,77 @@ const NewTab: React.FC = () => {
     fetchBackgroundImage();
   }, []);
 
-  const handleSearch = () => {
+    const handleSearch = async () => {
     if (searchQuery.trim()) {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}&udm=50`;
-      window.open(searchUrl, '_blank');
+      const provider = providers.find(p => p.id === selectedProviderId) || providers[0];
+      const buildSearchUrl = (p: any, q: string) => {
+        const query = encodeURIComponent(q.trim());
+        if (p.urlTemplate) {
+          return p.urlTemplate.replace('{query}', query);
+        }
+        if (p.baseUrl) {
+          return `${p.baseUrl}?q=${query}`;
+        }
+        // Fallback to metaso
+        return `https://metaso.cn/?q=${query}`;
+      };
+
+      const url = buildSearchUrl(provider, searchQuery);
+
+      // Remember last used provider
+      try {
+        localStorage.setItem('lastSearchProvider', provider.id);
+      } catch (e) {
+        // ignore
+      }
+
+      // If provider is manual, open provider home and copy query to clipboard
+      if (provider.capability === 'manual') {
+        // Open provider homepage if available
+        if (provider.baseUrl) {
+          window.open(provider.baseUrl, '_blank');
+        } else if (provider.urlTemplate) {
+          const homepage = provider.urlTemplate.split('?')[0];
+          window.open(homepage, '_blank');
+        }
+
+        try {
+          navigator.clipboard.writeText(searchQuery.trim()).catch(() => {});
+          alert('已复制查询内容到剪贴板，请在目标站点粘贴并搜索');
+        } catch (e) {
+          // ignore clipboard failures
+        }
+        return;
+      }
+
+      // If provider requests proxy, fetch HTML via background and render
+      if (provider.useProxy) {
+        try {
+          const resp: any = await sendMessage({ action: 'fetchSearchProxy', url });
+          if (resp && resp.success && resp.data) {
+            // open a new window and write the returned HTML
+            const w = window.open();
+            if (w && w.document) {
+              w.document.open();
+              w.document.write(resp.data);
+              w.document.close();
+            } else {
+              // fallback: open direct URL
+              window.open(url, '_blank');
+            }
+          } else {
+            // fallback to direct open
+            window.open(url, '_blank');
+          }
+        } catch (e) {
+          console.error('Proxy fetch failed, falling back to direct open', e);
+          window.open(url, '_blank');
+        }
+
+        return;
+      }
+
+      window.open(url, '_blank');
     }
   };
 
@@ -500,6 +621,20 @@ const NewTab: React.FC = () => {
       <div className="search-container">
         <div className="search-box">
           <div className="google-logo">G</div>
+          <select
+            className="search-provider-select"
+            value={selectedProviderId}
+            onChange={(e) => {
+              const v = e.target.value;
+              setSelectedProviderId(v);
+              try { localStorage.setItem('lastSearchProvider', v); } catch (err) {}
+            }}
+            aria-label="选择搜索提供商"
+          >
+            {providers.filter(p => p.enabled !== false).map((p) => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
           <input 
             type="text" 
             placeholder="输入并搜索..."
