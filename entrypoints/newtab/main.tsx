@@ -346,7 +346,7 @@ const NewTab: React.FC = () => {
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
-      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}`;
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(searchQuery.trim())}&udm=50`;
       window.open(searchUrl, '_blank');
     }
   };
