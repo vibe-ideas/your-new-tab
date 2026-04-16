@@ -73,14 +73,17 @@ function App() {
     } catch (e) {
       console.warn('Failed to parse searchProviders from localStorage', e);
     }
-    return [ { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false } ];
+    return [
+      { id: 'google', name: 'Google', urlTemplate: 'https://www.google.com/search?q={query}&udm=50', capability: 'stable' as const, enabled: true, useProxy: false },
+      { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false }
+    ];
   });
 
   const [defaultSearchProvider, setDefaultSearchProvider] = useState<string>(() => {
     try {
-      return localStorage.getItem('defaultSearchProvider') || (providers[0] && providers[0].id) || 'metaso';
+      return localStorage.getItem('defaultSearchProvider') || (providers[0] && providers[0].id) || 'google';
     } catch (e) {
-      return 'metaso';
+      return 'google';
     }
   });
 

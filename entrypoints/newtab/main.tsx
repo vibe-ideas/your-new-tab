@@ -34,9 +34,20 @@ const NewTab: React.FC = () => {
     enabled?: boolean;
     autoSubmit?: boolean;
     useProxy?: boolean;
+    iconSvg?: string;
   }
 
   const defaultProviders: SearchProvider[] = [
+    {
+      id: 'google',
+      name: 'Google',
+      urlTemplate: 'https://www.google.com/search?q={query}&udm=50',
+      capability: 'stable',
+      enabled: true,
+      autoSubmit: true,
+      useProxy: false
+      , iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0%" x2="100%"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#34A853"/><stop offset="75%" stop-color="#FBBC05"/><stop offset="100%" stop-color="#EA4335"/></linearGradient></defs><circle cx="24" cy="24" r="22" fill="url(#g1)"/><text x="24" y="30" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">G</text></svg>`
+    },
     {
       id: 'metaso',
       name: 'Metaso',
@@ -45,6 +56,7 @@ const NewTab: React.FC = () => {
       enabled: true,
       autoSubmit: true,
       useProxy: false
+      , iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#6f42c1"/><text x="24" y="31" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">M</text></svg>`
     }
   ];
 
@@ -60,11 +72,53 @@ const NewTab: React.FC = () => {
 
   const [selectedProviderId, setSelectedProviderId] = React.useState<string>(() => {
     try {
-      return localStorage.getItem('lastSearchProvider') || localStorage.getItem('defaultSearchProvider') || 'metaso';
+      return localStorage.getItem('lastSearchProvider') || localStorage.getItem('defaultSearchProvider') || 'google';
     } catch (e) {
-      return 'metaso';
+      return 'google';
     }
   });
+
+  const [showProviderMenu, setShowProviderMenu] = React.useState<boolean>(false);
+  const providerIconRef = React.useRef<HTMLDivElement>(null);
+  const popoverRef = React.useRef<HTMLDivElement>(null);
+
+  // Close provider menu when clicking outside
+  React.useEffect(() => {
+    if (!showProviderMenu) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        providerIconRef.current && !providerIconRef.current.contains(target) &&
+        popoverRef.current && !popoverRef.current.contains(target)
+      ) {
+        setShowProviderMenu(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowProviderMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showProviderMenu]);
+
+  const handleProviderSelect = (providerId: string) => {
+    setSelectedProviderId(providerId);
+    setShowProviderMenu(false);
+    try {
+      localStorage.setItem('lastSearchProvider', providerId);
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // Default bookmarks as fallback - using example-bookmarks-with-icons.json data
   const defaultBookmarks: Bookmark[] = [
@@ -401,17 +455,17 @@ const NewTab: React.FC = () => {
     const handleSearch = async () => {
     if (searchQuery.trim()) {
       const provider = providers.find(p => p.id === selectedProviderId) || providers[0];
-      const buildSearchUrl = (p: any, q: string) => {
-        const query = encodeURIComponent(q.trim());
-        if (p.urlTemplate) {
-          return p.urlTemplate.replace('{query}', query);
-        }
-        if (p.baseUrl) {
-          return `${p.baseUrl}?q=${query}`;
-        }
-        // Fallback to metaso
-        return `https://metaso.cn/?q=${query}`;
-      };
+    const buildSearchUrl = (p: any, q: string) => {
+      const query = encodeURIComponent(q.trim());
+      if (p.urlTemplate) {
+        return p.urlTemplate.replace('{query}', query);
+      }
+      if (p.baseUrl) {
+        return `${p.baseUrl}?q=${query}`;
+      }
+        // Fallback to Google search
+        return `https://www.google.com/search?q=${query}&udm=50`;
+    };
 
       const url = buildSearchUrl(provider, searchQuery);
 
@@ -620,7 +674,28 @@ const NewTab: React.FC = () => {
       
       <div className="search-container">
         <div className="search-box">
-          <div className="google-logo">G</div>
+          <div
+            ref={providerIconRef}
+            className="search-provider-icon"
+            role="button"
+            aria-haspopup="listbox"
+            aria-expanded={showProviderMenu}
+            aria-label="切换搜索提供商"
+            tabIndex={0}
+            onClick={() => setShowProviderMenu(prev => !prev)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowProviderMenu(prev => !prev);
+              }
+            }}
+          >
+            {(() => {
+              const p = providers.find(x => x.id === selectedProviderId) || providers[0];
+              if (p && p.iconSvg) return <span dangerouslySetInnerHTML={{ __html: p.iconSvg }} />;
+              return <div className="google-logo">G</div>;
+            })()}
+          </div>
           <select
             className="search-provider-select"
             value={selectedProviderId}
@@ -629,12 +704,30 @@ const NewTab: React.FC = () => {
               setSelectedProviderId(v);
               try { localStorage.setItem('lastSearchProvider', v); } catch (err) {}
             }}
-            aria-label="选择搜索提供商"
+            aria-hidden="true"
+            tabIndex={-1}
+            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
           >
             {providers.filter(p => p.enabled !== false).map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
+          {showProviderMenu && (
+            <div ref={popoverRef} className="provider-popover" role="listbox">
+              {providers.filter(p => p.enabled !== false).map((p) => (
+                <div
+                  key={p.id}
+                  className={`provider-popover-item${p.id === selectedProviderId ? ' active' : ''}`}
+                  role="option"
+                  aria-selected={p.id === selectedProviderId}
+                  onClick={() => handleProviderSelect(p.id)}
+                >
+                  {p.iconSvg && <span className="provider-option-icon" dangerouslySetInnerHTML={{ __html: p.iconSvg }} />}
+                  <span className="provider-option-name">{p.name}</span>
+                </div>
+              ))}
+            </div>
+          )}
           <input 
             type="text" 
             placeholder="输入并搜索..."

@@ -73,21 +73,29 @@ body {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
 }
 
-.google-logo {
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(45deg, #4285f4, #34a853, #fbbc05, #ea4335);
+.search-provider-icon {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 16px;
   margin-right: 12px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+.search-provider-icon:hover {
+  background: rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.search-provider-icon svg {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
 }
 
 .search-input {
@@ -132,6 +140,71 @@ body {
   font-size: 12px;
   color: #666;
   margin-left: 6px;
+}
+
+.provider-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 6px;
+  z-index: 1000;
+  min-width: 160px;
+  animation: popoverFadeIn 0.2s ease-out;
+}
+
+@keyframes popoverFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.provider-popover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  user-select: none;
+}
+.provider-popover-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+.provider-popover-item.active {
+  background: rgba(0, 123, 255, 0.08);
+}
+.provider-popover-item.active:hover {
+  background: rgba(0, 123, 255, 0.14);
+}
+
+.provider-option-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.provider-option-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.provider-option-name {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
 }
 
 
