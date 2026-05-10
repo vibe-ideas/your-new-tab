@@ -1,10 +1,4 @@
 import { useState, useEffect } from 'react';
-import reactLogo from '@/assets/react.svg';
-import wxtLogo from '/wxt.svg';
-import AceEditor from 'react-ace';
-import 'ace-builds/src-noconflict/mode-json';
-import 'ace-builds/src-noconflict/theme-monokai';
-import 'ace-builds/src-noconflict/ext-language_tools';
 import { i18n, t } from '@/utils/i18n';
 import './App.css';
 
@@ -54,6 +48,7 @@ function App() {
   const [useDefaultBookmarks, setUseDefaultBookmarks] = useState(false);
   const [useDirectJson, setUseDirectJson] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
+  const [backgroundMediaUrlsInput, setBackgroundMediaUrlsInput] = useState('');
   const [status, setStatus] = useState('');
   const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
   // Search providers config
@@ -93,6 +88,7 @@ function App() {
     const storedUseDefault = localStorage.getItem('useDefaultBookmarks') === 'true';
     const storedUseDirectJson = localStorage.getItem('useDirectJson') === 'true';
     const storedJsonInput = localStorage.getItem('bookmarksJson');
+    const storedBackgroundMediaUrls = localStorage.getItem('customBackgroundMediaUrls');
     
     if (storedUseDefault) {
       setUseDefaultBookmarks(true);
@@ -117,9 +113,18 @@ function App() {
       setUseDirectJson(false);
       setJsonInput('');
     }
+
+    if (storedBackgroundMediaUrls) {
+      setBackgroundMediaUrlsInput(storedBackgroundMediaUrls);
+    }
   }, []);
 
   const handleSave = () => {
+    const normalizedBackgroundMediaUrls = backgroundMediaUrlsInput
+      .split('\n')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
     if (useDefaultBookmarks) {
       localStorage.setItem('useDefaultBookmarks', 'true');
       localStorage.setItem('useDirectJson', 'false');
@@ -155,6 +160,14 @@ function App() {
       setBookmarksUrl(inputUrl);
       setStatus(t('saved'));
     }
+
+    if (normalizedBackgroundMediaUrls.length > 0) {
+      localStorage.setItem('customBackgroundMediaUrls', normalizedBackgroundMediaUrls.join('\n'));
+    } else {
+      localStorage.removeItem('customBackgroundMediaUrls');
+    }
+    localStorage.removeItem('customBackgroundMediaIndex');
+
     setTimeout(() => setStatus(''), 3000);
     try {
       // Also save default search provider if not present
@@ -172,6 +185,11 @@ function App() {
       } catch (e) {
         console.warn('Failed to send refreshSearchConfig message', e);
       }
+      try {
+        chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
+      } catch (e) {
+        console.warn('Failed to send refreshBackgroundConfig message', e);
+      }
     } catch (e) {
       console.warn('Failed to save searchProviders default or notify background', e);
     }
@@ -183,13 +201,21 @@ function App() {
     localStorage.setItem('useDirectJson', 'false');
     localStorage.setItem('bookmarksUrl', defaultUrl);
     localStorage.removeItem('bookmarksJson');
+    localStorage.removeItem('customBackgroundMediaUrls');
+    localStorage.removeItem('customBackgroundMediaIndex');
     setBookmarksUrl(defaultUrl);
     setInputUrl(defaultUrl);
     setUseDefaultBookmarks(false);
     setUseDirectJson(false);
     setJsonInput('');
+    setBackgroundMediaUrlsInput('');
     setStatus(t('resetToDefault'));
     setTimeout(() => setStatus(''), 3000);
+    try {
+      chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
+    } catch (e) {
+      console.warn('Failed to send refreshBackgroundConfig message', e);
+    }
   };
 
   const handleSaveProviders = () => {
@@ -265,258 +291,360 @@ function App() {
     setTimeout(() => setStatus(''), 1000);
   };
 
+  const isStatusError = /错误|无法|error|invalid|failed/i.test(status);
+  const uiText = currentLanguage === 'zh-CN'
+    ? {
+        subtitle: '统一管理书签源、搜索引擎和动态背景，让新标签页更顺手。',
+        bookmarkSection: '书签来源',
+        bookmarkSectionHint: '选择内置书签、远程 JSON，或直接粘贴自己的书签数据。',
+        defaultMode: `内置书签 · ${DEFAULT_BOOKMARKS.length} 项`,
+        jsonMode: '直接 JSON',
+        urlMode: '远程 URL',
+        searchSection: '搜索引擎',
+        searchSectionHint: '设置默认搜索引擎，并维护可切换的搜索列表。',
+        searchProviderName: '名称',
+        searchProviderUrl: '搜索 URL 模板',
+        addProvider: '新增搜索提供商',
+        removeProvider: '删除',
+        enabled: '已启用',
+        disabled: '已停用',
+        proxyLabel: '使用代理',
+        proxyNote: '如果启用代理，扩展会通过后台脚本抓取搜索页 HTML，适合处理跨域或前端渲染较重的网站；启用前请确认目标站点允许这种访问方式。',
+        backgroundSection: '动态背景',
+        backgroundSectionHint: '支持 GIF、WebP、APNG 和 MP4/WebM/MOV 直链。',
+        actionsSection: '快速操作',
+        actionsSectionHint: '保存当前配置、测试来源可用性，或手动刷新书签。',
+      }
+    : {
+        subtitle: 'Manage bookmark sources, search engines, and animated backgrounds from one polished control panel.',
+        bookmarkSection: 'Bookmark source',
+        bookmarkSectionHint: 'Switch between built-in bookmarks, a remote JSON file, or directly pasted bookmark data.',
+        defaultMode: `Built-in · ${DEFAULT_BOOKMARKS.length} items`,
+        jsonMode: 'Direct JSON',
+        urlMode: 'Remote URL',
+        searchSection: 'Search providers',
+        searchSectionHint: 'Set the default provider and maintain the list shown in the new tab page.',
+        searchProviderName: 'Name',
+        searchProviderUrl: 'Search URL template',
+        addProvider: 'Add provider',
+        removeProvider: 'Remove',
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+        proxyLabel: 'Use proxy',
+        proxyNote: 'When proxy is enabled, the extension fetches provider HTML through the background script. This can help with cross-origin or heavily client-rendered search pages, but should only be used when the target site allows it.',
+        backgroundSection: 'Animated backgrounds',
+        backgroundSectionHint: 'Supports direct GIF, WebP, APNG, MP4, WebM, and MOV links.',
+        actionsSection: 'Quick actions',
+        actionsSectionHint: 'Save the current configuration, test data sources, or refresh bookmarks manually.',
+      };
+
+  const bookmarkModeLabel = useDefaultBookmarks
+    ? uiText.defaultMode
+    : useDirectJson
+      ? uiText.jsonMode
+      : uiText.urlMode;
+
   return (
-    <>
-      <div>
-        <a href="https://wxt.dev" target="_blank">
-          <img src={wxtLogo} className="logo" alt="WXT logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1 style={{ marginBottom: '1rem', fontSize: '1.5rem' }}>{t('title')}</h1>
-      
-      {/* 语言切换器 */}
-      <div style={{ marginBottom: '15px', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-        <button
-          onClick={() => handleLanguageChange('zh-CN')}
-          style={{
-            padding: '4px 8px',
-            fontSize: '12px',
-            border: currentLanguage === 'zh-CN' ? '2px solid #646cff' : '1px solid #444',
-            backgroundColor: currentLanguage === 'zh-CN' ? '#646cff' : 'transparent',
-            color: currentLanguage === 'zh-CN' ? 'white' : 'inherit',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            minWidth: 'auto'
-          }}
-        >
-          中文
-        </button>
-        <button
-          onClick={() => handleLanguageChange('en')}
-          style={{
-            padding: '4px 8px',
-            fontSize: '12px',
-            border: currentLanguage === 'en' ? '2px solid #646cff' : '1px solid #444',
-            backgroundColor: currentLanguage === 'en' ? '#646cff' : 'transparent',
-            color: currentLanguage === 'en' ? 'white' : 'inherit',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            minWidth: 'auto'
-          }}
-        >
-          English
-        </button>
-      </div>
-      
+    <div className="popup-shell">
+      <header className="popup-hero">
+        <div className="popup-hero-copy">
+          <div className="popup-badge">Your New Tab</div>
+          <h1 className="popup-title">{t('title')}</h1>
+          <p className="popup-subtitle">{uiText.subtitle}</p>
+        </div>
+        <div className="language-switcher">
+          <button
+            className={`language-button ${currentLanguage === 'zh-CN' ? 'active' : ''}`}
+            onClick={() => handleLanguageChange('zh-CN')}
+            type="button"
+          >
+            中文
+          </button>
+          <button
+            className={`language-button ${currentLanguage === 'en' ? 'active' : ''}`}
+            onClick={() => handleLanguageChange('en')}
+            type="button"
+          >
+            English
+          </button>
+        </div>
+      </header>
+
+      {status && (
+        <div className={`status-message ${isStatusError ? 'error' : 'success'}`}>
+          {status}
+        </div>
+      )}
+
       <div className="card">
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useDefaultBookmarks}
-              onChange={(e) => {
-                setUseDefaultBookmarks(e.target.checked);
-                if (e.target.checked) {
-                  setUseDirectJson(false);
-                }
-              }}
-              style={{ marginRight: '10px', transform: 'scale(1.1)' }}
-            />
-            <span>{t('useDefaultBookmarks')}</span>
-          </label>
-          
-          <label style={{ display: 'flex', alignItems: 'center', marginBottom: '12px', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useDirectJson}
-              onChange={(e) => {
-                setUseDirectJson(e.target.checked);
-                if (e.target.checked) {
-                  setUseDefaultBookmarks(false);
-                }
-              }}
-              style={{ marginRight: '10px', transform: 'scale(1.1)' }}
-            />
-            <span>{t('useDirectJson')}</span>
-          </label>
-          
+        <section className="config-panel">
+          <div className="section-heading">
+            <div>
+              <h2>{uiText.bookmarkSection}</h2>
+              <p>{uiText.bookmarkSectionHint}</p>
+            </div>
+            <span className="section-badge">{bookmarkModeLabel}</span>
+          </div>
+
+          <div className="toggle-grid">
+            <label className={`toggle-card ${useDefaultBookmarks ? 'active' : ''}`}>
+              <input
+                type="checkbox"
+                checked={useDefaultBookmarks}
+                onChange={(e) => {
+                  setUseDefaultBookmarks(e.target.checked);
+                  if (e.target.checked) {
+                    setUseDirectJson(false);
+                  }
+                }}
+              />
+              <div>
+                <strong>{t('useDefaultBookmarks')}</strong>
+                <span>{t('defaultBookmarksDescription')}</span>
+              </div>
+            </label>
+
+            <label className={`toggle-card ${useDirectJson ? 'active' : ''}`}>
+              <input
+                type="checkbox"
+                checked={useDirectJson}
+                onChange={(e) => {
+                  setUseDirectJson(e.target.checked);
+                  if (e.target.checked) {
+                    setUseDefaultBookmarks(false);
+                  }
+                }}
+              />
+              <div>
+                <strong>{t('useDirectJson')}</strong>
+                <span>{t('directJsonDescription')}</span>
+              </div>
+            </label>
+          </div>
+
           {!useDefaultBookmarks && useDirectJson && (
-            <>
-              <div style={{ marginBottom: '8px' }}>
-                <label htmlFor="bookmarksJson" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  {t('bookmarksJson')}
-                </label>
-              </div>
-              <div className="json-editor-container">
-                <AceEditor
-                  mode="json"
-                  theme="monokai"
-                  value={jsonInput}
-                  onChange={(value) => setJsonInput(value)}
-                  placeholder={t('jsonInputPlaceholder')}
-                  name="bookmarksJson"
-                  editorProps={{ $blockScrolling: true }}
-                  setOptions={{
-                    enableBasicAutocompletion: true,
-                    enableLiveAutocompletion: true,
-                    enableSnippets: true,
-                    showLineNumbers: true,
-                    tabSize: 2,
-                    useSoftTabs: true,
-                    wrap: true
-                  }}
-                  style={{
-                    width: '100%',
-                    minHeight: '400px',
-                    fontSize: '13px'
-                  }}
-                />
-              </div>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-                <button 
-                  onClick={handleFormatJson} 
-                  style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
-                  type="button"
-                >
+            <div className="field-stack">
+              <label htmlFor="bookmarksJson" className="field-label">
+                {t('bookmarksJson')}
+              </label>
+              <textarea
+                id="bookmarksJson"
+                value={jsonInput}
+                onChange={(e) => setJsonInput(e.target.value)}
+                placeholder={t('jsonInputPlaceholder')}
+                className="input-field textarea-field json-textarea"
+                rows={14}
+              />
+              <div className="inline-actions">
+                <button onClick={handleFormatJson} className="secondary-button" type="button">
                   {t('format')}
                 </button>
-                <button 
-                  onClick={handleMinifyJson} 
-                  style={{ flex: 1, minWidth: '80px', fontSize: '13px', padding: '8px 12px' }}
-                  type="button"
-                >
+                <button onClick={handleMinifyJson} className="secondary-button" type="button">
                   {t('minify')}
                 </button>
               </div>
-            </>
+            </div>
           )}
-          
+
           {!useDefaultBookmarks && !useDirectJson && (
-            <>
-              <div style={{ marginBottom: '20px' }}>
-                <label htmlFor="bookmarksUrl" style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>
-                  {t('bookmarksUrl')}
-                </label>
-                <input
-                  id="bookmarksUrl"
-                  type="text"
-                  value={inputUrl}
-                  onChange={(e) => setInputUrl(e.target.value)}
-                  placeholder={t('urlInputPlaceholder')}
-                  className="input-field"
-                />
-              </div>
-              <div className="config-info">
-                {t('urlInputTip')}
-              </div>
-            </>
+            <div className="field-stack">
+              <label htmlFor="bookmarksUrl" className="field-label">
+                {t('bookmarksUrl')}
+              </label>
+              <input
+                id="bookmarksUrl"
+                type="text"
+                value={inputUrl}
+                onChange={(e) => setInputUrl(e.target.value)}
+                placeholder={t('urlInputPlaceholder')}
+                className="input-field"
+              />
+              <div className="config-info">{t('urlInputTip')}</div>
+            </div>
           )}
-        </div>
-        {/* Search providers configuration */}
-        <div style={{ marginTop: '12px', marginBottom: '12px' }}>
-          <h3 style={{ marginBottom: '8px' }}>{t('selectSearchProviderLabel')}</h3>
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+        </section>
+
+        <section className="config-panel">
+          <div className="section-heading">
+            <div>
+              <h2>{uiText.searchSection}</h2>
+              <p>{uiText.searchSectionHint}</p>
+            </div>
+          </div>
+
+          <div className="default-provider-row">
             <select
               value={defaultSearchProvider}
               onChange={(e) => setDefaultSearchProvider(e.target.value)}
-              style={{ flex: 1, padding: '6px' }}
+              className="input-field select-field"
             >
               {providers.map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
-            <button onClick={handleSaveProviders} style={{ padding: '6px 10px' }}>{t('save')}</button>
+            <button onClick={handleSaveProviders} className="secondary-button" type="button">
+              {t('save')}
+            </button>
           </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="provider-list">
             {providers.map((p, idx) => (
-              <div key={p.id} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input type="checkbox" checked={p.enabled !== false} onChange={(e) => {
-                  const next = [...providers];
-                  next[idx] = { ...p, enabled: e.target.checked };
-                  setProviders(next);
-                }} />
-                <input style={{ flex: 1, padding: '6px' }} value={p.name} onChange={(e) => {
-                  const next = [...providers]; next[idx] = { ...p, name: e.target.value }; setProviders(next);
-                }} />
-                <input style={{ flex: 2, padding: '6px' }} value={p.urlTemplate || ''} onChange={(e) => {
-                  const next = [...providers]; next[idx] = { ...p, urlTemplate: e.target.value }; setProviders(next);
-                }} />
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }} title="Fetch provider HTML via background proxy">
-                  <input type="checkbox" checked={!!p.useProxy} onChange={(e) => {
-                    const next = [...providers]; next[idx] = { ...p, useProxy: e.target.checked }; setProviders(next);
-                  }} />
-                  <span style={{ fontSize: '12px' }}>Use proxy</span>
+              <div key={p.id} className="provider-card">
+                <div className="provider-card-header">
+                  <label className="provider-toggle">
+                    <input
+                      type="checkbox"
+                      checked={p.enabled !== false}
+                      onChange={(e) => {
+                        const next = [...providers];
+                        next[idx] = { ...p, enabled: e.target.checked };
+                        setProviders(next);
+                      }}
+                    />
+                    <span>{p.enabled !== false ? uiText.enabled : uiText.disabled}</span>
+                  </label>
+                  <button
+                    onClick={() => {
+                      const next = providers.filter((pp) => pp.id !== p.id);
+                      setProviders(next);
+                    }}
+                    className="ghost-button"
+                    type="button"
+                  >
+                    {uiText.removeProvider}
+                  </button>
+                </div>
+                <div className="provider-fields">
+                  <input
+                    className="input-field"
+                    value={p.name}
+                    onChange={(e) => {
+                      const next = [...providers];
+                      next[idx] = { ...p, name: e.target.value };
+                      setProviders(next);
+                    }}
+                    placeholder={uiText.searchProviderName}
+                  />
+                  <input
+                    className="input-field"
+                    value={p.urlTemplate || ''}
+                    onChange={(e) => {
+                      const next = [...providers];
+                      next[idx] = { ...p, urlTemplate: e.target.value };
+                      setProviders(next);
+                    }}
+                    placeholder={uiText.searchProviderUrl}
+                  />
+                </div>
+                <label className="provider-toggle provider-proxy-toggle" title="Fetch provider HTML via background proxy">
+                  <input
+                    type="checkbox"
+                    checked={!!p.useProxy}
+                    onChange={(e) => {
+                      const next = [...providers];
+                      next[idx] = { ...p, useProxy: e.target.checked };
+                      setProviders(next);
+                    }}
+                  />
+                  <span>{uiText.proxyLabel}</span>
                 </label>
-                <button onClick={() => {
-                  const next = providers.filter((pp) => pp.id !== p.id);
-                  setProviders(next);
-                }}>{t('reset')}</button>
               </div>
             ))}
+          </div>
 
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <button onClick={() => {
+          <div className="inline-actions">
+            <button
+              onClick={() => {
                 const id = `custom_${Date.now()}`;
                 const next = [...providers, { id, name: 'Custom', urlTemplate: '', capability: 'experimental' as const, enabled: true }];
                 setProviders(next);
-              }}>{t('format') /* reuse label as 'Add' fallback */}</button>
-              <div className="config-info" style={{ fontSize: '12px' }}>{t('copiedToClipboard')}</div>
+              }}
+              className="secondary-button"
+              type="button"
+            >
+              {uiText.addProvider}
+            </button>
+          </div>
+
+          <div className="config-info subtle-info">
+            <strong>Proxy:</strong> {uiText.proxyNote}
+          </div>
+        </section>
+
+        <section className="config-panel">
+          <div className="section-heading">
+            <div>
+              <h2>{uiText.backgroundSection}</h2>
+              <p>{uiText.backgroundSectionHint}</p>
             </div>
           </div>
-          <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
-            <strong>Proxy 提示：</strong> 如果为某个搜索提供者启用了 "Use proxy"，扩展会通过后台脚本替你抓取该提供者的页面 HTML 再返回到页面（避免客户端跨域或渲染问题）。启用代理会将该次请求的目标 URL 发送到后台并由本机浏览器进程发起请求，可能会触及隐私/法律边界，请谨慎使用。更多信息见 README 的 "Search proxy" 部分。
+
+          <div className="field-stack">
+            <label htmlFor="backgroundMediaUrls" className="field-label">
+              {t('backgroundMediaUrls')}
+            </label>
+            <textarea
+              id="backgroundMediaUrls"
+              value={backgroundMediaUrlsInput}
+              onChange={(e) => setBackgroundMediaUrlsInput(e.target.value)}
+              placeholder={t('backgroundMediaPlaceholder')}
+              className="input-field textarea-field"
+              rows={5}
+            />
+            <div className="config-info">{t('backgroundMediaTip')}</div>
           </div>
-        </div>
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '15px' }}>
-          <button onClick={handleSave} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-            {t('save')}
-          </button>
-          <button onClick={handleReset} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-            {t('reset')}
-          </button>
-          {(!useDefaultBookmarks || useDirectJson) && (
-            <button onClick={handleTest} style={{ flex: 1, minWidth: '80px', padding: '10px' }}>
-              {t('test')}
+        </section>
+
+        <section className="config-panel">
+          <div className="section-heading">
+            <div>
+              <h2>{uiText.actionsSection}</h2>
+              <p>{uiText.actionsSectionHint}</p>
+            </div>
+          </div>
+
+          <div className="action-grid">
+            <button id="saveConfigButton" onClick={handleSave} className="primary-button" type="button">
+              {t('save')}
             </button>
-          )}
-        </div>
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-          <button 
-            onClick={() => {
-              // Send message to background script to refresh bookmarks
-              chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
-              setStatus(t('bookmarksRefreshed'));
-              setTimeout(() => setStatus(''), 3000);
-            }} 
-            style={{ flex: 1, minWidth: '80px', padding: '10px' }}
-          >
-            {t('refreshBookmarks')}
-          </button>
-        </div>
-        {status && (
-          <div className={`status-message ${status.includes('错误') || status.includes('无法') ? 'error' : 'success'}`}>
-            {status}
+            <button onClick={handleReset} className="secondary-button" type="button">
+              {t('reset')}
+            </button>
+            {(!useDefaultBookmarks || useDirectJson) && (
+              <button onClick={handleTest} className="secondary-button" type="button">
+                {t('test')}
+              </button>
+            )}
+            <button
+              onClick={() => {
+                chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
+                setStatus(t('bookmarksRefreshed'));
+                setTimeout(() => setStatus(''), 3000);
+              }}
+              className="ghost-button"
+              type="button"
+            >
+              {t('refreshBookmarks')}
+            </button>
           </div>
-        )}
-        <div className="config-info">
-          <div className="label">{t('currentConfig')}</div>
-          <code>
-            {useDefaultBookmarks ? t('builtInBookmarks') : useDirectJson ? t('directJsonLabel') : t('urlLabel') + bookmarksUrl}
-          </code>
-        </div>
+
+          <div className="config-summary-card">
+            <div className="label">{t('currentConfig')}</div>
+            <code>
+              {useDefaultBookmarks ? t('builtInBookmarks') : useDirectJson ? t('directJsonLabel') : t('urlLabel') + bookmarksUrl}
+            </code>
+          </div>
+        </section>
       </div>
+
       <p className="read-the-docs">
-        {useDefaultBookmarks 
-          ? t('defaultBookmarksDescription') 
-          : useDirectJson 
-            ? t('directJsonDescription') 
+        {useDefaultBookmarks
+          ? t('defaultBookmarksDescription')
+          : useDirectJson
+            ? t('directJsonDescription')
             : t('urlBookmarksDescription')}
       </p>
-    </>
+    </div>
   );
 }
 

@@ -9,6 +9,7 @@ export interface TranslationKeys {
   useDirectJson: string;
   bookmarksJson: string;
   bookmarksUrl: string;
+  backgroundMediaUrls: string;
   
   // Button text
   save: string;
@@ -38,7 +39,9 @@ export interface TranslationKeys {
   // Placeholder text
   urlInputPlaceholder: string;
   jsonInputPlaceholder: string;
+  backgroundMediaPlaceholder: string;
   urlInputTip: string;
+  backgroundMediaTip: string;
   defaultBookmarksDescription: string;
   directJsonDescription: string;
   urlBookmarksDescription: string;
@@ -63,6 +66,7 @@ const translations: Record<Language, TranslationKeys> = {
     useDirectJson: '直接粘贴书签 JSON',
     bookmarksJson: '书签 JSON:',
     bookmarksUrl: '书签 JSON URL:',
+    backgroundMediaUrls: '动图背景 URL（每行一个）:',
     
     // Button text
     save: '保存',
@@ -74,7 +78,7 @@ const translations: Record<Language, TranslationKeys> = {
     
     // Status messages
     saved: '已保存',
-    resetToDefault: '已重置为默认 URL',
+    resetToDefault: '已重置为默认配置',
     urlAccessible: 'URL 可访问',
     urlNotAccessible: 'URL 无法访问',
     jsonValid: 'JSON 格式正确',
@@ -90,7 +94,9 @@ const translations: Record<Language, TranslationKeys> = {
     // Placeholder text
     urlInputPlaceholder: '输入书签 JSON 文件的 URL',
     jsonInputPlaceholder: '粘贴完整的书签 JSON 数据',
+    backgroundMediaPlaceholder: 'https://example.com/live.gif\nhttps://example.com/aerial.mp4',
     urlInputTip: '💡 提示：输入包含书签数据的 JSON 文件 URL，支持跨域访问',
+    backgroundMediaTip: '支持 GIF/APNG/WebP 以及 MP4/WebM/MOV。留空时继续使用每日轮换静态背景，风车按钮会在已配置的背景之间切换。',
     
     // Description info
     defaultBookmarksDescription: '使用精选的开发者书签：ShanSan、VS Code、Telegram、daily.dev、GitHub、Stack Overflow 等',
@@ -118,6 +124,7 @@ const translations: Record<Language, TranslationKeys> = {
     useDirectJson: 'Paste Bookmarks JSON Directly',
     bookmarksJson: 'Bookmarks JSON:',
     bookmarksUrl: 'Bookmarks JSON URL:',
+    backgroundMediaUrls: 'Animated background URLs (one per line):',
     
     // Button text
     save: 'Save',
@@ -129,7 +136,7 @@ const translations: Record<Language, TranslationKeys> = {
     
     // Status messages
     saved: 'Saved',
-    resetToDefault: 'Reset to default URL',
+    resetToDefault: 'Reset to default configuration',
     urlAccessible: 'URL is accessible',
     urlNotAccessible: 'URL is not accessible',
     jsonValid: 'JSON format is valid',
@@ -145,7 +152,9 @@ const translations: Record<Language, TranslationKeys> = {
     // Placeholder text
     urlInputPlaceholder: 'Enter URL of bookmarks JSON file',
     jsonInputPlaceholder: 'Paste complete bookmarks JSON data',
+    backgroundMediaPlaceholder: 'https://example.com/live.gif\nhttps://example.com/aerial.mp4',
     urlInputTip: '💡 Tip: Enter URL of JSON file containing bookmarks data, supports cross-domain access',
+    backgroundMediaTip: 'Supports GIF/APNG/WebP plus MP4/WebM/MOV. Leave empty to keep the daily rotating static background, and the windmill button will cycle through configured media.',
     
     // Description info
     defaultBookmarksDescription: 'Use curated developer bookmarks: ShanSan, VS Code, Telegram, daily.dev, GitHub, Stack Overflow, etc.',

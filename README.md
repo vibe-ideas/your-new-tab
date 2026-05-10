@@ -12,10 +12,16 @@ A customizable browser extension that replaces your new tab page with a beautifu
 - **Instant Search**: Quick Google searches from your new tab
 - **Personalized Shortcuts**: One-click access to your favorite sites
 - **Dynamic Backgrounds**: Daily rotation from Unsplash & Picsum APIs
+- **Animated Backgrounds**: Optional custom GIF/WebP/video URLs, with windmill cycling support
 - **On-Demand Refresh**: Windmill button for instant background changes
 - **Bookmark Management**: Customize via extension popup interface & private first class storage
 - **Adaptive Layout**: Perfectly responsive across all devices
 - **Smart Fallbacks**: Graceful error handling for all components
+
+## User Guide
+
+- 中文版: [docs/user-guide.md](docs/user-guide.md)
+- English: [docs/user-guide.en.md](docs/user-guide.en.md)
 
 ## Changelog
 

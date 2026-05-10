@@ -3,11 +3,22 @@ export default defineBackground(() => {
 
   // Use browser.runtime for Firefox compatibility, fallback to chrome.runtime
   const runtime = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime : chrome.runtime;
+  const tabsAPI = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs : chrome.tabs;
   
   if (!runtime) {
     console.error('Browser runtime API not available');
     return;
   }
+
+  const broadcastToTabs = (action: string) => {
+    tabsAPI.query({}, (tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id) {
+          tabsAPI.sendMessage(tab.id, { action });
+        }
+      });
+    });
+  };
 
   // Listen for messages from popup
   runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -15,27 +26,15 @@ export default defineBackground(() => {
     
     if (message.action === 'refreshBookmarks') {
       console.log('Handling refreshBookmarks action');
-      // Send message to all tabs to refresh bookmarks
-      const tabsAPI = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs : chrome.tabs;
-      tabsAPI.query({}, (tabs) => {
-        tabs.forEach((tab) => {
-          if (tab.id) {
-            tabsAPI.sendMessage(tab.id, { action: 'refreshBookmarks' });
-          }
-        });
-      });
+      broadcastToTabs('refreshBookmarks');
       return false; // Synchronous response
     } else if (message.action === 'refreshSearchConfig') {
       console.log('Handling refreshSearchConfig action');
-      // Send message to all tabs to refresh search config
-      const tabsAPI = (typeof browser !== 'undefined' && browser.tabs) ? browser.tabs : chrome.tabs;
-      tabsAPI.query({}, (tabs) => {
-        tabs.forEach((tab) => {
-          if (tab.id) {
-            tabsAPI.sendMessage(tab.id, { action: 'refreshSearchConfig' });
-          }
-        });
-      });
+      broadcastToTabs('refreshSearchConfig');
+      return false;
+    } else if (message.action === 'refreshBackgroundConfig') {
+      console.log('Handling refreshBackgroundConfig action');
+      broadcastToTabs('refreshBackgroundConfig');
       return false;
     } else if (message.action === 'fetchBackgroundImage') {
       console.log('Handling fetchBackgroundImage action with URL:', message.url);

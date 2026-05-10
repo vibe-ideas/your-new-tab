@@ -17,13 +17,126 @@ interface BackgroundImage {
   timestamp: number;
 }
 
+type BackgroundMediaType = 'image' | 'video';
+
+interface BackgroundMedia {
+  src: string;
+  type: BackgroundMediaType;
+}
+
+const CUSTOM_BACKGROUND_URLS_STORAGE_KEY = 'customBackgroundMediaUrls';
+const CUSTOM_BACKGROUND_INDEX_STORAGE_KEY = 'customBackgroundMediaIndex';
+const VIDEO_BACKGROUND_EXTENSIONS = /\.(mp4|webm|ogg|ogv|mov|m4v)(?:[?#].*)?$/i;
+const BACKGROUND_MEDIA_PRELOAD_TIMEOUT_MS = 15000;
+
+const readCustomBackgroundUrls = (): string[] => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_BACKGROUND_URLS_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    return raw
+      .split('\n')
+      .map((url) => url.trim())
+      .filter(Boolean);
+  } catch (error) {
+    console.warn('Failed to read custom background URLs from localStorage', error);
+    return [];
+  }
+};
+
+const readCustomBackgroundIndex = (): number => {
+  try {
+    const raw = localStorage.getItem(CUSTOM_BACKGROUND_INDEX_STORAGE_KEY);
+    if (!raw) {
+      return 0;
+    }
+
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch (error) {
+    console.warn('Failed to read custom background index from localStorage', error);
+    return 0;
+  }
+};
+
+const detectBackgroundMediaType = (url: string): BackgroundMediaType => (
+  VIDEO_BACKGROUND_EXTENSIONS.test(url) ? 'video' : 'image'
+);
+
+const preloadBackgroundMedia = (url: string, type: BackgroundMediaType): Promise<void> => {
+  if (type === 'video') {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      const timeoutId = window.setTimeout(() => {
+        cleanup();
+        reject(new Error(`Timed out while preloading video background: ${url}`));
+      }, BACKGROUND_MEDIA_PRELOAD_TIMEOUT_MS);
+
+      const cleanup = () => {
+        window.clearTimeout(timeoutId);
+        video.onloadeddata = null;
+        video.onerror = null;
+        video.removeAttribute('src');
+        video.load();
+      };
+
+      video.preload = 'auto';
+      video.muted = true;
+      video.playsInline = true;
+      video.onloadeddata = () => {
+        cleanup();
+        resolve();
+      };
+      video.onerror = () => {
+        cleanup();
+        reject(new Error(`Failed to preload video background: ${url}`));
+      };
+      video.src = url;
+      video.load();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    const timeoutId = window.setTimeout(() => {
+      window.clearTimeout(timeoutId);
+      image.onload = null;
+      image.onerror = null;
+      reject(new Error(`Timed out while preloading image background: ${url}`));
+    }, BACKGROUND_MEDIA_PRELOAD_TIMEOUT_MS);
+
+    image.onload = () => {
+      window.clearTimeout(timeoutId);
+      resolve();
+    };
+    image.onerror = () => {
+      window.clearTimeout(timeoutId);
+      reject(new Error(`Failed to preload image background: ${url}`));
+    };
+    image.src = url;
+  });
+};
+
+const getDynamicBackgroundRequest = () => ({
+  imageUrl: `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`,
+  fallbackUrls: [
+    `https://picsum.photos/2560/1440?random&t=${Date.now()}`,
+    `https://fastly.picsum.photos/id/${Math.floor(Math.random() * 1000)}/2560/1440.jpg`
+  ]
+});
+
 const NewTab: React.FC = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [searchQuery, setSearchQuery] = React.useState('');
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
-  const [backgroundImage, setBackgroundImage] = React.useState<string>('');
+  const [backgroundMedia, setBackgroundMedia] = React.useState<BackgroundMedia | null>(null);
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
-  const [isImageLoading, setIsImageLoading] = React.useState<boolean>(false); // Start with false to show default background initially
+  const [customBackgroundUrls, setCustomBackgroundUrls] = React.useState<string[]>(() => readCustomBackgroundUrls());
+  const [currentCustomBackgroundIndex, setCurrentCustomBackgroundIndex] = React.useState<number>(() => readCustomBackgroundIndex());
+  const backgroundRequestIdRef = React.useRef(0);
+  const backgroundVideoRef = React.useRef<HTMLVideoElement | null>(null);
   // Search providers state
   interface SearchProvider {
     id: string;
@@ -319,6 +432,9 @@ const NewTab: React.FC = () => {
         } catch (e) {
           console.warn('Failed to reload searchProviders from localStorage', e);
         }
+      } else if (message.action === 'refreshBackgroundConfig') {
+        setCustomBackgroundUrls(readCustomBackgroundUrls());
+        setCurrentCustomBackgroundIndex(readCustomBackgroundIndex());
       }
     };
 
@@ -366,91 +482,125 @@ const NewTab: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch daily background image from Unsplash
-  React.useEffect(() => {
-    const fetchBackgroundImage = async () => {
-      try {
-        // Check if we have a cached image
+  const loadDynamicBackground = React.useCallback(async (forceRefresh: boolean) => {
+    const requestId = ++backgroundRequestIdRef.current;
+
+    try {
+      if (forceRefresh) {
+        localStorage.removeItem('backgroundImage');
+      } else {
         const storedBackground = localStorage.getItem('backgroundImage');
         if (storedBackground) {
           const backgroundImageData: BackgroundImage = JSON.parse(storedBackground);
-          // Use base64 data if available, otherwise use URL
-          if (backgroundImageData.base64) {
-            setBackgroundImage(backgroundImageData.base64);
-            return;
-          } else if (backgroundImageData.url) {
-            setBackgroundImage(backgroundImageData.url);
-            return;
+          const cachedSource = backgroundImageData.base64 || backgroundImageData.url;
+
+          if (cachedSource) {
+            setBackgroundMedia({ src: cachedSource, type: 'image' });
+            return true;
           }
         }
-        
-        // If no stored image, set loading state and fetch a new image
-        setIsImageLoading(true);
-        
-        // Use Unsplash to get a random image in 2K resolution
-        // Fallback to Picsum if Unsplash fails
-        const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
-        const fallbackUrls = [
-          `https://picsum.photos/2560/1440?random&t=${Date.now()}`,
-          `https://fastly.picsum.photos/id/${Math.floor(Math.random() * 1000)}/2560/1440.jpg`
-        ];
-        
-        // Fetch image through background script to avoid CORS issues
-        try {
-          // Create a promise that rejects after 10 seconds
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Background script response timeout')), 10000);
-          });
-          
-          // Fetch image through background script
-          console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
-          // Use the browser utility for better compatibility
-          const fetchPromise = sendMessage({ 
-            action: 'fetchBackgroundImage', 
-            url: imageUrl,
-            fallbackUrls: fallbackUrls
-          });
-          console.log('Message sent, waiting for response...');
-          
-          // Race between fetch and timeout
-          const response: any = await Promise.race([fetchPromise, timeoutPromise]);
-          
-          if (response && response.success) {
-            const base64Image = response.data;
-            
-            // Set background image to base64 data
-            setBackgroundImage(base64Image);
-            setIsImageLoading(false); // Set loading to false when image loads successfully
-            
-            // Store in localStorage with today's timestamp and base64 data
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              base64: base64Image,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-          } else {
-            console.error('Failed to fetch background image through background script:', response);
-            // Fallback to default gradient if image fails to load
-            setBackgroundImage('');
-            setIsImageLoading(false);
-          }
-        } catch (error) {
-          console.error('Failed to fetch background image through background script:', error);
-          // Fallback to default gradient if fetch fails
-          setBackgroundImage('');
-          setIsImageLoading(false);
+      }
+
+      const { imageUrl, fallbackUrls } = getDynamicBackgroundRequest();
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Background script response timeout')), 10000);
+      });
+
+      console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
+      const fetchPromise = sendMessage({
+        action: 'fetchBackgroundImage',
+        url: imageUrl,
+        fallbackUrls
+      });
+      const response: any = await Promise.race([fetchPromise, timeoutPromise]);
+
+      if (backgroundRequestIdRef.current !== requestId) {
+        return false;
+      }
+
+      if (response && response.success && response.data) {
+        const base64Image = response.data as string;
+        setBackgroundMedia({ src: base64Image, type: 'image' });
+
+        const imageData: BackgroundImage = {
+          url: imageUrl,
+          base64: base64Image,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('backgroundImage', JSON.stringify(imageData));
+        return true;
+      }
+
+      console.error('Failed to fetch background image through background script:', response);
+    } catch (error) {
+      console.error('Failed to fetch background image:', error);
+    }
+
+    if (backgroundRequestIdRef.current === requestId) {
+      setBackgroundMedia(null);
+    }
+
+    return false;
+  }, []);
+
+  const loadCustomBackground = React.useCallback(async (startIndex: number) => {
+    if (!customBackgroundUrls.length) {
+      return false;
+    }
+
+    const requestId = ++backgroundRequestIdRef.current;
+
+    for (let attempt = 0; attempt < customBackgroundUrls.length; attempt += 1) {
+      const nextIndex = (startIndex + attempt + customBackgroundUrls.length) % customBackgroundUrls.length;
+      const nextUrl = customBackgroundUrls[nextIndex];
+      const nextType = detectBackgroundMediaType(nextUrl);
+
+      try {
+        await preloadBackgroundMedia(nextUrl, nextType);
+
+        if (backgroundRequestIdRef.current !== requestId) {
+          return true;
         }
+
+        setBackgroundMedia({ src: nextUrl, type: nextType });
+        setCurrentCustomBackgroundIndex(nextIndex);
+        localStorage.setItem(CUSTOM_BACKGROUND_INDEX_STORAGE_KEY, String(nextIndex));
+        return true;
       } catch (error) {
-        console.error('Failed to fetch background image:', error);
-        // Fallback to default gradient if fetch fails
-        setBackgroundImage('');
-        setIsImageLoading(false);
+        console.error(`Failed to load custom background media: ${nextUrl}`, error);
+      }
+    }
+
+    if (backgroundRequestIdRef.current === requestId) {
+      setBackgroundMedia(null);
+    }
+
+    return false;
+  }, [customBackgroundUrls]);
+
+  React.useEffect(() => {
+    let isActive = true;
+
+    const initializeBackground = async () => {
+      if (customBackgroundUrls.length > 0) {
+        const loadedCustomBackground = await loadCustomBackground(readCustomBackgroundIndex());
+        if (loadedCustomBackground || !isActive) {
+          return;
+        }
+      }
+
+      if (isActive) {
+        await loadDynamicBackground(false);
       }
     };
 
-    fetchBackgroundImage();
-  }, []);
+    void initializeBackground();
+
+    return () => {
+      isActive = false;
+      backgroundRequestIdRef.current += 1;
+    };
+  }, [customBackgroundUrls, loadCustomBackground, loadDynamicBackground]);
 
     const handleSearch = async () => {
     if (searchQuery.trim()) {
@@ -572,101 +722,98 @@ const NewTab: React.FC = () => {
 
   const bookmarkRows = groupBookmarksIntoRows(bookmarks);
 
-  const containerClass = backgroundImage 
+  const containerClass = backgroundMedia
     ? "newtab-container with-background" 
     : "newtab-container";
 
-  const backgroundStyle = backgroundImage 
-    ? { 
-        backgroundImage: `url(${backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat'
-      }
-    : {};
+  const ensureVideoPlayback = React.useCallback(async () => {
+    const video = backgroundVideoRef.current;
+    if (!video) {
+      return;
+    }
+
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+
+    try {
+      await video.play();
+    } catch (error) {
+      console.warn('Failed to start video background playback', error);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (backgroundMedia?.type !== 'video') {
+      return;
+    }
+
+    void ensureVideoPlayback();
+  }, [backgroundMedia, ensureVideoPlayback]);
+
+  const handleBackgroundMediaError = React.useCallback(() => {
+    void loadDynamicBackground(false);
+  }, [loadDynamicBackground]);
 
   const switchImage = () => {
     // Set loading state
     setIsSwitchingImage(true);
-    
-    // Clear the current cached image to force fetching a new one
-    localStorage.removeItem('backgroundImage');
-    
-    // Fetch a new image
-    const fetchNewImage = async () => {
+
+    const switchBackground = async () => {
       try {
-        // Use Unsplash to get a random image in 2K resolution
-        // Fallback to Picsum if Unsplash fails
-        const imageUrl = `https://source.unsplash.com/2560x1440/?nature,landscape&t=${Date.now()}`;
-        const fallbackUrls = [
-          `https://picsum.photos/2560/1440?random&t=${Date.now()}`,
-          `https://fastly.picsum.photos/id/${Math.floor(Math.random() * 1000)}/2560/1440.jpg`
-        ];
-        
-        // Fetch image through background script to avoid CORS issues
-        try {
-          // Create a promise that rejects after 10 seconds
-          const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Background script response timeout')), 10000);
-          });
-          
-          // Fetch image through background script
-          console.log('Sending fetchBackgroundImage message to background script with URL:', imageUrl);
-          // Use the browser utility for better compatibility
-          const fetchPromise = sendMessage({ 
-            action: 'fetchBackgroundImage', 
-            url: imageUrl,
-            fallbackUrls: fallbackUrls
-          });
-          console.log('Message sent, waiting for response...');
-          
-          // Race between fetch and timeout
-          const response: any = await Promise.race([fetchPromise, timeoutPromise]);
-          
-          if (response && response.success) {
-            const base64Image = response.data;
-            
-            // Set background image to base64 data (switch happens here after preload)
-            setBackgroundImage(base64Image);
-            
-            // Store in localStorage with current timestamp and base64 data
-            const imageData: BackgroundImage = {
-              url: imageUrl,
-              base64: base64Image,
-              timestamp: Date.now()
-            };
-            localStorage.setItem('backgroundImage', JSON.stringify(imageData));
-            
-            // Reset loading state
-            setIsSwitchingImage(false);
-          } else {
-            console.error('Failed to fetch background image through background script:', response);
-            // Fallback to default gradient if image fails to load
-            setBackgroundImage('');
-            // Reset loading state
-            setIsSwitchingImage(false);
+        if (customBackgroundUrls.length > 0) {
+          const loadedCustomBackground = await loadCustomBackground(currentCustomBackgroundIndex + 1);
+          if (!loadedCustomBackground) {
+            await loadDynamicBackground(true);
           }
-        } catch (error) {
-          console.error('Failed to fetch background image through background script:', error);
-          // Fallback to default gradient if fetch fails
-          setBackgroundImage('');
-          // Reset loading state
-          setIsSwitchingImage(false);
+        } else {
+          await loadDynamicBackground(true);
         }
       } catch (error) {
-        console.error('Failed to fetch background image:', error);
-        // Fallback to default gradient if fetch fails
-        setBackgroundImage('');
-        // Reset loading state
+        console.error('Failed to switch background media:', error);
+      } finally {
         setIsSwitchingImage(false);
       }
     };
 
-    fetchNewImage();
+    void switchBackground();
   };
 
   return (
-    <div className={containerClass} style={backgroundStyle}>
+    <div className={containerClass}>
+      {backgroundMedia && (
+        <>
+          <div className="background-media-layer" aria-hidden="true">
+            {backgroundMedia.type === 'video' ? (
+              <video
+                key={backgroundMedia.src}
+                ref={backgroundVideoRef}
+                className="background-media"
+                src={backgroundMedia.src}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="auto"
+                onCanPlay={() => {
+                  void ensureVideoPlayback();
+                }}
+                onError={handleBackgroundMediaError}
+              />
+            ) : (
+              <img
+                key={backgroundMedia.src}
+                className="background-media"
+                src={backgroundMedia.src}
+                alt=""
+                draggable={false}
+                onError={handleBackgroundMediaError}
+              />
+            )}
+          </div>
+          <div className="background-overlay" aria-hidden="true" />
+        </>
+      )}
       <div className="time-display">
         <div className="time">{formatTime(currentTime)}</div>
         <div className="date">{formatDate(currentTime)}</div>
