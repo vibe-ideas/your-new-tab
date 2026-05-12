@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.3.1 - 2026-05-12
+
+### Changed
+
+- Improved the new tab search provider switcher with clearer active-provider feedback
+- Restored Google AI as the default built-in search provider name and behavior
+
+### Fixed
+
+- Repaired legacy search provider configs that could get stuck with only one provider visible
+- Preserved built-in provider metadata such as icons across popup edits and new tab rendering
+- Added end-to-end regression coverage for default-provider sync, provider switching, and legacy config repair
+
 ## 0.2.0 - 2025-09-20
 
 ### Added

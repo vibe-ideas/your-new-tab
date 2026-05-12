@@ -1,5 +1,11 @@
 import { useState, useEffect } from 'react';
 import { i18n, t } from '@/utils/i18n';
+import {
+  DEFAULT_SEARCH_PROVIDER_ID,
+  isBuiltInSearchProvider,
+  repairSearchProviderConfig,
+  type SearchProvider,
+} from '@/utils/searchProviders';
 import './App.css';
 
 // 默认内置书签数据 - 来自 example-bookmarks-with-icons.json
@@ -51,35 +57,34 @@ function App() {
   const [backgroundMediaUrlsInput, setBackgroundMediaUrlsInput] = useState('');
   const [status, setStatus] = useState('');
   const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
-  // Search providers config
-  type SearchProvider = {
-    id: string;
-    name: string;
-    urlTemplate?: string;
-    capability?: 'stable'|'experimental'|'manual';
-    enabled?: boolean;
-    useProxy?: boolean;
+  const readStoredSearchProviderConfig = () => {
+    try {
+      const rawProviders = localStorage.getItem('searchProviders');
+      return repairSearchProviderConfig({
+        providers: rawProviders ? JSON.parse(rawProviders) as SearchProvider[] : undefined,
+        defaultProviderId: localStorage.getItem('defaultSearchProvider'),
+        lastProviderId: localStorage.getItem('lastSearchProvider'),
+      });
+    } catch (error) {
+      console.warn('Failed to read search provider config from localStorage', error);
+      return repairSearchProviderConfig({});
+    }
+  };
+
+  const persistSearchProviderConfig = (config: ReturnType<typeof readStoredSearchProviderConfig>) => {
+    localStorage.setItem('searchProviders', JSON.stringify(config.providers));
+    localStorage.setItem('defaultSearchProvider', config.defaultProviderId);
+    localStorage.setItem('lastSearchProvider', config.lastProviderId);
   };
 
   const [providers, setProviders] = useState<SearchProvider[]>(() => {
-    try {
-      const raw = localStorage.getItem('searchProviders');
-      if (raw) return JSON.parse(raw) as SearchProvider[];
-    } catch (e) {
-      console.warn('Failed to parse searchProviders from localStorage', e);
-    }
-    return [
-      { id: 'google', name: 'Google', urlTemplate: 'https://www.google.com/search?q={query}&udm=50', capability: 'stable' as const, enabled: true, useProxy: false },
-      { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false }
-    ];
+    const config = readStoredSearchProviderConfig();
+    return config.providers;
   });
 
   const [defaultSearchProvider, setDefaultSearchProvider] = useState<string>(() => {
-    try {
-      return localStorage.getItem('defaultSearchProvider') || (providers[0] && providers[0].id) || 'google';
-    } catch (e) {
-      return 'google';
-    }
+    const config = readStoredSearchProviderConfig();
+    return config.defaultProviderId;
   });
 
   // Load bookmarks URL from localStorage on component mount
@@ -116,6 +121,13 @@ function App() {
 
     if (storedBackgroundMediaUrls) {
       setBackgroundMediaUrlsInput(storedBackgroundMediaUrls);
+    }
+
+    const config = readStoredSearchProviderConfig();
+    setProviders(config.providers);
+    setDefaultSearchProvider(config.defaultProviderId);
+    if (config.repaired) {
+      persistSearchProviderConfig(config);
     }
   }, []);
 
@@ -170,14 +182,10 @@ function App() {
 
     setTimeout(() => setStatus(''), 3000);
     try {
-      // Also save default search provider if not present
-      const rawProviders = localStorage.getItem('searchProviders');
-      if (!rawProviders) {
-        const defaultProviders = [
-          { id: 'metaso', name: 'Metaso', urlTemplate: 'https://metaso.cn/?q={query}', capability: 'stable' as const, enabled: true, useProxy: false }
-        ];
-        localStorage.setItem('searchProviders', JSON.stringify(defaultProviders));
-      }
+      const config = readStoredSearchProviderConfig();
+      persistSearchProviderConfig(config);
+      setProviders(config.providers);
+      setDefaultSearchProvider(config.defaultProviderId);
 
       // Notify background to refresh search config
       try {
@@ -220,8 +228,24 @@ function App() {
 
   const handleSaveProviders = () => {
     try {
-      localStorage.setItem('searchProviders', JSON.stringify(providers));
-      localStorage.setItem('defaultSearchProvider', defaultSearchProvider);
+      const nextProviders = providers.length > 0
+        ? providers.map((provider, index) => (
+            providers.some((candidate) => candidate.enabled !== false)
+              ? provider
+              : index === 0
+                ? { ...provider, enabled: true }
+                : provider
+          ))
+        : undefined;
+      const config = repairSearchProviderConfig({
+        providers: nextProviders,
+        defaultProviderId: defaultSearchProvider,
+        lastProviderId: defaultSearchProvider,
+      });
+
+      setProviders(config.providers);
+      setDefaultSearchProvider(config.defaultProviderId);
+      persistSearchProviderConfig(config);
       // Notify background to refresh search config
       try { chrome.runtime.sendMessage({ action: 'refreshSearchConfig' }); } catch (e) {}
       setStatus(t('saved'));
@@ -474,6 +498,7 @@ function App() {
 
           <div className="default-provider-row">
             <select
+              id="defaultSearchProvider"
               value={defaultSearchProvider}
               onChange={(e) => setDefaultSearchProvider(e.target.value)}
               className="input-field select-field"
@@ -489,12 +514,13 @@ function App() {
 
           <div className="provider-list">
             {providers.map((p, idx) => (
-              <div key={p.id} className="provider-card">
+              <div key={p.id} className="provider-card" data-provider-id={p.id}>
                 <div className="provider-card-header">
                   <label className="provider-toggle">
                     <input
                       type="checkbox"
                       checked={p.enabled !== false}
+                      disabled={isBuiltInSearchProvider(p.id)}
                       onChange={(e) => {
                         const next = [...providers];
                         next[idx] = { ...p, enabled: e.target.checked };
@@ -503,16 +529,18 @@ function App() {
                     />
                     <span>{p.enabled !== false ? uiText.enabled : uiText.disabled}</span>
                   </label>
-                  <button
-                    onClick={() => {
-                      const next = providers.filter((pp) => pp.id !== p.id);
-                      setProviders(next);
-                    }}
-                    className="ghost-button"
-                    type="button"
-                  >
-                    {uiText.removeProvider}
-                  </button>
+                  {!isBuiltInSearchProvider(p.id) && (
+                    <button
+                      onClick={() => {
+                        const next = providers.filter((pp) => pp.id !== p.id);
+                        setProviders(next);
+                      }}
+                      className="ghost-button"
+                      type="button"
+                    >
+                      {uiText.removeProvider}
+                    </button>
+                  )}
                 </div>
                 <div className="provider-fields">
                   <input
@@ -558,6 +586,7 @@ function App() {
                 const id = `custom_${Date.now()}`;
                 const next = [...providers, { id, name: 'Custom', urlTemplate: '', capability: 'experimental' as const, enabled: true }];
                 setProviders(next);
+                setDefaultSearchProvider((currentProviderId) => currentProviderId || DEFAULT_SEARCH_PROVIDER_ID);
               }}
               className="secondary-button"
               type="button"

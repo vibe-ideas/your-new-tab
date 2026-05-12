@@ -2,6 +2,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
 import { getRuntime, sendMessage } from '../../utils/browser';
+import {
+  DEFAULT_SEARCH_PROVIDER_ID,
+  getSearchProviderFallbackLabel,
+  repairSearchProviderConfig,
+  resolveSearchProviderId,
+  type SearchProvider,
+} from '../../utils/searchProviders';
 
 interface Bookmark {
   id: string;
@@ -137,63 +144,78 @@ const NewTab: React.FC = () => {
   const [currentCustomBackgroundIndex, setCurrentCustomBackgroundIndex] = React.useState<number>(() => readCustomBackgroundIndex());
   const backgroundRequestIdRef = React.useRef(0);
   const backgroundVideoRef = React.useRef<HTMLVideoElement | null>(null);
-  // Search providers state
-  interface SearchProvider {
-    id: string;
-    name: string;
-    urlTemplate?: string; // e.g. 'https://metaso.cn/?q={query}'
-    baseUrl?: string; // legacy support
-    capability?: 'stable' | 'experimental' | 'manual';
-    enabled?: boolean;
-    autoSubmit?: boolean;
-    useProxy?: boolean;
-    iconSvg?: string;
-  }
-
-  const defaultProviders: SearchProvider[] = [
-    {
-      id: 'google',
-      name: 'Google',
-      urlTemplate: 'https://www.google.com/search?q={query}&udm=50',
-      capability: 'stable',
-      enabled: true,
-      autoSubmit: true,
-      useProxy: false
-      , iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0%" x2="100%"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#34A853"/><stop offset="75%" stop-color="#FBBC05"/><stop offset="100%" stop-color="#EA4335"/></linearGradient></defs><circle cx="24" cy="24" r="22" fill="url(#g1)"/><text x="24" y="30" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">G</text></svg>`
-    },
-    {
-      id: 'metaso',
-      name: 'Metaso',
-      urlTemplate: 'https://metaso.cn/?q={query}',
-      capability: 'stable',
-      enabled: true,
-      autoSubmit: true,
-      useProxy: false
-      , iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#6f42c1"/><text x="24" y="31" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">M</text></svg>`
+  const readStoredSearchProviderConfig = () => {
+    try {
+      const rawProviders = localStorage.getItem('searchProviders');
+      return repairSearchProviderConfig({
+        providers: rawProviders ? JSON.parse(rawProviders) as SearchProvider[] : undefined,
+        defaultProviderId: localStorage.getItem('defaultSearchProvider'),
+        lastProviderId: localStorage.getItem('lastSearchProvider'),
+      });
+    } catch (error) {
+      console.warn('Failed to read search provider config from localStorage', error);
+      return repairSearchProviderConfig({});
     }
-  ];
+  };
+
+  const persistSearchProviderConfig = (config: ReturnType<typeof readStoredSearchProviderConfig>) => {
+    try {
+      localStorage.setItem('searchProviders', JSON.stringify(config.providers));
+      localStorage.setItem('defaultSearchProvider', config.defaultProviderId);
+      localStorage.setItem('lastSearchProvider', config.lastProviderId);
+    } catch (error) {
+      console.warn('Failed to persist search provider config to localStorage', error);
+    }
+  };
+
+  const getSelectableProviders = (searchProviders: SearchProvider[]) => {
+    const enabledProviders = searchProviders.filter((provider) => provider.enabled !== false);
+
+    if (enabledProviders.length > 0) {
+      return enabledProviders;
+    }
+
+    if (searchProviders.length > 0) {
+      return searchProviders;
+    }
+
+    return readStoredSearchProviderConfig().providers;
+  };
 
   const [providers, setProviders] = React.useState<SearchProvider[]>(() => {
-    try {
-      const raw = localStorage.getItem('searchProviders');
-      if (raw) return JSON.parse(raw) as SearchProvider[];
-    } catch (e) {
-      console.warn('Failed to parse searchProviders from localStorage', e);
-    }
-    return defaultProviders;
+    const config = readStoredSearchProviderConfig();
+    return config.providers;
   });
 
   const [selectedProviderId, setSelectedProviderId] = React.useState<string>(() => {
-    try {
-      return localStorage.getItem('lastSearchProvider') || localStorage.getItem('defaultSearchProvider') || 'google';
-    } catch (e) {
-      return 'google';
-    }
+    const config = readStoredSearchProviderConfig();
+    return resolveSearchProviderId(config.providers, [
+      config.lastProviderId,
+      config.defaultProviderId,
+      DEFAULT_SEARCH_PROVIDER_ID,
+    ]);
   });
 
   const [showProviderMenu, setShowProviderMenu] = React.useState<boolean>(false);
-  const providerIconRef = React.useRef<HTMLDivElement>(null);
+  const providerIconRef = React.useRef<HTMLButtonElement>(null);
   const popoverRef = React.useRef<HTMLDivElement>(null);
+  const selectableProviders = getSelectableProviders(providers);
+  const activeProviderId = resolveSearchProviderId(selectableProviders, [selectedProviderId]);
+  const activeProvider = selectableProviders.find((provider) => provider.id === activeProviderId) || selectableProviders[0];
+
+  React.useEffect(() => {
+    const config = readStoredSearchProviderConfig();
+    setProviders(config.providers);
+    setSelectedProviderId(resolveSearchProviderId(config.providers, [
+      config.lastProviderId,
+      config.defaultProviderId,
+      DEFAULT_SEARCH_PROVIDER_ID,
+    ]));
+
+    if (config.repaired) {
+      persistSearchProviderConfig(config);
+    }
+  }, []);
 
   // Close provider menu when clicking outside
   React.useEffect(() => {
@@ -420,17 +442,21 @@ const NewTab: React.FC = () => {
       if (message.action === 'refreshBookmarks') {
         refreshBookmarks();
       } else if (message.action === 'refreshSearchConfig') {
-        // Reload providers from localStorage
         try {
-          const raw = localStorage.getItem('searchProviders');
-          if (raw) {
-            const parsed = JSON.parse(raw) as SearchProvider[];
-            setProviders(parsed);
+          const config = readStoredSearchProviderConfig();
+          setProviders(config.providers);
+          setSelectedProviderId((currentProviderId) => resolveSearchProviderId(config.providers, [
+            config.lastProviderId,
+            config.defaultProviderId,
+            currentProviderId,
+            DEFAULT_SEARCH_PROVIDER_ID,
+          ]));
+
+          if (config.repaired) {
+            persistSearchProviderConfig(config);
           }
-          const last = localStorage.getItem('lastSearchProvider');
-          if (last) setSelectedProviderId(last);
-        } catch (e) {
-          console.warn('Failed to reload searchProviders from localStorage', e);
+        } catch (error) {
+          console.warn('Failed to reload searchProviders from localStorage', error);
         }
       } else if (message.action === 'refreshBackgroundConfig') {
         setCustomBackgroundUrls(readCustomBackgroundUrls());
@@ -602,14 +628,19 @@ const NewTab: React.FC = () => {
     };
   }, [customBackgroundUrls, loadCustomBackground, loadDynamicBackground]);
 
-    const handleSearch = async () => {
+  const handleSearch = async () => {
     if (searchQuery.trim()) {
-      const provider = providers.find(p => p.id === selectedProviderId) || providers[0];
-    const buildSearchUrl = (p: any, q: string) => {
-      const query = encodeURIComponent(q.trim());
-      if (p.urlTemplate) {
-        return p.urlTemplate.replace('{query}', query);
+      const provider = activeProvider;
+
+      if (!provider) {
+        return;
       }
+
+      const buildSearchUrl = (p: any, q: string) => {
+        const query = encodeURIComponent(q.trim());
+        if (p.urlTemplate) {
+          return p.urlTemplate.replace('{query}', query);
+        }
       if (p.baseUrl) {
         return `${p.baseUrl}?q=${query}`;
       }
@@ -821,14 +852,15 @@ const NewTab: React.FC = () => {
       
       <div className="search-container">
         <div className="search-box">
-          <div
+          <button
+            type="button"
             ref={providerIconRef}
             className="search-provider-icon"
+            data-provider-id={activeProviderId}
             role="button"
             aria-haspopup="listbox"
             aria-expanded={showProviderMenu}
-            aria-label="切换搜索提供商"
-            tabIndex={0}
+            aria-label={`切换搜索提供商，当前为 ${activeProvider?.name || '搜索'}`}
             onClick={() => setShowProviderMenu(prev => !prev)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
@@ -837,39 +869,30 @@ const NewTab: React.FC = () => {
               }
             }}
           >
-            {(() => {
-              const p = providers.find(x => x.id === selectedProviderId) || providers[0];
-              if (p && p.iconSvg) return <span dangerouslySetInnerHTML={{ __html: p.iconSvg }} />;
-              return <div className="google-logo">G</div>;
-            })()}
-          </div>
-          <select
-            className="search-provider-select"
-            value={selectedProviderId}
-            onChange={(e) => {
-              const v = e.target.value;
-              setSelectedProviderId(v);
-              try { localStorage.setItem('lastSearchProvider', v); } catch (err) {}
-            }}
-            aria-hidden="true"
-            tabIndex={-1}
-            style={{ position: 'absolute', opacity: 0, pointerEvents: 'none', width: 1, height: 1 }}
-          >
-            {providers.filter(p => p.enabled !== false).map((p) => (
-              <option key={p.id} value={p.id}>{p.name}</option>
-            ))}
-          </select>
+            <span className="search-provider-trigger-icon" aria-hidden="true">
+              {activeProvider?.iconSvg
+                ? <span dangerouslySetInnerHTML={{ __html: activeProvider.iconSvg }} />
+                : <span className="search-provider-fallback">{getSearchProviderFallbackLabel(activeProvider)}</span>}
+            </span>
+            <span className="search-provider-name">{activeProvider?.name || 'Search'}</span>
+            <span className="search-provider-chevron" aria-hidden="true">▾</span>
+          </button>
           {showProviderMenu && (
             <div ref={popoverRef} className="provider-popover" role="listbox">
-              {providers.filter(p => p.enabled !== false).map((p) => (
+              {selectableProviders.map((p) => (
                 <div
                   key={p.id}
-                  className={`provider-popover-item${p.id === selectedProviderId ? ' active' : ''}`}
+                  data-provider-id={p.id}
+                  className={`provider-popover-item${p.id === activeProviderId ? ' active' : ''}`}
                   role="option"
-                  aria-selected={p.id === selectedProviderId}
+                  aria-selected={p.id === activeProviderId}
                   onClick={() => handleProviderSelect(p.id)}
                 >
-                  {p.iconSvg && <span className="provider-option-icon" dangerouslySetInnerHTML={{ __html: p.iconSvg }} />}
+                  <span className="provider-option-icon" aria-hidden="true">
+                    {p.iconSvg
+                      ? <span dangerouslySetInnerHTML={{ __html: p.iconSvg }} />
+                      : <span className="search-provider-fallback">{getSearchProviderFallbackLabel(p)}</span>}
+                  </span>
                   <span className="provider-option-name">{p.name}</span>
                 </div>
               ))}
