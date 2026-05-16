@@ -186,7 +186,7 @@ test('repairs legacy metaso-only search config in popup and new tab', async () =
       lastProviderId: localStorage.getItem('lastSearchProvider'),
     }));
     expect(repairedPopupConfig).toEqual({
-      providers: ['google', 'metaso'],
+      providers: ['google', 'metaso', 'x', 'grok'],
       defaultProviderId: 'google',
       lastProviderId: 'google',
     });
@@ -195,9 +195,11 @@ test('repairs legacy metaso-only search config in popup and new tab', async () =
     await expect(newTabPage.locator('.search-provider-icon')).toHaveAttribute('data-provider-id', 'google');
     await expect(newTabPage.locator('.search-provider-name')).toHaveText('Google AI');
     await newTabPage.locator('.search-provider-icon').click();
-    await expect(newTabPage.locator('.provider-popover-item')).toHaveCount(2);
+    await expect(newTabPage.locator('.provider-popover-item')).toHaveCount(4);
     await expect(newTabPage.locator('.provider-popover-item').nth(0)).toContainText('Google AI');
     await expect(newTabPage.locator('.provider-popover-item').nth(1)).toContainText('Metaso');
+    await expect(newTabPage.locator('.provider-popover-item').nth(2)).toContainText('X');
+    await expect(newTabPage.locator('.provider-popover-item').nth(3)).toContainText('Grok');
   } finally {
     await extension.cleanup();
   }
