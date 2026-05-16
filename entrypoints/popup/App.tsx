@@ -332,6 +332,7 @@ function App() {
         removeProvider: '删除',
         enabled: '已启用',
         disabled: '已停用',
+        requiresLogin: '需要登录',
         proxyLabel: '使用代理',
         proxyNote: '如果启用代理，扩展会通过后台脚本抓取搜索页 HTML，适合处理跨域或前端渲染较重的网站；启用前请确认目标站点允许这种访问方式。',
         backgroundSection: '动态背景',
@@ -354,6 +355,7 @@ function App() {
         removeProvider: 'Remove',
         enabled: 'Enabled',
         disabled: 'Disabled',
+        requiresLogin: 'Requires login',
         proxyLabel: 'Use proxy',
         proxyNote: 'When proxy is enabled, the extension fetches provider HTML through the background script. This can help with cross-origin or heavily client-rendered search pages, but should only be used when the target site allows it.',
         backgroundSection: 'Animated backgrounds',
@@ -529,6 +531,11 @@ function App() {
                     />
                     <span>{p.enabled !== false ? uiText.enabled : uiText.disabled}</span>
                   </label>
+                  {p.requiresLogin && (
+                    <span className="provider-login-badge" title={uiText.requiresLogin}>
+                      🔐 {uiText.requiresLogin}
+                    </span>
+                  )}
                   {!isBuiltInSearchProvider(p.id) && (
                     <button
                       onClick={() => {
