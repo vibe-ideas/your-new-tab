@@ -48,7 +48,9 @@ The new tab search box remembers your recent queries so you can recall them with
 - Up to **20 entries** are kept; newest queries are inserted at the top and the oldest entry is dropped when the cap is exceeded.
 - History is persisted in `localStorage` under the `searchHistory` key on this machine only; clearing site data wipes it.
 
-![Search history E2E screenshot](./screenshots/search-history-e2e.png)
+![Search history animated demo](./search-history-demo.gif)
+
+> The clip first walks the full history with ArrowUp, then clears the input, types `apple`, and shows ArrowUp cycling only through entries that start with `apple`. Generated via `pnpm run demo:search-history` (Playwright frame capture + ImageMagick).
 
 ## Animated background E2E screenshot
 

@@ -13,7 +13,8 @@
     "zip:firefox": "wxt zip -b firefox --mv3",
     "compile": "wxt prepare && tsc --noEmit",
     "test:e2e": "playwright test -c playwright.config.mjs",
-    "check": "pnpm run compile && pnpm run build && pnpm run test:e2e"
+    "check": "pnpm run compile && pnpm run build && pnpm run test:e2e",
+    "demo:search-history": "node e2e/search-history-demo.mjs"
   },
   "keywords": [
     "browser-extension",

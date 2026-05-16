@@ -48,7 +48,9 @@
 - 历史最多保留 **20 条**，新的搜索会被插入到最前面，超出后自动丢弃最旧的记录。
 - 历史保存在 `localStorage` 的 `searchHistory` 键下，仅本机可见；清除浏览器站点数据即可清空。
 
-![搜索历史 E2E 截图](./screenshots/search-history-e2e.png)
+![搜索历史动图演示](./search-history-demo.gif)
+
+> 演示流程：先连按 ArrowUp 浏览全量历史，再清空输入并键入 `apple`，按 ArrowUp 仅在以 apple 开头的历史中切换。本动图由 `pnpm run demo:search-history` 生成（基于 Playwright 截帧 + ImageMagick 合成）。
 
 ## 动图背景 E2E 测试截图
 

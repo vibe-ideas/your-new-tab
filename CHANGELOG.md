@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Search history with arrow-key navigation in the new tab search box (stores up to 20 recent queries; ArrowUp/ArrowDown cycles through history with prefix-match filtering)
 - E2E regression coverage for search history recording, prefix-match navigation, and the 20-entry cap
+- Animated GIF demo for search history; reproduced via `pnpm run demo:search-history` (Playwright + ImageMagick)
 
 ### Changed
 
