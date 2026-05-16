@@ -313,6 +313,21 @@ body {
   align-self: flex-start;
 }
 
+.provider-login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #4a3820;
+  background: #2a1f10;
+  color: #e0a050;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .primary-button,
 .secondary-button,
 .ghost-button {
