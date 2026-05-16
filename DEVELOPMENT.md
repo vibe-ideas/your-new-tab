@@ -125,3 +125,9 @@ npm run compile
    - Base64 encoding for better performance and reliability
    - localStorage caching with timestamp validation
    - Manual switching via windmill button
+
+3. **Search History**:
+   - Recent queries persisted in `localStorage` under the `searchHistory` key (capped at 20 entries)
+   - Helpers live in `utils/searchHistory.ts` (`getSearchHistory`, `addSearchHistory`, `filterHistoryByPrefix`)
+   - The new tab input handles `ArrowUp`/`ArrowDown` to cycle through history with prefix-match filtering
+   - The input is cleared on submit so the next ArrowUp surfaces the most recent entry

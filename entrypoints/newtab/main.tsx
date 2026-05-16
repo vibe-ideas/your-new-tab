@@ -9,6 +9,11 @@ import {
   resolveSearchProviderId,
   type SearchProvider,
 } from '../../utils/searchProviders';
+import {
+  addSearchHistory,
+  filterHistoryByPrefix,
+  getSearchHistory,
+} from '../../utils/searchHistory';
 
 interface Bookmark {
   id: string;
@@ -137,6 +142,9 @@ const getDynamicBackgroundRequest = () => ({
 const NewTab: React.FC = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchHistory, setSearchHistory] = React.useState<string[]>(() => getSearchHistory());
+  const historyIndexRef = React.useRef<number>(-1);
+  const savedInputRef = React.useRef<string>('');
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
   const [backgroundMedia, setBackgroundMedia] = React.useState<BackgroundMedia | null>(null);
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
@@ -628,6 +636,14 @@ const NewTab: React.FC = () => {
     };
   }, [customBackgroundUrls, loadCustomBackground, loadDynamicBackground]);
 
+  const recordSearchHistory = (query: string) => {
+    addSearchHistory(query);
+    setSearchHistory(getSearchHistory());
+    historyIndexRef.current = -1;
+    savedInputRef.current = '';
+    setSearchQuery('');
+  };
+
   const handleSearch = async () => {
     if (searchQuery.trim()) {
       const provider = activeProvider;
@@ -635,6 +651,8 @@ const NewTab: React.FC = () => {
       if (!provider) {
         return;
       }
+
+      recordSearchHistory(searchQuery);
 
       const buildSearchUrl = (p: any, q: string) => {
         const query = encodeURIComponent(q.trim());
@@ -707,14 +725,62 @@ const NewTab: React.FC = () => {
     }
   };
 
+  const navigateHistory = (direction: 1 | -1) => {
+    if (historyIndexRef.current === -1) {
+      savedInputRef.current = searchQuery;
+    }
+
+    const candidates = filterHistoryByPrefix(searchHistory, savedInputRef.current);
+    if (candidates.length === 0) {
+      return;
+    }
+
+    const nextIndex = historyIndexRef.current + direction;
+
+    if (nextIndex < -1) {
+      return;
+    }
+
+    if (nextIndex >= candidates.length) {
+      historyIndexRef.current = candidates.length - 1;
+      setSearchQuery(candidates[candidates.length - 1]);
+      return;
+    }
+
+    historyIndexRef.current = nextIndex;
+    if (nextIndex === -1) {
+      setSearchQuery(savedInputRef.current);
+    } else {
+      setSearchQuery(candidates[nextIndex]);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (e.key === 'Enter') {
       handleSearch();
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateHistory(1);
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateHistory(-1);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    historyIndexRef.current = -1;
+    savedInputRef.current = '';
   };
 
   const handleBookmarkClick = (url: string) => {

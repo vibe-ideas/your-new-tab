@@ -37,7 +37,20 @@ Once configured, the new tab page displays your media URLs as full-screen backgr
 - The extension remembers the current position locally.
 - Clear the field and save, or click **Reset** in the popup, to return to the default static background rotation.
 
-## E2E test screenshot
+## Search history
+
+The new tab search box remembers your recent queries so you can recall them with arrow keys.
+
+- Pressing **Enter** to run a search records the query into the local history.
+- With the search box focused, press **ArrowUp** to walk back through history; keep pressing to reach older entries.
+- Press **ArrowDown** to walk forward; reaching the bottom restores whatever you had typed before pressing arrow keys.
+- Type part of a query first, then press arrow keys to navigate only the entries that **start with your current input** (case-insensitive prefix match).
+- Up to **20 entries** are kept; newest queries are inserted at the top and the oldest entry is dropped when the cap is exceeded.
+- History is persisted in `localStorage` under the `searchHistory` key on this machine only; clearing site data wipes it.
+
+![Search history E2E screenshot](./screenshots/search-history-e2e.png)
+
+## Animated background E2E screenshot
 
 The screenshot below comes from a **real extension environment** Playwright CLI E2E flow: the built extension is loaded, animated backgrounds are configured through the popup, the new tab is opened, and the test verifies that MP4 playback starts after switching.
 

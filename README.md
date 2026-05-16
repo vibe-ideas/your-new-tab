@@ -10,6 +10,7 @@ A customizable browser extension that replaces your new tab page with a beautifu
 
 - **Live Clock & Date**: Real-time display with elegant typography
 - **Instant Search**: Quick Google searches from your new tab
+- **Search History**: ArrowUp/ArrowDown cycles through your recent queries (with prefix-match filtering)
 - **Personalized Shortcuts**: One-click access to your favorite sites
 - **Dynamic Backgrounds**: Daily rotation from Unsplash & Picsum APIs
 - **Animated Backgrounds**: Optional custom GIF/WebP/video URLs, with windmill cycling support
