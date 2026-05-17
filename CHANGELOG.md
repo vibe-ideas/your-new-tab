@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.4.1 - 2026-05-17
+
+### Fixed
+
+- Shortened the manifest `description` so the Chrome Web Store accepts the package (previous 167-character string exceeded Chrome's 132-character limit)
+
 ## 0.4.0 - 2026-05-17
 
 ### Added
