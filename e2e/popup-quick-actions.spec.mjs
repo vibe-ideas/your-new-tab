@@ -103,6 +103,45 @@ test('Refresh bookmarks in Quick actions re-reads bookmarks in an already-open n
   }
 });
 
+test('Test button surfaces a status toast that stays in the viewport when scrolled', async () => {
+  const extension = await launchExtension();
+
+  try {
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+
+    // Direct JSON, valid payload — Test should report success.
+    await pasteDirectJson(popupPage, directJsonBefore);
+
+    const testLabel = /^测试$|^Test$/i;
+    const testButton = popupPage.getByRole('button', { name: testLabel });
+
+    // Scroll to the Test button so the popup viewport sits on Quick actions
+    // (this is the failure mode the user reported: status was rendered above
+    // the visible area).
+    await testButton.scrollIntoViewIfNeeded();
+    await testButton.click();
+
+    const successToast = popupPage.locator('.status-message.success');
+    await expect(successToast).toBeVisible();
+    await expect(successToast).toBeInViewport();
+
+    // Wait the auto-dismiss out so the next assertion isn't racing.
+    await expect(successToast).toBeHidden({ timeout: 5000 });
+
+    // Direct JSON, invalid payload — Test should report an error.
+    const jsonTextarea = popupPage.locator('#bookmarksJson');
+    await jsonTextarea.fill('not-json');
+    await testButton.scrollIntoViewIfNeeded();
+    await testButton.click();
+
+    const errorToast = popupPage.locator('.status-message.error');
+    await expect(errorToast).toBeVisible();
+    await expect(errorToast).toBeInViewport();
+  } finally {
+    await extension.cleanup();
+  }
+});
+
 test('Reset in Quick actions restores defaults in an already-open new tab', async () => {
   const extension = await launchExtension();
 
