@@ -1,3 +1,7 @@
+<div align="center">
+<img src="assets/icon-source.svg" alt="Your New Tab logo" width="160" height="160" />
+</div>
+
 # Your New Tab — AI Search Hub
 
 **AI-search-first new tab.** Open a new tab, type your question once, and send it to Google AI, Metaso, Grok, or X in a single keystroke — or wire in any other search provider in seconds.

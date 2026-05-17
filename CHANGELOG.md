@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.4.0 - 2026-05-17
+
 ### Added
 
 - Search history with arrow-key navigation in the new tab search box (stores up to 20 recent queries; ArrowUp/ArrowDown cycles through history with prefix-match filtering)

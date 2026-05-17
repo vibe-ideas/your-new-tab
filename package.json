@@ -2,7 +2,7 @@
   "name": "your-new-tab",
   "description": "AI-search-first new tab — type once and send your query to Google AI, Metaso, Grok, or X in a single keystroke, with arrow-key search history, animated backgrounds, and your own shortcuts.",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
