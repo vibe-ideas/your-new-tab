@@ -1,6 +1,6 @@
 export const zh = {
-  lang: 'zh' as const,
-  dir: 'ltr' as const,
+  lang: 'zh',
+  dir: 'ltr',
   htmlTitle: 'Your New Tab — 一个标签页打通所有 AI 搜索',
   htmlDesc:
     '面向 AI 搜索的浏览器新标签页：一次输入直达 Google AI、Metaso、Grok、X，自带搜索历史、动态背景与可配置快捷方式。',
