@@ -33,16 +33,29 @@ jobs:
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
+
       - name: Validate extension
         run: pnpm run check
 
       - name: Build extension
         run: pnpm build
 
+      - name: Generate project demo GIF
+        run: pnpm run demo:project
+
       - name: Zip extension
         run: |
             pnpm zip
             pnpm zip:firefox
+
+      - name: Upload workflow demo artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: project-demo-gif
+          path: demo.gif
+          if-no-files-found: error
 
       - name: Get version
         id: get_version
@@ -58,5 +71,6 @@ jobs:
           prerelease: false
           files: |
             .output/*.zip
+            demo.gif
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

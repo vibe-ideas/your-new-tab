@@ -14,7 +14,8 @@
     "compile": "wxt prepare && tsc --noEmit",
     "test:e2e": "playwright test -c playwright.config.mjs",
     "check": "pnpm run compile && pnpm run build && pnpm run test:e2e",
-    "demo:search-history": "node e2e/search-history-demo.mjs"
+    "demo:search-history": "node e2e/search-history-demo.mjs",
+    "demo:project": "node e2e/project-demo.mjs"
   },
   "keywords": [
     "browser-extension",
