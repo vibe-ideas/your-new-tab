@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Your New Tab replaces the browser new tab page with a configurable clock, search box, shortcuts, and background experience.
+Your New Tab is an AI-search-first new tab page: it provides a unified search box that forwards your query to the AI / search provider you selected (Google AI Mode, Metaso, Grok, X, or any provider you add yourself). The extension also offers a configurable clock, shortcut grid, and background.
 
 ## Data Stored Locally
 
@@ -21,7 +21,7 @@ The extension does not send data to the developer's servers.
 
 Some features contact third-party services directly from the user's browser:
 
-- Running a search opens the selected search provider with the user's query.
+- **Search**: pressing Enter in the search box opens the selected provider's URL with the user's query in a new tab. The query is sent only to the provider the user explicitly selected (built-in: Google AI, Metaso, Grok, X — or any provider the user added). The extension does not proxy the request through any backend; the browser contacts the provider directly.
 - The default static background feature requests images from Unsplash or Picsum.
 - If the user configures a remote bookmark JSON URL or custom animated background URL, the browser requests those URLs to load the configured content.
 

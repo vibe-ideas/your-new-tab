@@ -4,6 +4,8 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
+    name: 'Your New Tab — AI Search Hub',
+    description: 'AI-search-first new tab. Type once and send your query to Google AI, Metaso, Grok, or X in one keystroke. Bring your own provider, shortcuts, and animated backgrounds.',
     chrome_url_overrides: {
       newtab: '/newtab/index.html'
     },

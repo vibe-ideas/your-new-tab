@@ -11,10 +11,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Search history with arrow-key navigation in the new tab search box (stores up to 20 recent queries; ArrowUp/ArrowDown cycles through history with prefix-match filtering)
 - E2E regression coverage for search history recording, prefix-match navigation, and the 20-entry cap
 - Animated GIF demo for search history; reproduced via `pnpm run demo:search-history` (Playwright + ImageMagick)
+- Project-level demo GIF rendered in CI (`pnpm run demo:project`) and attached to GitHub releases
+- `PRIVACY.md` covering local storage and third-party requests for Chrome Web Store publication
+- `AGENTS.md` with Codex-oriented project guidance
 
 ### Changed
 
+- Repositioned the extension as **AI-search-first**: README, user guides (zh/en), CLAUDE.md, AGENTS.md, DEVELOPMENT.md, IFLOW.md, `package.json` description, and the WXT manifest now lead with the AI search hub (Google AI, Metaso, Grok, X, plus user-added providers)
+- Redesigned the extension icon around the AI search hub concept; authoring source switched to `assets/icon-source.svg` and re-rendered at 16/32/48/96/128 with `rsvg-convert`
+- Default to bundled bookmarks on first install instead of fetching the jsdelivr-hosted remote JSON
+- Cross-tab config sync now uses `storage` events instead of background broadcast — no `tabs` permission required
 - The search input is cleared after submitting a search so subsequent ArrowUp navigation starts from the latest history entry
+
+### Removed
+
+- `tabs` permission, `entrypoints/content.ts` content script, and the `useProxy` search-provider proxy fetch — none were needed for the AI-search-first flow and they each broadened the permission surface
+
+### Security
+
+- Provider and bookmark icons are sanitized at render time: inline SVG is converted to a data URI after a script/handler/`javascript:` check; remote URLs must be HTTPS; otherwise the icon falls back to a text glyph (replaces previous `dangerouslySetInnerHTML` paths)
 
 ## 0.3.1 - 2026-05-12
 

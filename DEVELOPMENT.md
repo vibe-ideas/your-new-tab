@@ -56,10 +56,10 @@ This extension is built with:
 │   │   ├── main.tsx     # React component initialization
 │   │   ├── App.css      # Popup styling
 │   │   └── style.css    # Additional popup styling
-│   ├── background.ts    # Background script
-│   └── content.ts       # Content script (runs on Google pages)
-├── public/              # Static assets
-├── assets/              # Extension icons
+│   └── background.ts    # Background script (image fetch only)
+├── utils/               # Shared helpers (browser API, search providers, history)
+├── public/              # Static assets (icons rendered from assets/icon-source.svg)
+├── assets/              # Extension icon source (SVG + 1024 PNG)
 └── wxt.config.ts        # WXT configuration
 ```
 
@@ -103,30 +103,32 @@ npm run compile
 
 ### Entry Points
 
-- **New Tab Page**: The main user interface located in `entrypoints/newtab/`. It's a React application that displays time, date, search functionality, and website shortcuts.
-- **Popup**: Configuration interface located in `entrypoints/popup/`. Allows users to customize bookmark sources and refresh bookmarks manually.
-- **Background Script**: Located in `entrypoints/background.ts`. Runs in the background and handles:
-  - Bookmark refreshing across all tabs
-  - Background image fetching to avoid CORS issues
-  - Communication between content scripts and UI components
-- **Content Script**: Located in `entrypoints/content.ts`. Runs on specific web pages (currently Google sites) to interact with web content.
+- **New Tab Page**: React app in `entrypoints/newtab/`. Renders the AI search bar with provider picker, search history, clock, shortcut grid, and background.
+- **Popup**: Configuration UI in `entrypoints/popup/`. Manages search-provider list (built-in + user-added), default provider, bookmark sources, and animated background URLs.
+- **Background Script**: `entrypoints/background.ts`. Sole responsibility is fetching the daily background image from Unsplash/Picsum to bypass CORS — no broadcast, no content scripting.
+
+Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no message broadcast).
 
 ### Data Flow
 
-1. **Bookmark Management**:
-   - Bookmarks are fetched from a customizable JSON URL
-   - Data is cached in localStorage with daily refresh logic
-   - Manual refresh available through popup interface
-   - Background script broadcasts refresh messages to all tabs
+1. **AI Search**:
+   - Built-in providers defined in `utils/searchProviders.ts` (Google AI, Metaso, X, Grok)
+   - User-added providers persisted in `localStorage` and merged with built-ins on render
+   - Active provider sticks across new-tab opens; selection round-trips through `localStorage` → `storage` event for cross-tab sync
+   - Submitting a query opens the provider's URL with `{query}` substituted in a new tab
 
-2. **Background Image Handling**:
+2. **Bookmark Management**:
+   - Three modes: bundled defaults, remote JSON URL, or pasted JSON
+   - Cached in `localStorage` with daily refresh logic; popup offers manual refresh
+   - New-tab page reacts to `storage` events for live updates
+
+3. **Background Image Handling**:
    - Daily rotation using Unsplash with Picsum fallbacks
-   - Images fetched through background script to avoid CORS issues
-   - Base64 encoding for better performance and reliability
-   - localStorage caching with timestamp validation
-   - Manual switching via windmill button
+   - Images fetched through the background script to avoid CORS issues
+   - Base64 encoding cached in `localStorage` with a timestamp
+   - Manual switching via windmill button (cycles user animated URLs when configured)
 
-3. **Search History**:
+4. **Search History**:
    - Recent queries persisted in `localStorage` under the `searchHistory` key (capped at 20 entries)
    - Helpers live in `utils/searchHistory.ts` (`getSearchHistory`, `addSearchHistory`, `filterHistoryByPrefix`)
    - The new tab input handles `ArrowUp`/`ArrowDown` to cycle through history with prefix-match filtering
