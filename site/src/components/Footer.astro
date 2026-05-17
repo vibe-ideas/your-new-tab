@@ -1,0 +1,50 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const repoUrl = 'https://github.com/vibe-ideas/your-new-tab';
+const licenseUrl = 'https://github.com/vibe-ideas/your-new-tab/blob/main/LICENSE';
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container footer__inner">
+    <div>
+      <strong>Your New Tab</strong> · © {year}
+    </div>
+    <div class="footer__meta">
+      <a href={licenseUrl} target="_blank" rel="noopener noreferrer">{t.footer.license}</a>
+      <span aria-hidden="true">·</span>
+      <a href={repoUrl} target="_blank" rel="noopener noreferrer">GitHub</a>
+      <span aria-hidden="true">·</span>
+      <span>{t.footer.builtWith}</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    border-top: 1px solid var(--border);
+    background: var(--bg-soft);
+    padding: 28px 0;
+    color: var(--ink-2);
+    font-size: 0.9rem;
+  }
+  .footer__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .footer__meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+</style>

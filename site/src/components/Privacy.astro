@@ -1,0 +1,89 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const repoPrivacy = 'https://github.com/vibe-ideas/your-new-tab/blob/main/PRIVACY.md';
+---
+
+<section id="privacy" class="section">
+  <div class="container">
+    <div class="section__head">
+      <h2>{t.privacy.heading}</h2>
+      <p>{t.privacy.intro}</p>
+    </div>
+    <div class="privacy">
+      {
+        t.privacy.points.map((p) => (
+          <article class="privacy__card">
+            <div class="privacy__bullet" aria-hidden="true">✓</div>
+            <div>
+              <h3>{p.title}</h3>
+              <p>{p.body}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+    <div class="privacy__cta">
+      <a href={repoPrivacy} target="_blank" rel="noopener noreferrer">
+        {t.privacy.fullLink}
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .privacy {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .privacy__card {
+    display: flex;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .privacy__bullet {
+    flex: 0 0 32px;
+    height: 32px;
+    border-radius: 999px;
+    background: rgba(37, 99, 235, 0.12);
+    color: var(--brand-blue-2);
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .privacy__card h3 {
+    margin: 0 0 6px;
+    font-size: 1rem;
+    color: var(--ink);
+  }
+  .privacy__card p {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 0.94rem;
+  }
+  .privacy__cta {
+    text-align: center;
+    margin-top: 28px;
+  }
+  .privacy__cta a {
+    font-weight: 600;
+  }
+  @media (max-width: 720px) {
+    .privacy {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

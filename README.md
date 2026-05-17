@@ -4,6 +4,8 @@
 
 # Your New Tab — AI Search Hub
 
+**Website:** <https://vibe-ideas.github.io/your-new-tab/> · [中文](https://vibe-ideas.github.io/your-new-tab/) / [English](https://vibe-ideas.github.io/your-new-tab/en/)
+
 **AI-search-first new tab.** Open a new tab, type your question once, and send it to Google AI, Metaso, Grok, or X in a single keystroke — or wire in any other search provider in seconds.
 
 <div align="center">

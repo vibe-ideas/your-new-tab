@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import Header from '../../components/Header.astro';
+import Hero from '../../components/Hero.astro';
+import Features from '../../components/Features.astro';
+import Faq from '../../components/Faq.astro';
+import Privacy from '../../components/Privacy.astro';
+import Footer from '../../components/Footer.astro';
+import { useTranslations } from '../../i18n';
+
+const lang = 'en';
+const t = useTranslations(lang);
+---
+
+<Base t={t} lang={lang}>
+  <Header t={t} lang={lang} />
+  <main>
+    <Hero t={t} />
+    <Features t={t} />
+    <Faq t={t} />
+    <Privacy t={t} />
+  </main>
+  <Footer t={t} />
+</Base>

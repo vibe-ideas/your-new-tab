@@ -1,0 +1,102 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const demoSrc = `${base}demo.gif`;
+const chromeUrl = 'https://chromewebstore.google.com/';
+const firefoxUrl = 'https://addons.mozilla.org/';
+const repoUrl = 'https://github.com/vibe-ideas/your-new-tab';
+---
+
+<section class="hero">
+  <div class="hero__glow"></div>
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      <span class="eyebrow">{t.hero.eyebrow}</span>
+      <h1>{t.hero.title}</h1>
+      <p class="hero__subtitle">{t.hero.subtitle}</p>
+      <div class="hero__ctas">
+        <a class="btn btn--primary" href={chromeUrl} target="_blank" rel="noopener noreferrer">
+          {t.hero.ctaInstall}
+        </a>
+        <a class="btn btn--ghost" href={firefoxUrl} target="_blank" rel="noopener noreferrer">
+          {t.hero.ctaFirefox}
+        </a>
+        <a class="btn btn--ghost" href={repoUrl} target="_blank" rel="noopener noreferrer">
+          {t.hero.ctaSource}
+        </a>
+      </div>
+    </div>
+    <div class="hero__demo">
+      <img src={demoSrc} alt={t.hero.demoAlt} loading="eager" decoding="async" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    background: var(--gradient-hero);
+    color: #fff;
+    padding: 96px 0 120px;
+    overflow: hidden;
+  }
+  .hero__glow {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: 80%;
+    background: var(--gradient-glow);
+    pointer-events: none;
+  }
+  .hero__inner {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .hero__copy h1 {
+    font-size: clamp(2rem, 4.6vw, 3.2rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 18px 0 18px;
+  }
+  .hero__subtitle {
+    font-size: 1.08rem;
+    color: rgba(255, 255, 255, 0.88);
+    margin: 0 0 32px;
+    max-width: 540px;
+  }
+  .hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero__demo {
+    position: relative;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-hero);
+    background: #0b1220;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .hero__demo img {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  @media (max-width: 960px) {
+    .hero {
+      padding: 72px 0 88px;
+    }
+    .hero__inner {
+      grid-template-columns: 1fr;
+      gap: 40px;
+    }
+  }
+</style>

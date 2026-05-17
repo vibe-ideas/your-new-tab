@@ -1,0 +1,75 @@
+---
+import type { Dict } from '../i18n';
+
+interface Props {
+  t: Dict;
+}
+
+const { t } = Astro.props;
+---
+
+<section id="faq" class="section section--alt">
+  <div class="container">
+    <div class="section__head">
+      <h2>{t.faq.heading}</h2>
+    </div>
+    <div class="faq">
+      {
+        t.faq.items.map((item) => (
+          <details class="faq__item">
+            <summary>{item.q}</summary>
+            <p>{item.a}</p>
+          </details>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    max-width: 760px;
+    margin: 0 auto;
+    display: grid;
+    gap: 12px;
+  }
+  .faq__item {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 18px 22px;
+    box-shadow: var(--shadow-sm);
+    transition: border-color 0.18s ease;
+  }
+  .faq__item[open] {
+    border-color: rgba(37, 99, 235, 0.45);
+  }
+  .faq__item summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--ink);
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .faq__item summary::-webkit-details-marker {
+    display: none;
+  }
+  .faq__item summary::after {
+    content: '+';
+    font-size: 1.4rem;
+    color: var(--ink-3);
+    line-height: 1;
+    transition: transform 0.2s ease;
+  }
+  .faq__item[open] summary::after {
+    content: '−';
+  }
+  .faq__item p {
+    margin: 12px 0 0;
+    color: var(--ink-2);
+    font-size: 0.96rem;
+  }
+</style>

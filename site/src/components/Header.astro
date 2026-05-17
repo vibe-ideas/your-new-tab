@@ -1,0 +1,81 @@
+---
+import type { Dict, Lang } from '../i18n';
+import LangSwitch from './LangSwitch.astro';
+
+interface Props {
+  t: Dict;
+  lang: Lang;
+}
+
+const { t, lang } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const iconHref = `${base}icon.svg`;
+const githubHref = 'https://github.com/vibe-ideas/your-new-tab';
+---
+
+<header class="site-header">
+  <div class="container header__inner">
+    <a class="brand" href={lang === 'zh' ? base : `${base}en/`}>
+      <img src={iconHref} alt="Your New Tab" width="32" height="32" />
+      <span>Your New Tab</span>
+    </a>
+    <nav class="nav">
+      <a href="#features">{t.nav.features}</a>
+      <a href="#faq">{t.nav.faq}</a>
+      <a href="#privacy">{t.nav.privacy}</a>
+      <a href={githubHref} target="_blank" rel="noopener noreferrer">{t.nav.github}</a>
+      <LangSwitch t={t} lang={lang} />
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 1.02rem;
+  }
+  .brand:hover {
+    text-decoration: none;
+  }
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    font-size: 0.92rem;
+  }
+  .nav a {
+    color: var(--ink-2);
+  }
+  .nav a:hover {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  @media (max-width: 640px) {
+    .nav {
+      gap: 14px;
+      font-size: 0.85rem;
+    }
+    .nav a:nth-child(-n + 3) {
+      display: none;
+    }
+  }
+</style>
