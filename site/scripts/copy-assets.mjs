@@ -9,9 +9,6 @@ const sitePublic = resolve(here, '..', 'public');
 const ASSETS = [
   ['demo.gif', 'demo.gif'],
   ['assets/icon-source.svg', 'icon.svg'],
-  ['docs/screenshots/animated-background-e2e.png', 'screens/animated-background.png'],
-  ['docs/screenshots/search-history-e2e.png', 'screens/search-history.png'],
-  ['docs/search-history-demo.gif', 'screens/search-history.gif'],
 ];
 
 for (const [src, dst] of ASSETS) {

@@ -8,8 +8,6 @@ on:
       - 'site/**'
       - 'demo.gif'
       - 'assets/icon-source.svg'
-      - 'docs/screenshots/**'
-      - 'docs/search-history-demo.gif'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
