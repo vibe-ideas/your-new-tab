@@ -309,10 +309,6 @@ body {
   accent-color: #d3b58c;
 }
 
-.provider-proxy-toggle {
-  align-self: flex-start;
-}
-
 .provider-login-badge {
   display: inline-flex;
   align-items: center;

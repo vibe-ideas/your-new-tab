@@ -134,7 +134,8 @@ body {
   outline-offset: 2px;
 }
 
-.search-provider-icon svg {
+.search-provider-icon svg,
+.search-provider-trigger-icon img {
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -258,9 +259,11 @@ body {
   justify-content: center;
   flex-shrink: 0;
 }
-.provider-option-icon svg {
+.provider-option-icon svg,
+.provider-option-icon img {
   width: 24px;
   height: 24px;
+  border-radius: 50%;
 }
 
 .provider-option-icon .search-provider-fallback {

@@ -69,7 +69,7 @@ async function seedLegacyMetasoOnlySearchConfig(page) {
     localStorage.setItem('lastSearchProvider', lastProviderId);
   }, {
     legacySearchProviders: [
-      { id: 'metaso', name: 'Metaso', urlTemplate: metasoSearchUrl, capability: 'stable', enabled: true, useProxy: false },
+      { id: 'metaso', name: 'Metaso', urlTemplate: metasoSearchUrl, capability: 'stable', enabled: true },
     ],
     defaultProviderId: 'metaso',
     lastProviderId: 'metaso',

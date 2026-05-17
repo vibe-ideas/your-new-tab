@@ -7,7 +7,6 @@ export default defineConfig({
     chrome_url_overrides: {
       newtab: '/newtab/index.html'
     },
-    permissions: ["tabs"],
     host_permissions: [
       "https://source.unsplash.com/*",
       "https://picsum.photos/*",
