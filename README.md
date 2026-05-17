@@ -9,7 +9,7 @@ A customizable browser extension that replaces your new tab page with a beautifu
 ## Features
 
 - **Live Clock & Date**: Real-time display with elegant typography
-- **Instant Search**: Quick Google searches from your new tab
+- **Instant Search**: Quick searches with configurable search providers from your new tab
 - **Search History**: ArrowUp/ArrowDown cycles through your recent queries (with prefix-match filtering)
 - **Personalized Shortcuts**: One-click access to your favorite sites
 - **Dynamic Backgrounds**: Daily rotation from Unsplash & Picsum APIs
@@ -27,6 +27,10 @@ A customizable browser extension that replaces your new tab page with a beautifu
 ## Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed information about updates and changes.
+
+## Privacy
+
+See [PRIVACY.md](PRIVACY.md) for the data handling summary used for Chrome Web Store publication.
 
 ## Contributing
 
