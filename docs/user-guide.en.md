@@ -17,6 +17,15 @@ The center of the new tab page is a unified AI search box, with the active provi
 - **One-click switching**: click the provider icon on the left of the search bar in the new tab to swap providers. Changes propagate to other open new tabs via `storage` events.
 - **Privacy**: the extension does **not** proxy your query. Pressing Enter opens the provider's site directly in a new tab; the request is made by your browser.
 
+## Bookmark configuration
+
+The popup now keeps two bookmark source options:
+
+- **Built-in bookmarks**: the default mode, using the developer-focused shortcuts bundled with the extension.
+- **Paste bookmarks JSON directly**: import your own shortcut list, with formatting and minifying tools in the popup.
+
+Bookmark data is stored locally in the browser's `localStorage`. Resetting the extension returns to the built-in bookmarks and does not fetch data from an external bookmark source.
+
 ### Search history
 
 The new tab search box remembers your recent queries so you can recall them with arrow keys.
@@ -34,19 +43,19 @@ The new tab search box remembers your recent queries so you can recall them with
 
 ## Animated background effect
 
-Once configured, the new tab page displays your media URLs as full-screen backgrounds:
+Once configured, the new tab page displays your media links as full-screen backgrounds:
 
 - `GIF`, `APNG`, and `WebP` are rendered as animated image backgrounds.
 - `MP4`, `WebM`, and `MOV` are rendered as muted looping video backgrounds.
 - The clock, search box, and shortcuts stay in the foreground, with a dark overlay for readability.
-- The windmill button in the lower-right corner switches through the configured background URLs in order.
-- If no animated background is configured, or a media URL fails to load, the extension falls back to the default Unsplash/Picsum static background.
+- The windmill button in the lower-right corner switches through the configured background media links in order.
+- If no animated background is configured, or a media link fails to load, the extension falls back to the default Unsplash/Picsum static background.
 
 ## How to use it
 
 1. Open the extension popup.
-2. Find the **Animated background URLs (one per line)** field.
-3. Paste one direct media URL per line.
+2. Find the **Animated background media links (one per line)** field.
+3. Paste one direct media link per line.
 4. Click **Save**.
 5. Open a new tab to see the updated background.
 
@@ -55,9 +64,9 @@ Once configured, the new tab page displays your media URLs as full-screen backgr
 - Animated images: `GIF`, `APNG`, `WebP`
 - Animated video: `MP4`, `WebM`, `MOV`
 
-## URL requirements
+## Media link requirements
 
-- Use direct file URLs whenever possible, such as links ending in `.gif`, `.webm`, or `.mp4`.
+- Use direct file links whenever possible, such as links ending in `.gif`, `.webm`, or `.mp4`.
 - Media should be accessible without login, cookies, temporary authorization, or anti-hotlink protection.
 - If the source blocks embedding, the extension will fall back to the default static background.
 

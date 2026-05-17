@@ -58,7 +58,7 @@ This extension is built with:
 │   │   └── style.css    # Additional popup styling
 │   └── background.ts    # Background script (image fetch only)
 ├── utils/               # Shared helpers (browser API, search providers, history)
-├── public/              # Static assets (icons rendered from assets/icon-source.svg)
+├── public/              # Static assets (extension icons, backgrounds, fixtures)
 ├── assets/              # Extension icon source (SVG + 1024 PNG)
 └── wxt.config.ts        # WXT configuration
 ```
@@ -104,7 +104,7 @@ npm run compile
 ### Entry Points
 
 - **New Tab Page**: React app in `entrypoints/newtab/`. Renders the AI search bar with provider picker, search history, clock, shortcut grid, and background.
-- **Popup**: Configuration UI in `entrypoints/popup/`. Manages search-provider list (built-in + user-added), default provider, bookmark sources, and animated background URLs.
+- **Popup**: Configuration UI in `entrypoints/popup/`. Manages search-provider list (built-in + user-added), default provider, bookmark sources, and animated background media links.
 - **Background Script**: `entrypoints/background.ts`. Sole responsibility is fetching the daily background image from Unsplash/Picsum to bypass CORS — no broadcast, no content scripting.
 
 Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no message broadcast).
@@ -118,7 +118,7 @@ Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no m
    - Submitting a query opens the provider's URL with `{query}` substituted in a new tab
 
 2. **Bookmark Management**:
-   - Three modes: bundled defaults, remote JSON URL, or pasted JSON
+   - Two primary modes: bundled defaults or pasted JSON
    - Cached in `localStorage` with daily refresh logic; popup offers manual refresh
    - New-tab page reacts to `storage` events for live updates
 
@@ -126,7 +126,7 @@ Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no m
    - Daily rotation using Unsplash with Picsum fallbacks
    - Images fetched through the background script to avoid CORS issues
    - Base64 encoding cached in `localStorage` with a timestamp
-   - Manual switching via windmill button (cycles user animated URLs when configured)
+   - Manual switching via windmill button (cycles user animated media links when configured)
 
 4. **Search History**:
    - Recent queries persisted in `localStorage` under the `searchHistory` key (capped at 20 entries)
