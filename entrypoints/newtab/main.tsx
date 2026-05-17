@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
-import { getRuntime, sendMessage } from '../../utils/browser';
+import { sendMessage } from '../../utils/browser';
 import {
   DEFAULT_SEARCH_PROVIDER_ID,
   getSearchProviderFallbackLabel,
@@ -475,7 +475,7 @@ const NewTab: React.FC = () => {
     }
   };
 
-  // Listen for messages from background script
+  // Sync popup edits to this open new tab via storage events.
   React.useEffect(() => {
     const reloadSearchProviderConfig = () => {
       try {
@@ -501,43 +501,19 @@ const NewTab: React.FC = () => {
       setCurrentCustomBackgroundIndex(readCustomBackgroundIndex());
     };
 
-    const handleMessage = (message: any) => {
-      if (message.action === 'refreshBookmarks') {
-        refreshBookmarks();
-      } else if (message.action === 'refreshSearchConfig') {
-        reloadSearchProviderConfig();
-      } else if (message.action === 'refreshBackgroundConfig') {
-        reloadBackgroundConfig();
-      }
-    };
-
     const handleStorage = (event: StorageEvent) => {
-      if (['bookmarksUrl', 'bookmarksJson', 'useDefaultBookmarks', 'useDirectJson'].includes(event.key || '')) {
+      const key = event.key || '';
+      if (['bookmarksUrl', 'bookmarksJson', 'useDefaultBookmarks', 'useDirectJson', 'bookmarksRefreshSignal'].includes(key)) {
         void refreshBookmarks();
-      } else if (['searchProviders', 'defaultSearchProvider', 'lastSearchProvider'].includes(event.key || '')) {
+      } else if (['searchProviders', 'defaultSearchProvider', 'lastSearchProvider'].includes(key)) {
         reloadSearchProviderConfig();
-      } else if (['customBackgroundMediaUrls', 'customBackgroundMediaIndex'].includes(event.key || '')) {
+      } else if (['customBackgroundMediaUrls', 'customBackgroundMediaIndex'].includes(key)) {
         reloadBackgroundConfig();
       }
     };
 
     window.addEventListener('storage', handleStorage);
-
-    try {
-      const runtime = getRuntime();
-      runtime.onMessage.addListener(handleMessage);
-      
-      // Cleanup listener on component unmount
-      return () => {
-        window.removeEventListener('storage', handleStorage);
-        runtime.onMessage.removeListener(handleMessage);
-      };
-    } catch (error) {
-      console.error('Failed to set up message listener:', error);
-      return () => {
-        window.removeEventListener('storage', handleStorage);
-      };
-    }
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
   
   // Set up daily refresh of bookmarks

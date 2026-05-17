@@ -188,20 +188,8 @@ function App() {
       persistSearchProviderConfig(config);
       setProviders(config.providers);
       setDefaultSearchProvider(config.defaultProviderId);
-
-      // Notify background to refresh search config
-      try {
-        chrome.runtime.sendMessage({ action: 'refreshSearchConfig' });
-      } catch (e) {
-        console.warn('Failed to send refreshSearchConfig message', e);
-      }
-      try {
-        chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
-      } catch (e) {
-        console.warn('Failed to send refreshBackgroundConfig message', e);
-      }
     } catch (e) {
-      console.warn('Failed to save searchProviders default or notify background', e);
+      console.warn('Failed to re-persist search provider config on save', e);
     }
   };
 
@@ -220,11 +208,6 @@ function App() {
     setBackgroundMediaUrlsInput('');
     setStatus(t('resetToDefault'));
     setTimeout(() => setStatus(''), 3000);
-    try {
-      chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
-    } catch (e) {
-      console.warn('Failed to send refreshBackgroundConfig message', e);
-    }
   };
 
   const handleSaveProviders = () => {
@@ -635,7 +618,7 @@ function App() {
             )}
             <button
               onClick={() => {
-                chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
+                localStorage.setItem('bookmarksRefreshSignal', Date.now().toString());
                 setStatus(t('bookmarksRefreshed'));
                 setTimeout(() => setStatus(''), 3000);
               }}

@@ -26,6 +26,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - `tabs` permission, `entrypoints/content.ts` content script, and the `useProxy` search-provider proxy fetch — none were needed for the AI-search-first flow and they each broadened the permission surface
+- Dead `chrome.runtime.sendMessage` paths in popup Save/Reset and the now-orphaned `runtime.onMessage` listener in the new tab — cross-tab sync is fully driven by `storage` events
+
+### Fixed
+
+- Popup *Refresh bookmarks* button now writes a `bookmarksRefreshSignal` `localStorage` key (previously sent a runtime broadcast that was removed alongside the `tabs` permission, leaving the button inert); already-open new tabs react to the signal and re-read their bookmark source
+- E2E coverage for the popup *Quick actions* section (Save / Refresh / Reset) so this class of regression cannot recur silently
 
 ### Security
 
