@@ -309,10 +309,6 @@ body {
   accent-color: #d3b58c;
 }
 
-.provider-proxy-toggle {
-  align-self: flex-start;
-}
-
 .provider-login-badge {
   display: inline-flex;
   align-items: center;
@@ -380,23 +376,45 @@ body {
 }
 
 .status-message {
-  padding: 14px 16px;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  min-width: 240px;
+  max-width: calc(100% - 32px);
+  padding: 14px 18px;
   border-radius: 16px;
   font-size: 14px;
   font-weight: 700;
-  text-align: left;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+  animation: status-toast-in 180ms ease-out;
 }
 
 .status-message.success {
-  background: rgba(83, 150, 110, 0.16);
-  color: #d0f2db;
-  border: 1px solid rgba(93, 196, 136, 0.2);
+  background: rgba(46, 102, 71, 0.92);
+  color: #e6fbef;
+  border: 1px solid rgba(93, 196, 136, 0.45);
 }
 
 .status-message.error {
-  background: rgba(145, 67, 61, 0.2);
-  color: #ffd7d2;
-  border: 1px solid rgba(217, 119, 106, 0.2);
+  background: rgba(120, 47, 42, 0.92);
+  color: #ffe1dc;
+  border: 1px solid rgba(217, 119, 106, 0.5);
+}
+
+@keyframes status-toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 
 .config-info,

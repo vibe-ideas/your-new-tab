@@ -8,7 +8,6 @@ export interface SearchProvider {
   capability?: SearchProviderCapability;
   enabled?: boolean;
   autoSubmit?: boolean;
-  useProxy?: boolean;
   requiresLogin?: boolean;
   iconSvg?: string;
 }
@@ -28,7 +27,6 @@ export const DEFAULT_SEARCH_PROVIDERS: SearchProvider[] = [
     capability: 'stable',
     enabled: true,
     autoSubmit: true,
-    useProxy: false,
     iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="g1" x1="0%" x2="100%"><stop offset="0%" stop-color="#4285F4"/><stop offset="50%" stop-color="#34A853"/><stop offset="75%" stop-color="#FBBC05"/><stop offset="100%" stop-color="#EA4335"/></linearGradient></defs><circle cx="24" cy="24" r="22" fill="url(#g1)"/><text x="24" y="30" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">G</text></svg>`,
   },
   {
@@ -38,7 +36,6 @@ export const DEFAULT_SEARCH_PROVIDERS: SearchProvider[] = [
     capability: 'stable',
     enabled: true,
     autoSubmit: true,
-    useProxy: false,
     iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#6f42c1"/><text x="24" y="31" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#fff">M</text></svg>`,
   },
   {
@@ -48,7 +45,6 @@ export const DEFAULT_SEARCH_PROVIDERS: SearchProvider[] = [
     capability: 'stable',
     enabled: true,
     autoSubmit: true,
-    useProxy: false,
     requiresLogin: true,
     iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#000"/><path d="M26.37 21.9L33.69 13h-1.74l-6.39 7.44L20.69 13H14.5l7.68 11.19L14.5 35h1.74l6.71-7.81L28.19 35h6.19L26.37 21.9zm-2.37 2.74-.78-1.11L16.62 14.3h2.66l4.98 7.12.78 1.11 6.49 9.28H28.87l-4.87-6.97z" fill="#fff"/></svg>`,
   },
@@ -59,7 +55,6 @@ export const DEFAULT_SEARCH_PROVIDERS: SearchProvider[] = [
     capability: 'stable',
     enabled: true,
     autoSubmit: true,
-    useProxy: false,
     requiresLogin: true,
     iconSvg: `<svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="22" fill="#1a1a2e"/><text x="24" y="31" font-size="20" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" fill="#c084fc">G</text></svg>`,
   },
@@ -114,7 +109,6 @@ export const normalizeSearchProvider = (provider: Partial<SearchProvider>): Sear
     capability: provider.capability ?? defaults?.capability ?? 'experimental',
     enabled: defaults ? true : (provider.enabled ?? true),
     autoSubmit: provider.autoSubmit ?? defaults?.autoSubmit ?? true,
-    useProxy: provider.useProxy ?? defaults?.useProxy ?? false,
     requiresLogin: provider.requiresLogin ?? defaults?.requiresLogin ?? false,
     iconSvg: provider.iconSvg ?? defaults?.iconSvg,
   };

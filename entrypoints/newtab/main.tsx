@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
-import { getRuntime, sendMessage } from '../../utils/browser';
+import { sendMessage } from '../../utils/browser';
 import {
   DEFAULT_SEARCH_PROVIDER_ID,
   getSearchProviderFallbackLabel,
@@ -9,6 +9,11 @@ import {
   resolveSearchProviderId,
   type SearchProvider,
 } from '../../utils/searchProviders';
+import {
+  addSearchHistory,
+  filterHistoryByPrefix,
+  getSearchHistory,
+} from '../../utils/searchHistory';
 
 interface Bookmark {
   id: string;
@@ -35,6 +40,7 @@ const CUSTOM_BACKGROUND_URLS_STORAGE_KEY = 'customBackgroundMediaUrls';
 const CUSTOM_BACKGROUND_INDEX_STORAGE_KEY = 'customBackgroundMediaIndex';
 const VIDEO_BACKGROUND_EXTENSIONS = /\.(mp4|webm|ogg|ogv|mov|m4v)(?:[?#].*)?$/i;
 const BACKGROUND_MEDIA_PRELOAD_TIMEOUT_MS = 15000;
+const MAX_INLINE_SVG_ICON_LENGTH = 12000;
 
 const readCustomBackgroundUrls = (): string[] => {
   try {
@@ -71,6 +77,35 @@ const readCustomBackgroundIndex = (): number => {
 const detectBackgroundMediaType = (url: string): BackgroundMediaType => (
   VIDEO_BACKGROUND_EXTENSIONS.test(url) ? 'video' : 'image'
 );
+
+const getSafeIconImageSrc = (icon?: string | null) => {
+  const trimmedIcon = icon?.trim();
+
+  if (!trimmedIcon) {
+    return null;
+  }
+
+  if (
+    trimmedIcon.startsWith('<svg') &&
+    trimmedIcon.length <= MAX_INLINE_SVG_ICON_LENGTH &&
+    !/<script[\s>]/i.test(trimmedIcon) &&
+    !/\son[a-z]+\s*=/i.test(trimmedIcon) &&
+    !/javascript:/i.test(trimmedIcon)
+  ) {
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(trimmedIcon)}`;
+  }
+
+  if (/^data:image\/(?:png|jpe?g|gif|webp);base64,/i.test(trimmedIcon)) {
+    return trimmedIcon;
+  }
+
+  try {
+    const url = new URL(trimmedIcon);
+    return url.protocol === 'https:' ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
 
 const preloadBackgroundMedia = (url: string, type: BackgroundMediaType): Promise<void> => {
   if (type === 'video') {
@@ -137,6 +172,9 @@ const getDynamicBackgroundRequest = () => ({
 const NewTab: React.FC = () => {
   const [currentTime, setCurrentTime] = React.useState(new Date());
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchHistory, setSearchHistory] = React.useState<string[]>(() => getSearchHistory());
+  const historyIndexRef = React.useRef<number>(-1);
+  const savedInputRef = React.useRef<string>('');
   const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
   const [backgroundMedia, setBackgroundMedia] = React.useState<BackgroundMedia | null>(null);
   const [isSwitchingImage, setIsSwitchingImage] = React.useState<boolean>(false);
@@ -202,6 +240,7 @@ const NewTab: React.FC = () => {
   const selectableProviders = getSelectableProviders(providers);
   const activeProviderId = resolveSearchProviderId(selectableProviders, [selectedProviderId]);
   const activeProvider = selectableProviders.find((provider) => provider.id === activeProviderId) || selectableProviders[0];
+  const activeProviderIconSrc = getSafeIconImageSrc(activeProvider?.iconSvg);
 
   React.useEffect(() => {
     const config = readStoredSearchProviderConfig();
@@ -308,12 +347,12 @@ const NewTab: React.FC = () => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
     const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
     const useDirectJson = localStorage.getItem('useDirectJson') === 'true';
-    const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    const bookmarksUrl = storedUrl || '';
     
     const fetchBookmarks = async () => {
       try {
         // Check if we should use default bookmarks
-        if (useDefaultBookmarks) {
+        if (useDefaultBookmarks || (!storedUrl && !useDirectJson)) {
           setBookmarks(defaultBookmarks);
           return;
         }
@@ -384,10 +423,10 @@ const NewTab: React.FC = () => {
     const storedUrl = localStorage.getItem('bookmarksUrl');
     const useDefaultBookmarks = localStorage.getItem('useDefaultBookmarks') === 'true';
     const useDirectJson = localStorage.getItem('useDirectJson') === 'true';
-    const bookmarksUrl = storedUrl || 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
+    const bookmarksUrl = storedUrl || '';
     
     // If using default bookmarks, just set them directly
-    if (useDefaultBookmarks) {
+    if (useDefaultBookmarks || (!storedUrl && !useDirectJson)) {
       setBookmarks(defaultBookmarks);
       return;
     }
@@ -436,46 +475,45 @@ const NewTab: React.FC = () => {
     }
   };
 
-  // Listen for messages from background script
+  // Sync popup edits to this open new tab via storage events.
   React.useEffect(() => {
-    const handleMessage = (message: any) => {
-      if (message.action === 'refreshBookmarks') {
-        refreshBookmarks();
-      } else if (message.action === 'refreshSearchConfig') {
-        try {
-          const config = readStoredSearchProviderConfig();
-          setProviders(config.providers);
-          setSelectedProviderId((currentProviderId) => resolveSearchProviderId(config.providers, [
-            config.lastProviderId,
-            config.defaultProviderId,
-            currentProviderId,
-            DEFAULT_SEARCH_PROVIDER_ID,
-          ]));
+    const reloadSearchProviderConfig = () => {
+      try {
+        const config = readStoredSearchProviderConfig();
+        setProviders(config.providers);
+        setSelectedProviderId((currentProviderId) => resolveSearchProviderId(config.providers, [
+          config.lastProviderId,
+          config.defaultProviderId,
+          currentProviderId,
+          DEFAULT_SEARCH_PROVIDER_ID,
+        ]));
 
-          if (config.repaired) {
-            persistSearchProviderConfig(config);
-          }
-        } catch (error) {
-          console.warn('Failed to reload searchProviders from localStorage', error);
+        if (config.repaired) {
+          persistSearchProviderConfig(config);
         }
-      } else if (message.action === 'refreshBackgroundConfig') {
-        setCustomBackgroundUrls(readCustomBackgroundUrls());
-        setCurrentCustomBackgroundIndex(readCustomBackgroundIndex());
+      } catch (error) {
+        console.warn('Failed to reload searchProviders from localStorage', error);
       }
     };
 
-    try {
-      const runtime = getRuntime();
-      runtime.onMessage.addListener(handleMessage);
-      
-      // Cleanup listener on component unmount
-      return () => {
-        runtime.onMessage.removeListener(handleMessage);
-      };
-    } catch (error) {
-      console.error('Failed to set up message listener:', error);
-      return () => {}; // Return empty cleanup function
-    }
+    const reloadBackgroundConfig = () => {
+      setCustomBackgroundUrls(readCustomBackgroundUrls());
+      setCurrentCustomBackgroundIndex(readCustomBackgroundIndex());
+    };
+
+    const handleStorage = (event: StorageEvent) => {
+      const key = event.key || '';
+      if (['bookmarksUrl', 'bookmarksJson', 'useDefaultBookmarks', 'useDirectJson', 'bookmarksRefreshSignal'].includes(key)) {
+        void refreshBookmarks();
+      } else if (['searchProviders', 'defaultSearchProvider', 'lastSearchProvider'].includes(key)) {
+        reloadSearchProviderConfig();
+      } else if (['customBackgroundMediaUrls', 'customBackgroundMediaIndex'].includes(key)) {
+        reloadBackgroundConfig();
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
   }, []);
   
   // Set up daily refresh of bookmarks
@@ -628,6 +666,14 @@ const NewTab: React.FC = () => {
     };
   }, [customBackgroundUrls, loadCustomBackground, loadDynamicBackground]);
 
+  const recordSearchHistory = (query: string) => {
+    addSearchHistory(query);
+    setSearchHistory(getSearchHistory());
+    historyIndexRef.current = -1;
+    savedInputRef.current = '';
+    setSearchQuery('');
+  };
+
   const handleSearch = async () => {
     if (searchQuery.trim()) {
       const provider = activeProvider;
@@ -635,6 +681,8 @@ const NewTab: React.FC = () => {
       if (!provider) {
         return;
       }
+
+      recordSearchHistory(searchQuery);
 
       const buildSearchUrl = (p: any, q: string) => {
         const query = encodeURIComponent(q.trim());
@@ -676,45 +724,66 @@ const NewTab: React.FC = () => {
         return;
       }
 
-      // If provider requests proxy, fetch HTML via background and render
-      if (provider.useProxy) {
-        try {
-          const resp: any = await sendMessage({ action: 'fetchSearchProxy', url });
-          if (resp && resp.success && resp.data) {
-            // open a new window and write the returned HTML
-            const w = window.open();
-            if (w && w.document) {
-              w.document.open();
-              w.document.write(resp.data);
-              w.document.close();
-            } else {
-              // fallback: open direct URL
-              window.open(url, '_blank');
-            }
-          } else {
-            // fallback to direct open
-            window.open(url, '_blank');
-          }
-        } catch (e) {
-          console.error('Proxy fetch failed, falling back to direct open', e);
-          window.open(url, '_blank');
-        }
-
-        return;
-      }
-
       window.open(url, '_blank');
     }
   };
 
+  const navigateHistory = (direction: 1 | -1) => {
+    if (historyIndexRef.current === -1) {
+      savedInputRef.current = searchQuery;
+    }
+
+    const candidates = filterHistoryByPrefix(searchHistory, savedInputRef.current);
+    if (candidates.length === 0) {
+      return;
+    }
+
+    const nextIndex = historyIndexRef.current + direction;
+
+    if (nextIndex < -1) {
+      return;
+    }
+
+    if (nextIndex >= candidates.length) {
+      historyIndexRef.current = candidates.length - 1;
+      setSearchQuery(candidates[candidates.length - 1]);
+      return;
+    }
+
+    historyIndexRef.current = nextIndex;
+    if (nextIndex === -1) {
+      setSearchQuery(savedInputRef.current);
+    } else {
+      setSearchQuery(candidates[nextIndex]);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+    if (e.nativeEvent.isComposing) {
+      return;
+    }
+
+    if (e.key === 'Enter') {
       handleSearch();
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigateHistory(1);
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      navigateHistory(-1);
     }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    historyIndexRef.current = -1;
+    savedInputRef.current = '';
   };
 
   const handleBookmarkClick = (url: string) => {
@@ -871,7 +940,9 @@ const NewTab: React.FC = () => {
           >
             <span className="search-provider-trigger-icon" aria-hidden="true">
               {activeProvider?.iconSvg
-                ? <span dangerouslySetInnerHTML={{ __html: activeProvider.iconSvg }} />
+                ? activeProviderIconSrc
+                  ? <img src={activeProviderIconSrc} alt="" />
+                  : <span className="search-provider-fallback">{getSearchProviderFallbackLabel(activeProvider)}</span>
                 : <span className="search-provider-fallback">{getSearchProviderFallbackLabel(activeProvider)}</span>}
             </span>
             <span className="search-provider-name">{activeProvider?.name || 'Search'}</span>
@@ -889,8 +960,8 @@ const NewTab: React.FC = () => {
                   onClick={() => handleProviderSelect(p.id)}
                 >
                   <span className="provider-option-icon" aria-hidden="true">
-                    {p.iconSvg
-                      ? <span dangerouslySetInnerHTML={{ __html: p.iconSvg }} />
+                    {getSafeIconImageSrc(p.iconSvg)
+                      ? <img src={getSafeIconImageSrc(p.iconSvg) || ''} alt="" />
                       : <span className="search-provider-fallback">{getSearchProviderFallbackLabel(p)}</span>}
                   </span>
                   <span className="provider-option-name">{p.name}</span>
@@ -931,14 +1002,8 @@ const NewTab: React.FC = () => {
                 onClick={() => handleBookmarkClick(bookmark.url)}
               >
                 <div className="shortcut-icon">
-                  {bookmark.icon ? (
-                    bookmark.icon.startsWith('<svg') ? (
-                      // Render SVG XML directly
-                      <div dangerouslySetInnerHTML={{ __html: bookmark.icon }} />
-                    ) : (
-                      // Render icon as URL
-                      <img src={bookmark.icon} alt={bookmark.title} />
-                    )
+                  {getSafeIconImageSrc(bookmark.icon) ? (
+                    <img src={getSafeIconImageSrc(bookmark.icon) || ''} alt={bookmark.title} />
                   ) : (
                     // Fallback to first letter of title
                     bookmark.title.charAt(0)

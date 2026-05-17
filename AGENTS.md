@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
@@ -33,6 +33,7 @@ This is an **AI-search-first** browser extension built with WXT (Web Extension F
 ├── public/              # Static assets (icons rendered from assets/icon-source.svg)
 ├── assets/              # Extension icon source (SVG + 1024 PNG)
 └── wxt.config.ts        # WXT configuration
+```
 
 ## Key Configuration Files
 
@@ -44,26 +45,26 @@ This is an **AI-search-first** browser extension built with WXT (Web Extension F
 
 ### Setup
 ```bash
-npm install          # Install dependencies
+pnpm install          # Install dependencies
 ```
 
 ### Development
 ```bash
-npm run dev          # Start development server for Chrome
-npm run dev:firefox  # Start development server for Firefox
+pnpm run dev          # Start development server for Chrome
+pnpm run dev:firefox  # Start development server for Firefox
 ```
 
 ### Building
 ```bash
-npm run build        # Build extension for Chrome
-npm run build:firefox # Build extension for Firefox
-npm run zip          # Create zip file for Chrome Web Store
-npm run zip:firefox  # Create zip file for Firefox Add-ons
+pnpm run build        # Build extension for Chrome
+pnpm run build:firefox # Build extension for Firefox
+pnpm run zip          # Create zip file for Chrome Web Store
+pnpm run zip:firefox  # Create zip file for Firefox Add-ons
 ```
 
 ### Type Checking
 ```bash
-npm run compile      # Run TypeScript compilation without emitting files
+pnpm run compile      # Run TypeScript compilation without emitting files
 ```
 
 ## Recommended IDE Setup
@@ -131,11 +132,11 @@ The extension is configured in `wxt.config.ts` to:
    - Optional user-supplied animated URLs (GIF/APNG/WebP/MP4/WebM/MOV) cycled by the windmill
 
 ## Development Workflow
-1. Run `npm run dev` to start the development server
+1. Run `pnpm run dev` to start the development server
 2. Load the extension in the browser using the provided instructions
 3. Make changes to files in `entrypoints/newtab/` for UI updates
-4. Build with `npm run build` when ready to package
-5. Use `npm run zip` to create a distributable package
+4. Build with `pnpm run build` when ready to package
+5. Use `pnpm run zip` to create a distributable package
 
 ## Key Technologies
 - **WXT**: Web Extension Framework for building browser extensions

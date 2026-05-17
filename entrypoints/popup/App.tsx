@@ -49,9 +49,9 @@ const DEFAULT_BOOKMARKS = [
 ];
 
 function App() {
-  const [bookmarksUrl, setBookmarksUrl] = useState('https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json');
+  const [bookmarksUrl, setBookmarksUrl] = useState('default');
   const [inputUrl, setInputUrl] = useState('');
-  const [useDefaultBookmarks, setUseDefaultBookmarks] = useState(false);
+  const [useDefaultBookmarks, setUseDefaultBookmarks] = useState(true);
   const [useDirectJson, setUseDirectJson] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [backgroundMediaUrlsInput, setBackgroundMediaUrlsInput] = useState('');
@@ -114,7 +114,9 @@ function App() {
       setUseDirectJson(false);
       setJsonInput('');
     } else {
-      setInputUrl(bookmarksUrl);
+      setUseDefaultBookmarks(true);
+      setBookmarksUrl('default');
+      setInputUrl('');
       setUseDirectJson(false);
       setJsonInput('');
     }
@@ -186,44 +188,26 @@ function App() {
       persistSearchProviderConfig(config);
       setProviders(config.providers);
       setDefaultSearchProvider(config.defaultProviderId);
-
-      // Notify background to refresh search config
-      try {
-        chrome.runtime.sendMessage({ action: 'refreshSearchConfig' });
-      } catch (e) {
-        console.warn('Failed to send refreshSearchConfig message', e);
-      }
-      try {
-        chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
-      } catch (e) {
-        console.warn('Failed to send refreshBackgroundConfig message', e);
-      }
     } catch (e) {
-      console.warn('Failed to save searchProviders default or notify background', e);
+      console.warn('Failed to re-persist search provider config on save', e);
     }
   };
 
   const handleReset = () => {
-    const defaultUrl = 'https://cdn.jsdelivr.net/gh/yeshan333/jsDelivrCDN@main/bookmarks.json';
-    localStorage.setItem('useDefaultBookmarks', 'false');
+    localStorage.setItem('useDefaultBookmarks', 'true');
     localStorage.setItem('useDirectJson', 'false');
-    localStorage.setItem('bookmarksUrl', defaultUrl);
+    localStorage.setItem('bookmarksUrl', 'default');
     localStorage.removeItem('bookmarksJson');
     localStorage.removeItem('customBackgroundMediaUrls');
     localStorage.removeItem('customBackgroundMediaIndex');
-    setBookmarksUrl(defaultUrl);
-    setInputUrl(defaultUrl);
-    setUseDefaultBookmarks(false);
+    setBookmarksUrl('default');
+    setInputUrl('');
+    setUseDefaultBookmarks(true);
     setUseDirectJson(false);
     setJsonInput('');
     setBackgroundMediaUrlsInput('');
     setStatus(t('resetToDefault'));
     setTimeout(() => setStatus(''), 3000);
-    try {
-      chrome.runtime.sendMessage({ action: 'refreshBackgroundConfig' });
-    } catch (e) {
-      console.warn('Failed to send refreshBackgroundConfig message', e);
-    }
   };
 
   const handleSaveProviders = () => {
@@ -333,8 +317,6 @@ function App() {
         enabled: '已启用',
         disabled: '已停用',
         requiresLogin: '需要登录',
-        proxyLabel: '使用代理',
-        proxyNote: '如果启用代理，扩展会通过后台脚本抓取搜索页 HTML，适合处理跨域或前端渲染较重的网站；启用前请确认目标站点允许这种访问方式。',
         backgroundSection: '动态背景',
         backgroundSectionHint: '支持 GIF、WebP、APNG 和 MP4/WebM/MOV 直链。',
         actionsSection: '快速操作',
@@ -356,8 +338,6 @@ function App() {
         enabled: 'Enabled',
         disabled: 'Disabled',
         requiresLogin: 'Requires login',
-        proxyLabel: 'Use proxy',
-        proxyNote: 'When proxy is enabled, the extension fetches provider HTML through the background script. This can help with cross-origin or heavily client-rendered search pages, but should only be used when the target site allows it.',
         backgroundSection: 'Animated backgrounds',
         backgroundSectionHint: 'Supports direct GIF, WebP, APNG, MP4, WebM, and MOV links.',
         actionsSection: 'Quick actions',
@@ -571,18 +551,6 @@ function App() {
                     placeholder={uiText.searchProviderUrl}
                   />
                 </div>
-                <label className="provider-toggle provider-proxy-toggle" title="Fetch provider HTML via background proxy">
-                  <input
-                    type="checkbox"
-                    checked={!!p.useProxy}
-                    onChange={(e) => {
-                      const next = [...providers];
-                      next[idx] = { ...p, useProxy: e.target.checked };
-                      setProviders(next);
-                    }}
-                  />
-                  <span>{uiText.proxyLabel}</span>
-                </label>
               </div>
             ))}
           </div>
@@ -602,9 +570,6 @@ function App() {
             </button>
           </div>
 
-          <div className="config-info subtle-info">
-            <strong>Proxy:</strong> {uiText.proxyNote}
-          </div>
         </section>
 
         <section className="config-panel">
@@ -653,7 +618,7 @@ function App() {
             )}
             <button
               onClick={() => {
-                chrome.runtime.sendMessage({ action: 'refreshBookmarks' });
+                localStorage.setItem('bookmarksRefreshSignal', Date.now().toString());
                 setStatus(t('bookmarksRefreshed'));
                 setTimeout(() => setStatus(''), 3000);
               }}

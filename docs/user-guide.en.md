@@ -2,6 +2,36 @@
 
 [中文版](./user-guide.md)
 
+> This extension is positioned as an **AI-search-first** new tab page: open a new tab, type your question, and send it to your chosen AI/search provider in one keystroke. The AI search hub is covered first; backgrounds and bookmarks follow.
+
+## AI search hub
+
+The center of the new tab page is a unified AI search box, with the active provider's icon on the left:
+
+- **Built-in providers**: Google AI Mode, Metaso, Grok, X. Grok and X require you to be logged in on those sites in your browser.
+- **Bring your own**: open the popup and click *Add search provider*. Provide a name and a URL template that contains `{query}` as the placeholder. Examples:
+  - ChatGPT search: `https://chatgpt.com/?q={query}`
+  - Perplexity: `https://www.perplexity.ai/search?q={query}`
+  - Any internal LLM gateway: `https://your-gateway.example.com/?q={query}`
+- **Set a default**: mark any provider as default in the popup; new tabs open with it preselected. The most recent manual switch is also remembered.
+- **One-click switching**: click the provider icon on the left of the search bar in the new tab to swap providers. Changes propagate to other open new tabs via `storage` events.
+- **Privacy**: the extension does **not** proxy your query. Pressing Enter opens the provider's site directly in a new tab; the request is made by your browser.
+
+### Search history
+
+The new tab search box remembers your recent queries so you can recall them with arrow keys.
+
+- Pressing **Enter** to run a search records the query into the local history.
+- With the search box focused, press **ArrowUp** to walk back through history; keep pressing to reach older entries.
+- Press **ArrowDown** to walk forward; reaching the bottom restores whatever you had typed before pressing arrow keys.
+- Type part of a query first, then press arrow keys to navigate only the entries that **start with your current input** (case-insensitive prefix match).
+- Up to **20 entries** are kept; newest queries are inserted at the top and the oldest entry is dropped when the cap is exceeded.
+- History is persisted in `localStorage` under the `searchHistory` key on this machine only; clearing site data wipes it.
+
+![Search history animated demo](./search-history-demo.gif)
+
+> The clip first walks the full history with ArrowUp, then clears the input, types `apple`, and shows ArrowUp cycling only through entries that start with `apple`. Generated via `pnpm run demo:search-history` (Playwright frame capture + ImageMagick).
+
 ## Animated background effect
 
 Once configured, the new tab page displays your media URLs as full-screen backgrounds:
@@ -37,7 +67,7 @@ Once configured, the new tab page displays your media URLs as full-screen backgr
 - The extension remembers the current position locally.
 - Clear the field and save, or click **Reset** in the popup, to return to the default static background rotation.
 
-## E2E test screenshot
+## Animated background E2E screenshot
 
 The screenshot below comes from a **real extension environment** Playwright CLI E2E flow: the built extension is loaded, animated backgrounds are configured through the popup, the new tab is opened, and the test verifies that MP4 playback starts after switching.
 

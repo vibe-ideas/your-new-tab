@@ -24,19 +24,6 @@ export function getRuntime() {
 }
 
 /**
- * Get the tabs API (browser.tabs for Firefox, chrome.tabs for Chrome)
- */
-export function getTabs() {
-  if (typeof browser !== 'undefined' && browser.tabs) {
-    return browser.tabs;
-  }
-  if (typeof chrome !== 'undefined' && chrome.tabs) {
-    return chrome.tabs;
-  }
-  throw new Error('Browser tabs API not available');
-}
-
-/**
  * Get the storage API (browser.storage for Firefox, chrome.storage for Chrome)
  */
 export function getStorage() {

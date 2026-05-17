@@ -2,17 +2,20 @@
 
 ## 项目概述
 
-**your-new-tab** 是一个可自定义的浏览器扩展，用于替换浏览器的新标签页，提供美观且功能丰富的界面。该项目基于 WXT 框架构建，使用 React 19 和 TypeScript 开发。
+**your-new-tab** 是一款 **AI 搜索优先**的浏览器新标签页扩展：打开新标签 → 输入问题 → 一键发送到 Google AI、Metaso、Grok 或 X 等搜索提供商。基于 WXT 框架构建，使用 React 19 和 TypeScript 开发。
 
-### 主要功能
-- **实时时钟和日期**：优雅的实时显示
-- **快速搜索**：集成 Google 搜索
-- **个性化快捷方式**：一键访问常用网站
-- **动态背景**：每日从 Unsplash 和 Picsum API 轮换背景图片
-- **即时刷新**：通过风车按钮手动切换背景
-- **书签管理**：通过扩展弹出界面配置，支持私有存储
-- **自适应布局**：完美适配各种设备
-- **智能降级**：优雅的错误处理机制
+### 核心卖点
+- **AI 搜索中心**：内置 Google AI Mode、Metaso、Grok、X 四个提供商；用户可在弹窗里添加任意带 `{query}` 模板的搜索/AI 站点，并设定默认提供商
+- **搜索历史快捷复用**：搜索框内 ArrowUp/ArrowDown 浏览最近 20 条历史，输入前缀后再按方向键则按前缀筛选
+- **隐私优先**：所有配置仅写入 `localStorage`；不申请 `tabs` 权限、无内容脚本、无远程代码、无遥测；图标统一经过白名单消毒后渲染
+
+### 辅助功能
+- **实时时钟与日期**
+- **个性化快捷方式**：通过弹窗 JSON 编辑器维护
+- **动态背景**：每日从 Unsplash 和 Picsum API 轮换
+- **动图背景**：可选 GIF/APNG/WebP/MP4/WebM/MOV 直链，风车按钮顺序切换
+- **自适应布局**：覆盖主流桌面/笔记本分辨率
+- **智能降级**：所有外部请求均带超时与回退
 
 ## 技术栈
 
@@ -36,12 +39,13 @@
 │   │   ├── App.tsx          # 配置组件
 │   │   ├── main.tsx         # 弹窗初始化
 │   │   └── App.css          # 弹窗样式
-│   ├── background.ts        # 后台脚本
-│   └── content.ts           # 内容脚本
-├── public/                  # 静态资源
-├── assets/                  # 扩展图标
+│   └── background.ts        # 后台脚本（仅负责拉取背景图）
+├── public/                  # 静态资源（图标由 assets/icon-source.svg 渲染）
+├── assets/                  # 扩展图标源文件（SVG + 1024 PNG）
 ├── utils/                   # 工具函数
-│   └── browser.ts          # 浏览器兼容性工具
+│   ├── browser.ts          # 浏览器兼容性工具
+│   ├── searchProviders.ts  # 搜索提供商定义与持久化
+│   └── searchHistory.ts    # 搜索历史读写与前缀过滤
 └── wxt.config.ts           # WXT 配置文件
 ```
 
@@ -75,27 +79,34 @@ pnpm run compile
 
 ## 核心功能实现
 
-### 1. 书签管理
+### 1. AI 搜索中心（卖点）
+- 内置提供商定义于 `utils/searchProviders.ts`：Google AI、Metaso、X、Grok
+- 用户可在弹窗里增删提供商；自定义项与内置项在渲染时合并
+- 选中的活跃提供商会持久化到 `localStorage`，并通过 `storage` 事件实现跨标签同步（无需 `tabs` 权限）
+- 提交查询时按提供商 `urlTemplate` 中的 `{query}` 占位符替换并在新标签打开
+- 提供商图标统一经过 `getSafeIconImageSrc` 白名单消毒（SVG → data URI；URL 仅允许 https）
+
+### 2. 搜索历史
+- 历史持久化在 `localStorage` 的 `searchHistory` 键下，最多 20 条
+- 工具函数位于 `utils/searchHistory.ts`：`getSearchHistory` / `addSearchHistory` / `filterHistoryByPrefix`
+- 新标签搜索框在 ArrowUp/ArrowDown 时按前缀（不区分大小写）过滤历史
+
+### 3. 书签管理
 - 支持三种数据源模式：
   - 内置默认书签（精选开发者工具）
   - 远程 JSON URL（支持跨域）
   - 直接粘贴 JSON 数据
 - 本地缓存机制：每日自动刷新，支持手动刷新
-- 后台脚本广播机制：跨标签页同步书签数据
+- 跨标签同步通过 `storage` 事件实现（已移除后台广播逻辑）
 
-### 2. 背景图片系统
+### 4. 背景图片系统
 - 多源图片获取：Unsplash 主源 + Picsum 备用源
 - 后台脚本处理：避免 CORS 问题
 - Base64 编码存储：提升性能和可靠性
 - 本地缓存：带时间戳验证的缓存机制
-- 手动切换：风车按钮即时刷新
+- 手动切换：风车按钮即时刷新；如配置了动图背景 URL，风车顺序循环
 
-### 3. 搜索功能
-- 集成 Google 搜索
-- 实时输入处理
-- Enter 键快速搜索
-
-### 4. 时间显示
+### 5. 时间显示
 - 实时更新（每秒刷新）
 - 中文本地化格式
 - 24小时制显示
@@ -117,12 +128,19 @@ pnpm run compile
 4. 选择 `.output/firefox-mv2/manifest.json` 文件
 
 ### 扩展权限
-- `tabs`: 标签页管理
-- `https://source.unsplash.com/*`: Unsplash 图片访问
-- `https://picsum.photos/*`: Picsum 图片访问
-- `https://fastly.picsum.photos/*`: Picsum CDN 访问
+- `host_permissions` 仅包含背景图来源：
+  - `https://source.unsplash.com/*`
+  - `https://picsum.photos/*`
+  - `https://fastly.picsum.photos/*`
+- 不申请 `tabs`、`storage`、`scripting` 等敏感权限
 
 ## 数据流架构
+
+### AI 搜索数据流
+1. 内置提供商 + 用户自定义在弹窗合并写入 `localStorage`
+2. 新标签页加载时读取配置并渲染提供商选择器
+3. 用户切换或新增提供商触发 `storage` 事件，所有打开的新标签实时同步
+4. 提交查询时按 `urlTemplate` 替换 `{query}` 并在新标签打开
 
 ### 书签数据流
 1. 用户通过弹窗配置书签源
@@ -130,7 +148,7 @@ pnpm run compile
 3. 新标签页组件加载时读取配置
 4. 根据配置模式获取书签数据
 5. 数据缓存并每日自动刷新
-6. 后台脚本广播刷新指令到所有标签页
+6. 跨标签同步通过 `storage` 事件触发（不再使用后台广播）
 
 ### 背景图片数据流
 1. 组件加载时检查本地缓存

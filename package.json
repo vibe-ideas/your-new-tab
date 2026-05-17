@@ -1,6 +1,6 @@
 {
   "name": "your-new-tab",
-  "description": "A customizable browser extension that replaces your new tab page with a beautiful, functional interface",
+  "description": "AI-search-first new tab — type once and send your query to Google AI, Metaso, Grok, or X in a single keystroke, with arrow-key search history, animated backgrounds, and your own shortcuts.",
   "private": true,
   "version": "0.3.1",
   "type": "module",
@@ -13,11 +13,19 @@
     "zip:firefox": "wxt zip -b firefox --mv3",
     "compile": "wxt prepare && tsc --noEmit",
     "test:e2e": "playwright test -c playwright.config.mjs",
-    "check": "pnpm run compile && pnpm run build && pnpm run test:e2e"
+    "check": "pnpm run compile && pnpm run build && pnpm run test:e2e",
+    "demo:search-history": "node e2e/search-history-demo.mjs",
+    "demo:project": "node e2e/project-demo.mjs"
   },
   "keywords": [
     "browser-extension",
     "new-tab",
+    "ai-search",
+    "search-hub",
+    "chatgpt-alternative",
+    "grok",
+    "metaso",
+    "google-ai",
     "react",
     "wxt",
     "productivity"
