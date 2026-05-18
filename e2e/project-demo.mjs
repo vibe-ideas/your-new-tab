@@ -190,7 +190,13 @@ async function main() {
     await capture(popupPage, 'popup-json-mode', 3);
 
     await popupPage.locator('#bookmarksJson').fill(directJsonBookmarks);
+
+    await popupPage.locator('[role="tab"][data-tab="backgrounds"]').click();
+    await popupPage.locator('#backgroundMediaUrls').waitFor();
     await popupPage.locator('#backgroundMediaUrls').fill(`${imageBackgroundUrl}\n${videoBackgroundUrl}`);
+
+    await popupPage.locator('[role="tab"][data-tab="search"]').click();
+    await popupPage.locator('#defaultSearchProvider').waitFor();
     await popupPage.locator('#defaultSearchProvider').selectOption('google');
     await capture(popupPage, 'popup-filled', 4);
 
