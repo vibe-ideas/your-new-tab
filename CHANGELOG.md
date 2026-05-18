@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.6.0 - 2026-05-19
+
+### Added
+
+- **Two bookmark groups** with a per-tab toggle in the new tab corner: configure separate bookmark sources for two groups (e.g. external / internal networks), switch between them with one click; both groups round-trip through `localStorage` so already-open tabs follow popup edits via `storage` events
+- **Custom group labels**: rename either bookmark group from the popup (max 24 chars). Empty labels fall back to localized defaults
+- Playwright e2e coverage for bookmark groups: per-group state isolation, custom labels with default fallback, cross-page switch sync via `storage` event
+- `_locales/{en,zh_CN}/messages.json` with `default_locale: "en"` for store-grade i18n on extension name, description, and toolbar tooltip
+- `ErrorBoundary` around the new tab React tree so a render failure shows a recoverable screen instead of a blank page
+- Toast component on the new tab page for in-flow feedback, replacing the native `alert(...)` previously used for the manual-provider clipboard hint
+
+### Changed
+
+- Refactored `entrypoints/newtab/main.tsx` (was ~1000 lines) into focused hooks (`useClock`, `useToast`, `useBookmarkLoader`, `useBackgroundMedia`, `useSearchProviders`, `useSearchInput`) and presentational components (`TimeDisplay`, `SearchHub`, `ShortcutsGrid`, `BackgroundLayer`, `BookmarkGroupToggle`, `WindmillButton`, `Toast`); the orchestrator is now ~90 lines
+- New tab UI now reads its strings through the shared `utils/i18n.ts` (newtab title, search placeholder, weekdays, aria labels, group toggle), with formatted-string interpolation support (`{name}`, `{year}` placeholders)
+- Popup shares a single `DEFAULT_BOOKMARKS` source from `utils/defaultBookmarks.ts` (was duplicated)
+- Popup status state moved from regex-based "is this an error?" detection to an explicit `{ text, kind }` tuple with `showSuccess` / `showError` helpers
+- Build artifacts shrunk from 1.55 MB to 426 KB by relocating Playwright fixtures (`flower.mp4`) out of `public/` and removing the unused WXT placeholder logo
+
+### Security
+
+- Search provider URL templates and bookmark URLs are now whitelisted to `http://` / `https://` protocols at normalization and click time, blocking `javascript:` / `data:text/html` injection paths from custom providers and remote bookmark JSON
+- Background service worker filters `fetchBackgroundImage` request URLs against the `host_permissions` allowlist (`images.unsplash.com` / `source.unsplash.com` / `picsum.photos` / `fastly.picsum.photos`), rejecting any other host
+- All `window.open` calls use `noopener,noreferrer` to prevent reverse-tabnabbing into the opener page
+- Removed stray `console.log` calls that exposed Unsplash request URLs
+
+### Manifest / Store
+
+- Manifest `name`, `description`, and `action.default_title` migrated to `__MSG_*__` placeholders backed by `_locales/{en,zh_CN}/messages.json`
+- Added Firefox `browser_specific_settings.gecko.data_collection_permissions: { required: ["none"] }` to satisfy AMO's 2025-11-03 data-collection consent rules
+- Added `https://images.unsplash.com/*` to `host_permissions` in preparation for the deprecation of `source.unsplash.com`
+
 ## 0.4.1 - 2026-05-17
 
 ### Fixed

@@ -69,6 +69,10 @@ function App() {
       <div className="card">
         {activeTab === 'bookmarks' && (
           <BookmarksTab
+            activeBookmarkGroup={state.activeBookmarkGroup}
+            setActiveBookmarkGroup={state.setActiveBookmarkGroup}
+            groupLabels={state.groupLabels}
+            setGroupLabel={state.setGroupLabel}
             useDefaultBookmarks={state.useDefaultBookmarks}
             setUseDefaultBookmarks={state.setUseDefaultBookmarks}
             useDirectJson={state.useDirectJson}

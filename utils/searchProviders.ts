@@ -1,3 +1,5 @@
+import { isHttpSearchTemplate, isHttpUrl } from './safeUrl';
+
 export type SearchProviderCapability = 'stable' | 'experimental' | 'manual';
 
 export interface SearchProvider {
@@ -100,12 +102,23 @@ export const normalizeSearchProvider = (provider: Partial<SearchProvider>): Sear
   }
 
   const defaults = DEFAULT_PROVIDER_MAP.get(trimmedId);
+  const candidateUrlTemplate = provider.urlTemplate?.trim();
+  const candidateBaseUrl = provider.baseUrl?.trim();
+
+  const safeUrlTemplate = candidateUrlTemplate && isHttpSearchTemplate(candidateUrlTemplate)
+    ? candidateUrlTemplate
+    : defaults?.urlTemplate;
+  const safeBaseUrl = candidateBaseUrl && isHttpUrl(candidateBaseUrl)
+    ? candidateBaseUrl
+    : defaults?.baseUrl;
 
   return {
     ...defaults,
     ...provider,
     id: trimmedId,
     name: normalizeProviderName(provider, defaults),
+    urlTemplate: safeUrlTemplate,
+    baseUrl: safeBaseUrl,
     capability: provider.capability ?? defaults?.capability ?? 'experimental',
     enabled: defaults ? true : (provider.enabled ?? true),
     autoSubmit: provider.autoSubmit ?? defaults?.autoSubmit ?? true,

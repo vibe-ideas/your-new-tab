@@ -4,7 +4,7 @@ import path from 'node:path';
 import { chromium, test, expect } from '@playwright/test';
 
 const animatedBackgroundOne = 'http://127.0.0.1:4174/demo.gif?variant=1';
-const animatedBackgroundTwo = 'http://127.0.0.1:4174/public/e2e-fixtures/flower.mp4';
+const animatedBackgroundTwo = 'http://127.0.0.1:4174/e2e/fixtures/flower.mp4';
 const extensionPath = path.join(process.cwd(), '.output', 'chrome-mv3');
 const screenshotPath = path.join(process.cwd(), 'docs', 'screenshots', 'animated-background-e2e.png');
 const googleSearchUrl = 'http://127.0.0.1:4174/README.md?engine=google&q={query}';

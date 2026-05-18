@@ -1,20 +1,31 @@
+import { isAllowedBackgroundFetchUrl } from '../utils/safeUrl';
+
 export default defineBackground(() => {
-  // Use browser.runtime for Firefox compatibility, fallback to chrome.runtime
   const runtime = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime : chrome.runtime;
-  
+
   if (!runtime) {
     console.error('Browser runtime API not available');
     return;
   }
 
-  // Listen for messages from popup
   runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message.action === 'fetchBackgroundImage') {
-      // Handle background image fetching in the background script to avoid CORS issues
-      // Try primary URL first, then fallback URLs
-      const urls = [message.url];
-      if (message.fallbackUrls && Array.isArray(message.fallbackUrls)) {
-        urls.push(...message.fallbackUrls);
+      const candidateUrls: string[] = [];
+      if (typeof message.url === 'string') candidateUrls.push(message.url);
+      if (Array.isArray(message.fallbackUrls)) {
+        for (const fallback of message.fallbackUrls) {
+          if (typeof fallback === 'string') candidateUrls.push(fallback);
+        }
+      }
+      const urls = candidateUrls.filter(isAllowedBackgroundFetchUrl);
+
+      if (urls.length === 0) {
+        try {
+          sendResponse({ success: false, error: 'No allowed background image hosts in request' });
+        } catch (_error) {
+          // ignore disconnected ports
+        }
+        return false;
       }
       
       // Define the fetch function inline to avoid scope issues
@@ -64,14 +75,10 @@ export default defineBackground(() => {
             return result;
           } catch (error: any) {
             console.error(`Error fetching background image from ${url}:`, error);
-            
-            // If this is the last URL, throw the error
+
             if (i === urls.length - 1) {
               throw new Error(`Failed to fetch image from all sources. Last error: ${error.message}`);
             }
-            
-            // Otherwise, continue to the next fallback URL
-            console.log('Trying next fallback URL...');
           }
         }
         

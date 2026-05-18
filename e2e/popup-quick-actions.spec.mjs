@@ -85,11 +85,12 @@ test('Refresh bookmarks in Quick actions re-reads bookmarks in an already-open n
     const newTabPage = await openExtensionPage(extension.context, extension.extensionId, 'newtab');
     await expect(newTabPage.locator('.shortcut-label')).toContainText(['Before Save']);
 
-    // Mutate the persisted JSON from the new tab itself — same-document setItem
-    // does NOT fire a storage event in this page, so without the refresh signal
-    // the UI stays stale.
+    // Mutate the persisted JSON for the active group from the new tab itself —
+    // same-document setItem does NOT fire a storage event in this page, so
+    // without the refresh signal the UI stays stale.
     await newTabPage.evaluate((json) => {
-      localStorage.setItem('bookmarksJson', json);
+      const group = localStorage.getItem('activeBookmarkGroup') || 'external';
+      localStorage.setItem(`bookmarkGroup.${group}.bookmarksJson`, json);
     }, directJsonAfterRefresh);
 
     // Click Refresh bookmarks in the popup; it writes bookmarksRefreshSignal,

@@ -534,3 +534,38 @@ body {
     width: 100%;
   }
 }
+
+.bookmark-group-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  border: 1px solid #383129;
+  background: #1c1814;
+}
+
+.bookmark-group-button {
+  border: none;
+  background: transparent;
+  color: #c4b39a;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.bookmark-group-button:hover {
+  color: #f4efe6;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.bookmark-group-button.active {
+  background: #f4efe6;
+  color: #191613;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+}

@@ -77,6 +77,28 @@ export interface TranslationKeys {
   backgroundSectionHint: string;
   actionsSection: string;
   actionsSectionHint: string;
+  // Bookmark groups
+  bookmarkGroupExternal: string;
+  bookmarkGroupInternal: string;
+  bookmarkGroupSelectorLabel: string;
+  bookmarkGroupSectionHint: string;
+  bookmarkGroupLabelField: string;
+  bookmarkGroupLabelHint: string;
+  // Newtab UI
+  newtabPageTitle: string;
+  searchInputPlaceholder: string;
+  searchProviderToggleAria: string;
+  searchProviderToggleNoMenu: string;
+  searchButtonAria: string;
+  switchBackgroundAria: string;
+  weekdaySunday: string;
+  weekdayMonday: string;
+  weekdayTuesday: string;
+  weekdayWednesday: string;
+  weekdayThursday: string;
+  weekdayFriday: string;
+  weekdaySaturday: string;
+  dateFormatYearMonthDay: string;
 }
 
 const translations: Record<Language, TranslationKeys> = {
@@ -160,6 +182,28 @@ const translations: Record<Language, TranslationKeys> = {
     backgroundSectionHint: '支持 GIF、WebP、APNG 和 MP4/WebM/MOV 直链。',
     actionsSection: '快速操作',
     actionsSectionHint: '保存当前配置、测试来源可用性，或手动刷新书签。',
+    // Bookmark groups
+    bookmarkGroupExternal: '外网',
+    bookmarkGroupInternal: '内网',
+    bookmarkGroupSelectorLabel: '书签分组切换',
+    bookmarkGroupSectionHint: '为两组书签分别配置来源，新标签页左上角可一键切换；分组名称可自定义。',
+    bookmarkGroupLabelField: '分组名称',
+    bookmarkGroupLabelHint: '留空时使用默认名称（外网 / 内网），最多 24 个字符。',
+    // Newtab UI
+    newtabPageTitle: '新标签页',
+    searchInputPlaceholder: '输入并搜索...',
+    searchProviderToggleAria: '切换搜索提供商，当前为 {name}',
+    searchProviderToggleNoMenu: '搜索',
+    searchButtonAria: '搜索',
+    switchBackgroundAria: '切换背景',
+    weekdaySunday: '星期日',
+    weekdayMonday: '星期一',
+    weekdayTuesday: '星期二',
+    weekdayWednesday: '星期三',
+    weekdayThursday: '星期四',
+    weekdayFriday: '星期五',
+    weekdaySaturday: '星期六',
+    dateFormatYearMonthDay: '{year}年{month}月{day}日 {weekday}',
   },
   'en': {
     // Title
@@ -241,6 +285,28 @@ const translations: Record<Language, TranslationKeys> = {
     backgroundSectionHint: 'Supports direct GIF, WebP, APNG, MP4, WebM, and MOV links.',
     actionsSection: 'Quick actions',
     actionsSectionHint: 'Save the current configuration, test data sources, or refresh bookmarks manually.',
+    // Bookmark groups
+    bookmarkGroupExternal: 'External',
+    bookmarkGroupInternal: 'Internal',
+    bookmarkGroupSelectorLabel: 'Switch bookmark group',
+    bookmarkGroupSectionHint: 'Configure bookmark sources for each group; rename either group and switch from the new tab page corner toggle.',
+    bookmarkGroupLabelField: 'Group name',
+    bookmarkGroupLabelHint: 'Leave empty to use the default (External / Internal). Up to 24 characters.',
+    // Newtab UI
+    newtabPageTitle: 'New Tab',
+    searchInputPlaceholder: 'Type and search...',
+    searchProviderToggleAria: 'Switch search provider, currently {name}',
+    searchProviderToggleNoMenu: 'Search',
+    searchButtonAria: 'Search',
+    switchBackgroundAria: 'Switch background',
+    weekdaySunday: 'Sunday',
+    weekdayMonday: 'Monday',
+    weekdayTuesday: 'Tuesday',
+    weekdayWednesday: 'Wednesday',
+    weekdayThursday: 'Thursday',
+    weekdayFriday: 'Friday',
+    weekdaySaturday: 'Saturday',
+    dateFormatYearMonthDay: '{weekday}, {month} {day}, {year}',
   }
 };
 
@@ -273,8 +339,12 @@ class I18n {
     return this.currentLanguage;
   }
   
-  t(key: keyof TranslationKeys): string {
-    return translations[this.currentLanguage][key];
+  t(key: keyof TranslationKeys, params?: Record<string, string | number>): string {
+    const template = translations[this.currentLanguage][key];
+    if (!params) return template;
+    return template.replace(/\{(\w+)\}/g, (match, name) => (
+      Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match
+    ));
   }
   
   private saveLanguage() {
@@ -300,6 +370,6 @@ class I18n {
 export const i18n = new I18n();
 
 // Export a convenient translation function
-export const t = (key: keyof TranslationKeys): string => {
-  return i18n.t(key);
+export const t = (key: keyof TranslationKeys, params?: Record<string, string | number>): string => {
+  return i18n.t(key, params);
 };

@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "Your New Tab — AI Search Hub",
+    "description": "Extension name shown in the Chrome Web Store and Firefox Add-ons listing."
+  },
+  "extensionDescription": {
+    "message": "AI-search-first new tab. Send queries to Google AI, Metaso, Grok, X, or your own provider in one keystroke.",
+    "description": "Short description for the extension store listings."
+  },
+  "actionTitle": {
+    "message": "Configure new tab",
+    "description": "Tooltip shown when hovering the extension toolbar icon."
+  }
+}

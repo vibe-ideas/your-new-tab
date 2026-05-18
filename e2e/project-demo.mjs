@@ -9,7 +9,7 @@ const outputPath = path.join(process.cwd(), 'demo.gif');
 const frameRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'your-new-tab-project-demo-'));
 const serverUrl = 'http://127.0.0.1:4174';
 const imageBackgroundUrl = `${serverUrl}/demo.gif?variant=1`;
-const videoBackgroundUrl = `${serverUrl}/public/e2e-fixtures/flower.mp4`;
+const videoBackgroundUrl = `${serverUrl}/e2e/fixtures/flower.mp4`;
 const viewport = { width: 1280, height: 800 };
 const frameDelay = '14';
 

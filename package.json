@@ -2,7 +2,7 @@
   "name": "your-new-tab",
   "description": "AI-search-first new tab — type once and send your query to Google AI, Metaso, Grok, or X in a single keystroke, with arrow-key search history, animated backgrounds, and your own shortcuts.",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "dev": "wxt",
@@ -13,7 +13,8 @@
     "zip:firefox": "wxt zip -b firefox --mv3",
     "compile": "wxt prepare && tsc --noEmit",
     "test:e2e": "playwright test -c playwright.config.mjs",
-    "check": "pnpm run compile && pnpm run build && pnpm run test:e2e",
+    "verify:artifacts": "node scripts/verify-build-artifacts.mjs",
+    "check": "pnpm run compile && pnpm run build && pnpm run build:firefox && pnpm run verify:artifacts && pnpm run test:e2e",
     "demo:search-history": "node e2e/search-history-demo.mjs",
     "demo:project": "node e2e/project-demo.mjs"
   },

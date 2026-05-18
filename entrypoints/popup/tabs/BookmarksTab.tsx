@@ -1,6 +1,15 @@
 import { t } from '@/utils/i18n';
+import {
+  BOOKMARK_GROUP_IDS,
+  type BookmarkGroupId,
+  type BookmarkGroupLabels,
+} from '@/utils/bookmarkGroups';
 
 interface BookmarksTabProps {
+  activeBookmarkGroup: BookmarkGroupId;
+  setActiveBookmarkGroup: (group: BookmarkGroupId) => void;
+  groupLabels: BookmarkGroupLabels;
+  setGroupLabel: (group: BookmarkGroupId, label: string) => void;
   useDefaultBookmarks: boolean;
   setUseDefaultBookmarks: (v: boolean) => void;
   useDirectJson: boolean;
@@ -16,8 +25,18 @@ interface BookmarksTabProps {
   handleRefreshBookmarks: () => void;
 }
 
+const defaultLabelKey = (group: BookmarkGroupId): 'bookmarkGroupExternal' | 'bookmarkGroupInternal' =>
+  group === 'external' ? 'bookmarkGroupExternal' : 'bookmarkGroupInternal';
+
+export const resolveGroupDisplayLabel = (
+  group: BookmarkGroupId,
+  labels: BookmarkGroupLabels,
+): string => labels[group]?.trim() || t(defaultLabelKey(group));
+
 export default function BookmarksTab(props: BookmarksTabProps) {
   const {
+    activeBookmarkGroup, setActiveBookmarkGroup,
+    groupLabels, setGroupLabel,
     useDefaultBookmarks, setUseDefaultBookmarks,
     useDirectJson, setUseDirectJson,
     jsonInput, setJsonInput,
@@ -26,6 +45,7 @@ export default function BookmarksTab(props: BookmarksTabProps) {
     handleTest, handleRefreshBookmarks,
   } = props;
   const showTest = !useDefaultBookmarks || useDirectJson;
+  const activeLabelValue = groupLabels[activeBookmarkGroup] ?? '';
 
   return (
     <div role="tabpanel" data-tab-panel="bookmarks">
@@ -33,9 +53,40 @@ export default function BookmarksTab(props: BookmarksTabProps) {
         <div className="section-heading">
           <div>
             <h2>{t('bookmarkSection')}</h2>
-            <p>{t('bookmarkSectionHint')}</p>
+            <p>{t('bookmarkGroupSectionHint')}</p>
           </div>
           <span className="section-badge">{bookmarkModeLabel}</span>
+        </div>
+
+        <div className="bookmark-group-switcher" role="tablist" aria-label={t('bookmarkGroupSelectorLabel')}>
+          {BOOKMARK_GROUP_IDS.map((group) => (
+            <button
+              key={group}
+              type="button"
+              role="tab"
+              aria-selected={activeBookmarkGroup === group}
+              className={`bookmark-group-button${activeBookmarkGroup === group ? ' active' : ''}`}
+              onClick={() => setActiveBookmarkGroup(group)}
+            >
+              {resolveGroupDisplayLabel(group, groupLabels)}
+            </button>
+          ))}
+        </div>
+
+        <div className="field-stack bookmark-group-rename">
+          <label htmlFor="bookmarkGroupLabel" className="field-label">
+            {t('bookmarkGroupLabelField')}
+          </label>
+          <input
+            id="bookmarkGroupLabel"
+            type="text"
+            value={activeLabelValue}
+            onChange={(e) => setGroupLabel(activeBookmarkGroup, e.target.value)}
+            placeholder={t(defaultLabelKey(activeBookmarkGroup))}
+            maxLength={24}
+            className="input-field"
+          />
+          <div className="config-info">{t('bookmarkGroupLabelHint')}</div>
         </div>
 
         <div className="toggle-grid">
