@@ -58,6 +58,7 @@ async function openExtensionPage(context, extensionId, pageName) {
 }
 
 async function configureSearchProviders(popupPage) {
+  await popupPage.locator('[role="tab"][data-tab="search"]').click();
   await popupPage.locator('.provider-card[data-provider-id="google"] .input-field').nth(1).fill(googleSearchUrl);
   await popupPage.locator('.provider-card[data-provider-id="metaso"] .input-field').nth(1).fill(metasoSearchUrl);
 }
@@ -176,6 +177,7 @@ test('repairs legacy metaso-only search config in popup and new tab', async () =
     await seedLegacyMetasoOnlySearchConfig(popupPage);
     await popupPage.reload();
 
+    await popupPage.locator('[role="tab"][data-tab="search"]').click();
     await expect(popupPage.locator('.provider-card[data-provider-id="google"]')).toBeVisible();
     await expect(popupPage.locator('.provider-card[data-provider-id="metaso"]')).toBeVisible();
     await expect(popupPage.locator('#defaultSearchProvider')).toHaveValue('google');
@@ -212,6 +214,7 @@ test('configures and plays animated backgrounds in the real extension', async ()
 
   try {
     const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    await popupPage.locator('[role="tab"][data-tab="backgrounds"]').click();
     await popupPage.locator('#backgroundMediaUrls').fill(`${animatedBackgroundOne}\n${animatedBackgroundTwo}`);
     await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();

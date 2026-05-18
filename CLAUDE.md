@@ -22,12 +22,18 @@ This is an **AI-search-first** browser extension built with WXT (Web Extension F
 │   │   ├── index.html   # HTML entry point
 │   │   ├── main.tsx     # React component and initialization
 │   │   └── newtab.css   # Styling
-│   ├── popup/           # Extension popup for configuration
-│   │   ├── index.html   # HTML entry point
-│   │   ├── App.tsx      # Popup configuration UI
-│   │   ├── main.tsx     # React component initialization
-│   │   ├── App.css      # Popup styling
-│   │   └── style.css    # Additional popup styling
+│   ├── popup/           # Extension popup for configuration (tabbed layout)
+│   │   ├── index.html             # HTML entry point
+│   │   ├── App.tsx                # Shell: tab bar, panels, persistent action footer
+│   │   ├── App.css                # Popup styling (tab bar + footer)
+│   │   ├── main.tsx               # React component initialization
+│   │   ├── style.css              # Base popup styling
+│   │   ├── defaultBookmarks.ts    # Built-in bookmark seed data
+│   │   ├── usePopupState.ts       # Custom hook owning all popup state + handlers
+│   │   └── tabs/                  # Tab panel components
+│   │       ├── BookmarksTab.tsx
+│   │       ├── SearchTab.tsx
+│   │       └── BackgroundsTab.tsx
 │   └── background.ts    # Background script (image fetch only)
 ├── utils/               # Shared helpers (browser API, search providers, history)
 ├── public/              # Static assets (icons rendered from assets/icon-source.svg)
@@ -89,12 +95,12 @@ Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no m
    - Background image handling with daily rotation
    - Windmill button for manual background switching
 
-2. **Popup Component** (`entrypoints/popup/App.tsx`): Configuration UI that allows:
-   - Editing the search-provider list and the default provider
-   - Toggling auto-submit / requires-login per provider
-   - Customizing bookmark JSON URL or pasting JSON directly
-   - Configuring animated background URLs
-   - Resetting to default configuration
+2. **Popup Component** (`entrypoints/popup/App.tsx`): Tabbed configuration UI organized into three panels with a persistent action footer:
+   - **Bookmarks tab**: built-in bookmarks vs. pasted JSON, with format/minify helpers
+   - **Search tab**: default provider picker, provider list editing, add custom provider
+   - **Backgrounds tab**: animated background media URLs (one per line)
+   - **Action footer** (always visible): Save, Reset, Test (when applicable), Refresh bookmarks; plus a current-config summary card
+   - State and handlers live in [usePopupState.ts](entrypoints/popup/usePopupState.ts); each tab is a presentational component under [entrypoints/popup/tabs/](entrypoints/popup/tabs/)
 
 3. **Styling** (`entrypoints/newtab/newtab.css`): Comprehensive CSS with:
    - Gradient background with SVG elements

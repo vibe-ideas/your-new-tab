@@ -43,6 +43,7 @@ async function openExtensionPage(context, extensionId, pageName) {
 }
 
 async function configureGoogleSearchUrl(popupPage) {
+  await popupPage.locator('[role="tab"][data-tab="search"]').click();
   await popupPage.locator('.provider-card[data-provider-id="google"] .input-field').nth(1).fill(googleSearchUrl);
   await popupPage.locator('#defaultSearchProvider').selectOption('google');
   await popupPage.locator('.default-provider-row .secondary-button').click();

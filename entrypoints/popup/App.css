@@ -87,7 +87,52 @@ body {
   border-color: #efe4d3;
 }
 
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 16px;
+  border: 1px solid #2a2520;
+  background: #15120f;
+}
+
+.tab-bar [role="tab"] {
+  flex: 1;
+  min-width: auto;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #958a7c;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.tab-bar [role="tab"]:hover {
+  background: #1c1814;
+  color: #c4b39a;
+}
+
+.tab-bar [role="tab"].active {
+  background: #efe4d3;
+  color: #1a1612;
+  border-color: #efe4d3;
+}
+
 .card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 22px;
+  border: 1px solid #2a2520;
+  background: #15120f;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.action-footer {
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -469,6 +514,15 @@ body {
   .toggle-grid,
   .provider-fields {
     grid-template-columns: 1fr;
+  }
+
+  .tab-bar {
+    gap: 2px;
+  }
+
+  .tab-bar [role="tab"] {
+    padding: 8px 10px;
+    font-size: 12px;
   }
 
   .action-grid .primary-button,

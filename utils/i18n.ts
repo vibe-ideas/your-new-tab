@@ -54,6 +54,29 @@ export interface TranslationKeys {
   // Search provider related
   selectSearchProviderLabel: string;
   copiedToClipboard: string;
+  // Popup tab labels
+  tabBookmarks: string;
+  tabSearch: string;
+  tabBackgrounds: string;
+  // Popup section text
+  popupSubtitle: string;
+  bookmarkSection: string;
+  bookmarkSectionHint: string;
+  jsonMode: string;
+  urlMode: string;
+  searchSection: string;
+  searchSectionHint: string;
+  searchProviderName: string;
+  searchProviderUrl: string;
+  addProvider: string;
+  removeProvider: string;
+  enabledLabel: string;
+  disabledLabel: string;
+  requiresLoginLabel: string;
+  backgroundSection: string;
+  backgroundSectionHint: string;
+  actionsSection: string;
+  actionsSectionHint: string;
 }
 
 const translations: Record<Language, TranslationKeys> = {
@@ -113,7 +136,30 @@ const translations: Record<Language, TranslationKeys> = {
     ,
     // Search provider
     selectSearchProviderLabel: '选择搜索提供商',
-    copiedToClipboard: '已复制查询内容到剪贴板，请在目标站点粘贴并搜索'
+    copiedToClipboard: '已复制查询内容到剪贴板，请在目标站点粘贴并搜索',
+    // Popup tabs
+    tabBookmarks: '书签来源',
+    tabSearch: '搜索引擎',
+    tabBackgrounds: '动态背景',
+    // Popup sections
+    popupSubtitle: '统一管理书签源、搜索引擎和动态背景，让新标签页更顺手。',
+    bookmarkSection: '书签来源',
+    bookmarkSectionHint: '选择内置书签、远程 JSON，或直接粘贴自己的书签数据。',
+    jsonMode: '直接 JSON',
+    urlMode: '远程 URL',
+    searchSection: '搜索引擎',
+    searchSectionHint: '设置默认搜索引擎，并维护可切换的搜索列表。',
+    searchProviderName: '名称',
+    searchProviderUrl: '搜索 URL 模板',
+    addProvider: '新增搜索提供商',
+    removeProvider: '删除',
+    enabledLabel: '已启用',
+    disabledLabel: '已停用',
+    requiresLoginLabel: '需要登录',
+    backgroundSection: '动态背景',
+    backgroundSectionHint: '支持 GIF、WebP、APNG 和 MP4/WebM/MOV 直链。',
+    actionsSection: '快速操作',
+    actionsSectionHint: '保存当前配置、测试来源可用性，或手动刷新书签。',
   },
   'en': {
     // Title
@@ -171,7 +217,30 @@ const translations: Record<Language, TranslationKeys> = {
     ,
     // Search provider
     selectSearchProviderLabel: 'Select search provider',
-    copiedToClipboard: 'Query copied to clipboard. Paste it in the target site and search.'
+    copiedToClipboard: 'Query copied to clipboard. Paste it in the target site and search.',
+    // Popup tabs
+    tabBookmarks: 'Bookmarks',
+    tabSearch: 'Search',
+    tabBackgrounds: 'Backgrounds',
+    // Popup sections
+    popupSubtitle: 'Manage bookmark sources, search engines, and animated backgrounds from one polished control panel.',
+    bookmarkSection: 'Bookmark source',
+    bookmarkSectionHint: 'Switch between built-in bookmarks, a remote JSON file, or directly pasted bookmark data.',
+    jsonMode: 'Direct JSON',
+    urlMode: 'Remote URL',
+    searchSection: 'Search providers',
+    searchSectionHint: 'Set the default provider and maintain the list shown in the new tab page.',
+    searchProviderName: 'Name',
+    searchProviderUrl: 'Search URL template',
+    addProvider: 'Add provider',
+    removeProvider: 'Remove',
+    enabledLabel: 'Enabled',
+    disabledLabel: 'Disabled',
+    requiresLoginLabel: 'Requires login',
+    backgroundSection: 'Animated backgrounds',
+    backgroundSectionHint: 'Supports direct GIF, WebP, APNG, MP4, WebM, and MOV links.',
+    actionsSection: 'Quick actions',
+    actionsSectionHint: 'Save the current configuration, test data sources, or refresh bookmarks manually.',
   }
 };
 
