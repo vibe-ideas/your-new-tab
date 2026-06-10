@@ -84,6 +84,8 @@ function App() {
             bookmarkModeLabel={state.bookmarkModeLabel}
             handleFormatJson={state.handleFormatJson}
             handleMinifyJson={state.handleMinifyJson}
+            handleImportJsonFile={state.handleImportJsonFile}
+            handleExportJsonFile={state.handleExportJsonFile}
             handleTest={state.handleTest}
             handleRefreshBookmarks={state.handleRefreshBookmarks}
           />

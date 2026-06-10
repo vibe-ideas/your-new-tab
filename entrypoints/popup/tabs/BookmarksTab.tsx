@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { t } from '@/utils/i18n';
 import {
   BOOKMARK_GROUP_IDS,
@@ -21,6 +22,8 @@ interface BookmarksTabProps {
   bookmarkModeLabel: string;
   handleFormatJson: () => void;
   handleMinifyJson: () => void;
+  handleImportJsonFile: (file: File) => void;
+  handleExportJsonFile: () => void;
   handleTest: () => void;
   handleRefreshBookmarks: () => void;
 }
@@ -42,8 +45,9 @@ export default function BookmarksTab(props: BookmarksTabProps) {
     jsonInput, setJsonInput,
     inputUrl, setInputUrl,
     bookmarkModeLabel, handleFormatJson, handleMinifyJson,
-    handleTest, handleRefreshBookmarks,
+    handleImportJsonFile, handleExportJsonFile, handleTest, handleRefreshBookmarks,
   } = props;
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const showTest = !useDefaultBookmarks || useDirectJson;
   const activeLabelValue = groupLabels[activeBookmarkGroup] ?? '';
 
@@ -140,6 +144,23 @@ export default function BookmarksTab(props: BookmarksTabProps) {
               </button>
               <button onClick={handleMinifyJson} className="secondary-button" type="button">
                 {t('minify')}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                hidden
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImportJsonFile(file);
+                  e.target.value = '';
+                }}
+              />
+              <button onClick={() => fileInputRef.current?.click()} className="secondary-button" type="button">
+                {t('importFile')}
+              </button>
+              <button onClick={handleExportJsonFile} className="secondary-button" type="button">
+                {t('exportFile')}
               </button>
             </div>
           </div>

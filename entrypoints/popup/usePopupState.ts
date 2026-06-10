@@ -234,6 +234,42 @@ export function usePopupState() {
     }
   };
 
+  const handleImportJsonFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result;
+      if (typeof text !== 'string') {
+        showError(t('fileReadFailed'));
+        return;
+      }
+      try {
+        const parsed = JSON.parse(text);
+        setJsonInput(JSON.stringify(parsed, null, 2));
+        showSuccess(t('fileImported'));
+      } catch (error) {
+        showError(t('jsonInvalid') + ': ' + (error as Error).message);
+      }
+    };
+    reader.onerror = () => showError(t('fileReadFailed'));
+    reader.readAsText(file);
+  };
+
+  const handleExportJsonFile = () => {
+    try {
+      const formatted = JSON.stringify(JSON.parse(jsonInput), null, 2);
+      const blob = new Blob([formatted], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bookmarks.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      showSuccess(t('fileExported'));
+    } catch (error) {
+      showError(t('jsonInvalid') + ': ' + (error as Error).message);
+    }
+  };
+
   const handleLanguageChange = (language: 'zh-CN' | 'en') => {
     i18n.setLanguage(language);
     setCurrentLanguage(language);
@@ -262,8 +298,9 @@ export function usePopupState() {
     providers, setProviders,
     defaultSearchProvider, setDefaultSearchProvider,
     handleSave, handleReset, handleSaveProviders, handleTest,
-    handleFormatJson, handleMinifyJson, handleLanguageChange,
-    handleRefreshBookmarks,
+    handleFormatJson, handleMinifyJson,
+    handleImportJsonFile, handleExportJsonFile,
+    handleLanguageChange, handleRefreshBookmarks,
     isStatusError, bookmarkModeLabel,
   };
 }

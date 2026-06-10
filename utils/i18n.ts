@@ -35,6 +35,11 @@ export interface TranslationKeys {
   usingDefaultBookmarks: string;
   usingDirectJson: string;
   usingUrl: string;
+  importFile: string;
+  fileImported: string;
+  fileReadFailed: string;
+  exportFile: string;
+  fileExported: string;
   
   // Placeholder text
   urlInputPlaceholder: string;
@@ -99,6 +104,9 @@ export interface TranslationKeys {
   weekdayFriday: string;
   weekdaySaturday: string;
   dateFormatYearMonthDay: string;
+  // Popup launcher
+  openSettings: string;
+  popupHint: string;
 }
 
 const translations: Record<Language, TranslationKeys> = {
@@ -154,8 +162,12 @@ const translations: Record<Language, TranslationKeys> = {
     directJsonLabel: '📋 直接 JSON',
     urlLabel: '🌐 ',
     usingDirectJson: '已设置为使用直接 JSON',
-    usingUrl: '已设置为使用 URL'
-    ,
+    usingUrl: '已设置为使用 URL',
+    importFile: '导入文件',
+    fileImported: 'JSON 文件已导入',
+    fileReadFailed: '文件读取失败',
+    exportFile: '导出文件',
+    fileExported: 'JSON 文件已导出',
     // Search provider
     selectSearchProviderLabel: '选择搜索提供商',
     copiedToClipboard: '已复制查询内容到剪贴板，请在目标站点粘贴并搜索',
@@ -204,6 +216,8 @@ const translations: Record<Language, TranslationKeys> = {
     weekdayFriday: '星期五',
     weekdaySaturday: '星期六',
     dateFormatYearMonthDay: '{year}年{month}月{day}日 {weekday}',
+    openSettings: '打开设置页',
+    popupHint: '在新标签页中打开完整设置面板',
   },
   'en': {
     // Title
@@ -257,8 +271,12 @@ const translations: Record<Language, TranslationKeys> = {
     directJsonLabel: '📋 Direct JSON',
     urlLabel: '🌐 ',
     usingDirectJson: 'Set to use direct JSON',
-    usingUrl: 'Set to use URL'
-    ,
+    usingUrl: 'Set to use URL',
+    importFile: 'Import File',
+    fileImported: 'JSON file imported',
+    fileReadFailed: 'Failed to read file',
+    exportFile: 'Export File',
+    fileExported: 'JSON file exported',
     // Search provider
     selectSearchProviderLabel: 'Select search provider',
     copiedToClipboard: 'Query copied to clipboard. Paste it in the target site and search.',
@@ -307,6 +325,8 @@ const translations: Record<Language, TranslationKeys> = {
     weekdayFriday: 'Friday',
     weekdaySaturday: 'Saturday',
     dateFormatYearMonthDay: '{weekday}, {month} {day}, {year}',
+    openSettings: 'Open Settings',
+    popupHint: 'Open full settings panel in a new tab',
   }
 };
 
