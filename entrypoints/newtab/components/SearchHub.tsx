@@ -53,9 +53,20 @@ export const SearchHub: React.FC<SearchHubProps> = ({
   selectableProviders, activeProvider, activeProviderId, onSelectProvider,
 }) => {
   const [showMenu, setShowMenu] = React.useState(false);
+  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
   const triggerRef = React.useRef<HTMLButtonElement>(null);
   const popoverRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
   const activeIconSrc = getSafeIconImageSrc(activeProvider?.iconSvg);
+
+  React.useEffect(() => {
+    if (showMenu) {
+      const idx = selectableProviders.findIndex((p) => p.id === activeProviderId);
+      setHighlightedIndex(idx !== -1 ? idx : 0);
+    } else {
+      setHighlightedIndex(-1);
+    }
+  }, [showMenu, selectableProviders, activeProviderId]);
 
   React.useEffect(() => {
     if (!showMenu) return;
@@ -77,16 +88,87 @@ export const SearchHub: React.FC<SearchHubProps> = ({
     };
   }, [showMenu]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSearchBoxKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.nativeEvent.isComposing) return;
-    if (e.key === 'Enter') { onSubmit(query); return; }
-    if (e.key === 'ArrowUp') { e.preventDefault(); onArrowUp(); return; }
-    if (e.key === 'ArrowDown') { e.preventDefault(); onArrowDown(); }
+
+    // 1. Direct cycle search provider using Alt + ArrowUp / Alt + ArrowDown
+    if (e.altKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      e.preventDefault();
+      const dir = e.key === 'ArrowUp' ? -1 : 1;
+      const currentIndex = selectableProviders.findIndex((p) => p.id === activeProviderId);
+      if (currentIndex !== -1) {
+        const nextIndex = (currentIndex + dir + selectableProviders.length) % selectableProviders.length;
+        onSelectProvider(selectableProviders[nextIndex].id);
+      }
+      return;
+    }
+
+    // 2. If the popover menu is open, handle keyboard navigation
+    if (showMenu) {
+      if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
+        e.preventDefault();
+        setHighlightedIndex((prev) => 
+          prev === -1 ? 0 : (prev + 1) % selectableProviders.length
+        );
+        return;
+      }
+      if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+        e.preventDefault();
+        setHighlightedIndex((prev) => 
+          prev === -1 ? selectableProviders.length - 1 : (prev - 1 + selectableProviders.length) % selectableProviders.length
+        );
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < selectableProviders.length) {
+          onSelectProvider(selectableProviders[highlightedIndex].id);
+        }
+        setShowMenu(false);
+        inputRef.current?.focus();
+        return;
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMenu(false);
+        inputRef.current?.focus();
+        return;
+      }
+    } else {
+      // 3. If the menu is closed, handle input keys (only when focus is in the input field)
+      if (e.target === inputRef.current) {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const dir = e.shiftKey ? -1 : 1;
+          const currentIndex = selectableProviders.findIndex((p) => p.id === activeProviderId);
+          if (currentIndex !== -1) {
+            const nextIndex = (currentIndex + dir + selectableProviders.length) % selectableProviders.length;
+            onSelectProvider(selectableProviders[nextIndex].id);
+          }
+          return;
+        }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onSubmit(query);
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          onArrowUp();
+          return;
+        }
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          onArrowDown();
+          return;
+        }
+      }
+    }
   };
 
   return (
     <div className="search-container">
-      <div className="search-box">
+      <div className="search-box" onKeyDown={handleSearchBoxKeyDown}>
         <button
           type="button"
           ref={triggerRef}
@@ -107,16 +189,18 @@ export const SearchHub: React.FC<SearchHubProps> = ({
         </button>
         {showMenu && (
           <div ref={popoverRef} className="provider-popover" role="listbox">
-            {selectableProviders.map((p) => {
+            {selectableProviders.map((p, idx) => {
               const iconSrc = getSafeIconImageSrc(p.iconSvg);
+              const isHighlighted = idx === highlightedIndex;
               return (
                 <div
                   key={p.id}
                   data-provider-id={p.id}
-                  className={`provider-popover-item${p.id === activeProviderId ? ' active' : ''}`}
+                  className={`provider-popover-item${p.id === activeProviderId ? ' active' : ''}${isHighlighted ? ' highlighted' : ''}`}
                   role="option"
                   aria-selected={p.id === activeProviderId}
                   onClick={() => { onSelectProvider(p.id); setShowMenu(false); }}
+                  onMouseEnter={() => setHighlightedIndex(idx)}
                 >
                   <span className="provider-option-icon" aria-hidden="true">
                     {iconSrc
@@ -131,12 +215,13 @@ export const SearchHub: React.FC<SearchHubProps> = ({
         )}
         <input
           type="text"
+          ref={inputRef}
           placeholder={t('searchInputPlaceholder')}
           className="search-input"
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
-          onKeyDown={handleKeyDown}
           autoComplete="off"
+          autoFocus
         />
         <button className="search-button" onClick={() => onSubmit(query)} aria-label={t('searchButtonAria')} type="button">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">

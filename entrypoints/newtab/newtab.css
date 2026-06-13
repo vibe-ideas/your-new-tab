@@ -297,10 +297,12 @@ body {
 .provider-popover-item:hover {
   background: rgba(0, 0, 0, 0.05);
 }
-.provider-popover-item.active {
+.provider-popover-item.active,
+.provider-popover-item.highlighted {
   background: rgba(0, 123, 255, 0.08);
 }
-.provider-popover-item.active:hover {
+.provider-popover-item.active:hover,
+.provider-popover-item.highlighted:hover {
   background: rgba(0, 123, 255, 0.14);
 }
 
