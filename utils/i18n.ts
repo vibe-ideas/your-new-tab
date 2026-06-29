@@ -63,6 +63,7 @@ export interface TranslationKeys {
   tabBookmarks: string;
   tabSearch: string;
   tabBackgrounds: string;
+  tabAnniversaries: string;
   // Popup section text
   popupSubtitle: string;
   bookmarkSection: string;
@@ -80,6 +81,20 @@ export interface TranslationKeys {
   requiresLoginLabel: string;
   backgroundSection: string;
   backgroundSectionHint: string;
+  anniversarySection: string;
+  anniversarySectionHint: string;
+  anniversaryTitlePlaceholder: string;
+  anniversaryNotePlaceholder: string;
+  anniversaryRecurringToggle: string;
+  anniversaryAdd: string;
+  anniversaryNewItem: string;
+  anniversaryTypeBirthday: string;
+  anniversaryTypeTravel: string;
+  anniversaryTypeAnniversary: string;
+  anniversaryTypeCustom: string;
+  anniversaryCalendarSolar: string;
+  anniversaryCalendarLunar: string;
+  anniversaryCalendarHint: string;
   actionsSection: string;
   actionsSectionHint: string;
   // Bookmark groups
@@ -96,6 +111,17 @@ export interface TranslationKeys {
   searchProviderToggleNoMenu: string;
   searchButtonAria: string;
   switchBackgroundAria: string;
+  anniversarySidebarLabel: string;
+  anniversarySidebarTitle: string;
+  anniversaryPinnedBadge: string;
+  anniversaryToday: string;
+  anniversaryTodayShort: string;
+  anniversaryTomorrow: string;
+  anniversaryDaysLeft: string;
+  anniversaryCalendarSolarTag: string;
+  anniversaryCalendarLunarTag: string;
+  anniversaryRecurring: string;
+  anniversaryOneTime: string;
   weekdaySunday: string;
   weekdayMonday: string;
   weekdayTuesday: string;
@@ -175,6 +201,7 @@ const translations: Record<Language, TranslationKeys> = {
     tabBookmarks: '书签来源',
     tabSearch: '搜索引擎',
     tabBackgrounds: '动态背景',
+    tabAnniversaries: '纪念日',
     // Popup sections
     popupSubtitle: '统一管理书签源、搜索引擎和动态背景，让新标签页更顺手。',
     bookmarkSection: '书签来源',
@@ -192,6 +219,20 @@ const translations: Record<Language, TranslationKeys> = {
     requiresLoginLabel: '需要登录',
     backgroundSection: '动态背景',
     backgroundSectionHint: '支持 GIF、WebP、APNG 和 MP4/WebM/MOV 直链。',
+    anniversarySection: '纪念日倒计时',
+    anniversarySectionHint: '维护生日、旅行、纪念日或自定义日期。新标签页侧边栏默认收起，临近当天会自动固定浮出。',
+    anniversaryTitlePlaceholder: '名称，例如：妈妈生日、东京旅行',
+    anniversaryNotePlaceholder: '备注，例如：订花、检查护照、准备礼物',
+    anniversaryRecurringToggle: '每年重复',
+    anniversaryAdd: '新增纪念日',
+    anniversaryNewItem: '新的纪念日',
+    anniversaryTypeBirthday: '生日',
+    anniversaryTypeTravel: '旅行',
+    anniversaryTypeAnniversary: '纪念日',
+    anniversaryTypeCustom: '自定义',
+    anniversaryCalendarSolar: '公历',
+    anniversaryCalendarLunar: '农历',
+    anniversaryCalendarHint: '农历模式下，日期框里选择任意一个对应农历的公历日期，之后会按这个农历月日自动倒计时。',
     actionsSection: '快速操作',
     actionsSectionHint: '保存当前配置、测试来源可用性，或手动刷新书签。',
     // Bookmark groups
@@ -208,6 +249,17 @@ const translations: Record<Language, TranslationKeys> = {
     searchProviderToggleNoMenu: '搜索',
     searchButtonAria: '搜索',
     switchBackgroundAria: '切换背景',
+    anniversarySidebarLabel: '纪念日倒计时侧边栏',
+    anniversarySidebarTitle: '纪念日',
+    anniversaryPinnedBadge: '临近',
+    anniversaryToday: '今天',
+    anniversaryTodayShort: '今',
+    anniversaryTomorrow: '明天',
+    anniversaryDaysLeft: '{days} 天',
+    anniversaryCalendarSolarTag: '公历',
+    anniversaryCalendarLunarTag: '农历',
+    anniversaryRecurring: '每年',
+    anniversaryOneTime: '一次',
     weekdaySunday: '星期日',
     weekdayMonday: '星期一',
     weekdayTuesday: '星期二',
@@ -284,6 +336,7 @@ const translations: Record<Language, TranslationKeys> = {
     tabBookmarks: 'Bookmarks',
     tabSearch: 'Search',
     tabBackgrounds: 'Backgrounds',
+    tabAnniversaries: 'Dates',
     // Popup sections
     popupSubtitle: 'Manage bookmark sources, search engines, and animated backgrounds from one polished control panel.',
     bookmarkSection: 'Bookmark source',
@@ -301,6 +354,20 @@ const translations: Record<Language, TranslationKeys> = {
     requiresLoginLabel: 'Requires login',
     backgroundSection: 'Animated backgrounds',
     backgroundSectionHint: 'Supports direct GIF, WebP, APNG, MP4, WebM, and MOV links.',
+    anniversarySection: 'Date countdowns',
+    anniversarySectionHint: 'Track birthdays, trips, anniversaries, and custom dates. The new-tab sidebar stays tucked away until hover, and pins itself when a date is due within a day.',
+    anniversaryTitlePlaceholder: 'Name, e.g. Mom birthday or Tokyo trip',
+    anniversaryNotePlaceholder: 'Note, e.g. order flowers, check passport, prepare gift',
+    anniversaryRecurringToggle: 'Repeats yearly',
+    anniversaryAdd: 'Add date',
+    anniversaryNewItem: 'New date',
+    anniversaryTypeBirthday: 'Birthday',
+    anniversaryTypeTravel: 'Trip',
+    anniversaryTypeAnniversary: 'Anniversary',
+    anniversaryTypeCustom: 'Custom',
+    anniversaryCalendarSolar: 'Solar',
+    anniversaryCalendarLunar: 'Lunar',
+    anniversaryCalendarHint: 'For lunar mode, pick any Gregorian date that matches the desired lunar date. The countdown will repeat on that lunar month/day each year.',
     actionsSection: 'Quick actions',
     actionsSectionHint: 'Save the current configuration, test data sources, or refresh bookmarks manually.',
     // Bookmark groups
@@ -317,6 +384,17 @@ const translations: Record<Language, TranslationKeys> = {
     searchProviderToggleNoMenu: 'Search',
     searchButtonAria: 'Search',
     switchBackgroundAria: 'Switch background',
+    anniversarySidebarLabel: 'Date countdown sidebar',
+    anniversarySidebarTitle: 'Dates',
+    anniversaryPinnedBadge: 'Soon',
+    anniversaryToday: 'Today',
+    anniversaryTodayShort: 'Now',
+    anniversaryTomorrow: 'Tomorrow',
+    anniversaryDaysLeft: '{days}d',
+    anniversaryCalendarSolarTag: 'Solar',
+    anniversaryCalendarLunarTag: 'Lunar',
+    anniversaryRecurring: 'Yearly',
+    anniversaryOneTime: 'Once',
     weekdaySunday: 'Sunday',
     weekdayMonday: 'Monday',
     weekdayTuesday: 'Tuesday',

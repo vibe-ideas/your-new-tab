@@ -39,7 +39,7 @@ async function launchExtension() {
 
 async function openPopup(context, extensionId) {
   const page = await context.newPage();
-  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  await page.goto(`chrome-extension://${extensionId}/settings.html`);
   return page;
 }
 
@@ -54,6 +54,7 @@ test('Bookmarks tab is the default; tab navigation reveals each tab panel', asyn
     await expect(popup.locator('[role="tab"][data-tab="bookmarks"]')).toHaveAttribute('aria-selected', 'true');
     await expect(popup.locator('[data-tab-panel="search"]')).toHaveCount(0);
     await expect(popup.locator('[data-tab-panel="backgrounds"]')).toHaveCount(0);
+    await expect(popup.locator('[data-tab-panel="anniversaries"]')).toHaveCount(0);
 
     // Switch to Search.
     await popup.locator('[role="tab"][data-tab="search"]').click();
@@ -68,6 +69,13 @@ test('Bookmarks tab is the default; tab navigation reveals each tab panel', asyn
     await expect(popup.locator('[role="tab"][data-tab="backgrounds"]')).toHaveAttribute('aria-selected', 'true');
     await expect(popup.locator('#backgroundMediaUrls')).toBeVisible();
     await expect(popup.locator('[data-tab-panel="search"]')).toHaveCount(0);
+
+    // Switch to Anniversaries.
+    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
+    await expect(popup.locator('[role="tab"][data-tab="anniversaries"]')).toHaveAttribute('aria-selected', 'true');
+    await expect(popup.locator('[data-tab-panel="anniversaries"]')).toBeVisible();
+    await expect(popup.locator('.anniversary-editor-card')).toHaveCount(2);
+    await expect(popup.locator('[data-tab-panel="backgrounds"]')).toHaveCount(0);
   } finally {
     await extension.cleanup();
   }
@@ -88,6 +96,8 @@ test('Switching tabs preserves form state in unmounted panels', async () => {
     await expect(popup.locator('#defaultSearchProvider')).toBeVisible();
     await popup.locator('[role="tab"][data-tab="backgrounds"]').click();
     await expect(popup.locator('#backgroundMediaUrls')).toBeVisible();
+    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
+    await expect(popup.locator('.anniversary-editor-card')).toHaveCount(2);
     await popup.locator('[role="tab"][data-tab="bookmarks"]').click();
 
     // The pasted JSON must still be there (state lives in the popup-level hook).
@@ -115,6 +125,14 @@ test('Save button in the persistent footer works from any active tab', async () 
     // Persisted to localStorage.
     const stored = await popup.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'));
     expect(stored).toBe('https://example.com/sample.gif');
+
+    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
+    await popup.locator('.anniversary-editor-card').first().locator('input').first().fill('Launch day');
+    await popup.locator('.anniversary-editor-card').first().locator('select').nth(1).selectOption('lunar');
+    await popup.locator('#saveConfigButton').click();
+    const anniversaries = await popup.evaluate(() => JSON.parse(localStorage.getItem('anniversaryItems') || '[]'));
+    expect(anniversaries[0].title).toBe('Launch day');
+    expect(anniversaries[0].calendar).toBe('lunar');
   } finally {
     await extension.cleanup();
   }

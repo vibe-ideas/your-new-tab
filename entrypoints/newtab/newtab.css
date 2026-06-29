@@ -63,7 +63,8 @@ body {
 .search-container,
 .shortcuts-grid,
 .windmill-button,
-.bookmark-group-toggle {
+.bookmark-group-toggle,
+.anniversary-sidebar {
   position: relative;
   z-index: 2;
 }
@@ -511,6 +512,249 @@ body {
   z-index: 1100;
   max-width: 80vw;
   animation: toastFadeIn 0.18s ease-out;
+}
+
+.anniversary-sidebar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(560px, calc(100vw - 24px));
+  transform: translateX(-50%);
+  z-index: 1001;
+  color: #f8fafc;
+  outline: none;
+}
+
+.anniversary-island-summary {
+  position: relative;
+  width: min(360px, 100%);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background:
+    linear-gradient(180deg, rgba(35, 41, 52, 0.9), rgba(13, 18, 28, 0.96)),
+    radial-gradient(circle at 20% 0%, rgba(248, 215, 122, 0.18), transparent 34%);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 20px 42px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.anniversary-sidebar:hover .anniversary-island-summary,
+.anniversary-sidebar:focus .anniversary-island-summary,
+.anniversary-sidebar:focus-within .anniversary-island-summary,
+.anniversary-sidebar.is-pinned-soon .anniversary-island-summary {
+  transform: translateY(2px) scale(1.01);
+}
+
+.anniversary-island-orb {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe59b, #f59e0b 72%);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  flex-shrink: 0;
+}
+
+.anniversary-island-icon {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.anniversary-island-copy {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+}
+
+.anniversary-island-title {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anniversary-island-subtitle {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.anniversary-island-days {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  font-size: 11px;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.anniversary-panel {
+  width: min(560px, 100%);
+  margin-top: 6px;
+  padding: 0 12px;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(-6px) scale(0.98);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(13, 18, 28, 0.92), rgba(18, 24, 36, 0.88)),
+    radial-gradient(circle at top center, rgba(255, 234, 178, 0.12), transparent 45%);
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 52px rgba(0, 0, 0, 0.34);
+  transition: max-height 0.24s ease, opacity 0.2s ease, transform 0.24s ease, padding 0.24s ease;
+}
+
+.anniversary-sidebar:hover .anniversary-panel,
+.anniversary-sidebar:focus .anniversary-panel,
+.anniversary-sidebar:focus-within .anniversary-panel,
+.anniversary-sidebar.is-pinned-soon .anniversary-panel {
+  max-height: 320px;
+  opacity: 1;
+  padding: 12px;
+  transform: translateY(0) scale(1);
+}
+
+.anniversary-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.anniversary-panel-header strong {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #f6c453;
+  color: #1f2937;
+  font-size: 10px;
+}
+
+.anniversary-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.anniversary-card {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.anniversary-card-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 13px;
+}
+
+.anniversary-card-title {
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anniversary-card-meta,
+.anniversary-card-note {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.anniversary-card-meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.anniversary-card-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anniversary-card-days {
+  min-width: 46px;
+  padding: 5px 7px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #111827;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.anniversary-card.type-birthday .anniversary-card-icon { background: rgba(244, 114, 182, 0.24); }
+.anniversary-card.type-travel .anniversary-card-icon { background: rgba(45, 212, 191, 0.22); }
+.anniversary-card.type-anniversary .anniversary-card-icon { background: rgba(250, 204, 21, 0.22); }
+.anniversary-card.type-custom .anniversary-card-icon { background: rgba(147, 197, 253, 0.22); }
+
+@media (max-width: 640px) {
+  .anniversary-sidebar {
+    top: 12px;
+    width: calc(100vw - 24px);
+  }
+
+  .anniversary-island-summary {
+    width: 100%;
+  }
+
+  .anniversary-island-copy {
+    gap: 6px;
+  }
+
+  .anniversary-island-subtitle {
+    max-width: 96px;
+  }
+
+  .anniversary-panel {
+    width: 100%;
+  }
+
+  .anniversary-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 @keyframes toastFadeIn {

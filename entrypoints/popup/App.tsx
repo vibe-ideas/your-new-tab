@@ -4,14 +4,16 @@ import { usePopupState } from './usePopupState';
 import BookmarksTab from './tabs/BookmarksTab';
 import SearchTab from './tabs/SearchTab';
 import BackgroundsTab from './tabs/BackgroundsTab';
+import AnniversariesTab from './tabs/AnniversariesTab';
 import './App.css';
 
-type TabId = 'bookmarks' | 'search' | 'backgrounds';
+type TabId = 'bookmarks' | 'search' | 'backgrounds' | 'anniversaries';
 
-const TABS: { id: TabId; labelKey: 'tabBookmarks' | 'tabSearch' | 'tabBackgrounds' }[] = [
+const TABS: { id: TabId; labelKey: 'tabBookmarks' | 'tabSearch' | 'tabBackgrounds' | 'tabAnniversaries' }[] = [
   { id: 'bookmarks', labelKey: 'tabBookmarks' },
   { id: 'search', labelKey: 'tabSearch' },
   { id: 'backgrounds', labelKey: 'tabBackgrounds' },
+  { id: 'anniversaries', labelKey: 'tabAnniversaries' },
 ];
 
 function App() {
@@ -103,6 +105,12 @@ function App() {
           <BackgroundsTab
             backgroundMediaUrlsInput={state.backgroundMediaUrlsInput}
             setBackgroundMediaUrlsInput={state.setBackgroundMediaUrlsInput}
+          />
+        )}
+        {activeTab === 'anniversaries' && (
+          <AnniversariesTab
+            anniversaries={state.anniversaries}
+            setAnniversaries={state.setAnniversaries}
           />
         )}
       </div>

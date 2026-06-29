@@ -22,6 +22,12 @@ import {
   writeBookmarkGroupLabels,
 } from '@/utils/bookmarkGroups';
 import { DEFAULT_BOOKMARKS } from '@/utils/defaultBookmarks';
+import {
+  readAnniversaryItems,
+  resetAnniversaryItems,
+  writeAnniversaryItems,
+  type AnniversaryItem,
+} from '@/utils/anniversaries';
 
 function readStoredSearchProviderConfig() {
   try {
@@ -52,6 +58,7 @@ export function usePopupState() {
   const [useDirectJson, setUseDirectJson] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [backgroundMediaUrlsInput, setBackgroundMediaUrlsInput] = useState('');
+  const [anniversaries, setAnniversaries] = useState<AnniversaryItem[]>(() => readAnniversaryItems());
   const [statusEntry, setStatusEntry] = useState<{ text: string; kind: 'success' | 'error' } | null>(null);
   const [currentLanguage, setCurrentLanguage] = useState(i18n.getLanguage());
 
@@ -89,6 +96,7 @@ export function usePopupState() {
     setProviders(config.providers);
     setDefaultSearchProvider(config.defaultProviderId);
     if (config.repaired) persistSearchProviderConfig(config);
+    setAnniversaries(readAnniversaryItems());
   }, [activeBookmarkGroup, loadGroupIntoUi]);
 
   const setActiveBookmarkGroup = useCallback((group: BookmarkGroupId) => {
@@ -143,6 +151,7 @@ export function usePopupState() {
       localStorage.removeItem('customBackgroundMediaUrls');
     }
     localStorage.removeItem('customBackgroundMediaIndex');
+    writeAnniversaryItems(anniversaries);
 
     try {
       const config = readStoredSearchProviderConfig();
@@ -159,6 +168,7 @@ export function usePopupState() {
     clearBookmarkGroupLabels();
     localStorage.removeItem('customBackgroundMediaUrls');
     localStorage.removeItem('customBackgroundMediaIndex');
+    resetAnniversaryItems();
     setGroupLabels({ ...EMPTY_BOOKMARK_GROUP_LABELS });
     setBookmarksUrl('default');
     setInputUrl('');
@@ -166,6 +176,7 @@ export function usePopupState() {
     setUseDirectJson(false);
     setJsonInput('');
     setBackgroundMediaUrlsInput('');
+    setAnniversaries(readAnniversaryItems());
     showSuccess(t('resetToDefault'));
   };
 
@@ -294,6 +305,7 @@ export function usePopupState() {
     useDirectJson, setUseDirectJson,
     jsonInput, setJsonInput,
     backgroundMediaUrlsInput, setBackgroundMediaUrlsInput,
+    anniversaries, setAnniversaries,
     status, currentLanguage,
     providers, setProviders,
     defaultSearchProvider, setDefaultSearchProvider,

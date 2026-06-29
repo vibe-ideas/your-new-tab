@@ -17,6 +17,7 @@ import { ShortcutsGrid } from './components/ShortcutsGrid';
 import { BackgroundLayer } from './components/BackgroundLayer';
 import { WindmillButton } from './components/WindmillButton';
 import { Toast } from './components/Toast';
+import { AnniversarySidebar } from './components/AnniversarySidebar';
 
 const NewTab: React.FC = () => {
   const now = useClock();
@@ -72,6 +73,7 @@ const NewTab: React.FC = () => {
         onSelectProvider={providers.selectProvider}
       />
       <ShortcutsGrid bookmarks={bookmarks.bookmarks} />
+      <AnniversarySidebar />
       <Toast message={toast.message} />
       <WindmillButton onClick={background.switchMedia} loading={background.isSwitching} />
     </div>
