@@ -1,4 +1,5 @@
 import { isAllowedBackgroundFetchUrl } from '../utils/safeUrl';
+import { BACKGROUND_MAX_SOURCES, BACKGROUND_SOURCE_TIMEOUT_MS } from '../utils/backgroundFetch';
 
 export default defineBackground(() => {
   const runtime = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime : chrome.runtime;
@@ -17,7 +18,7 @@ export default defineBackground(() => {
           if (typeof fallback === 'string') candidateUrls.push(fallback);
         }
       }
-      const urls = candidateUrls.filter(isAllowedBackgroundFetchUrl);
+      const urls = candidateUrls.filter(isAllowedBackgroundFetchUrl).slice(0, BACKGROUND_MAX_SOURCES);
 
       if (urls.length === 0) {
         try {
@@ -33,15 +34,13 @@ export default defineBackground(() => {
         for (let i = 0; i < urls.length; i++) {
           const url = urls[i];
           
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), BACKGROUND_SOURCE_TIMEOUT_MS);
           try {
-            // Try to fetch the image
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
             
             const response = await fetch(url, { 
               signal: controller.signal
             });
-            clearTimeout(timeoutId);
             
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
@@ -72,6 +71,7 @@ export default defineBackground(() => {
             });
             
             // If we successfully fetched an image, return it
+            controller.signal.throwIfAborted();
             return result;
           } catch (error: any) {
             console.error(`Error fetching background image from ${url}:`, error);
@@ -79,6 +79,8 @@ export default defineBackground(() => {
             if (i === urls.length - 1) {
               throw new Error(`Failed to fetch image from all sources. Last error: ${error.message}`);
             }
+          } finally {
+            clearTimeout(timeoutId);
           }
         }
         

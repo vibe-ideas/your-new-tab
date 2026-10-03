@@ -59,6 +59,8 @@ async function openExtensionPage(context, extensionId, pageName) {
 
 async function configureSearchProviders(popupPage) {
   await popupPage.locator('[role="tab"][data-tab="search"]').click();
+  await popupPage.locator('.provider-card[data-provider-id="google"] > summary').click();
+  await popupPage.locator('.provider-card[data-provider-id="metaso"] > summary').click();
   await popupPage.locator('.provider-card[data-provider-id="google"] .input-field').nth(1).fill(googleSearchUrl);
   await popupPage.locator('.provider-card[data-provider-id="metaso"] .input-field').nth(1).fill(metasoSearchUrl);
 }
@@ -81,8 +83,9 @@ test('accepts direct JSON bookmark configuration and renders custom bookmarks', 
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
-    await popupPage.locator('.toggle-card').filter({ hasText: /直接粘贴书签 JSON|Paste Bookmarks JSON Directly/ }).click();
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
+    await popupPage.locator('[data-tab="bookmarks"]').click();
+    await popupPage.locator('.source-option').filter({ hasText: /JSON 数据|JSON data/ }).click();
 
     const jsonTextarea = popupPage.locator('#bookmarksJson');
     await expect(jsonTextarea).toBeVisible();
@@ -103,10 +106,10 @@ test('applies the saved default search provider in new tab searches', async () =
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await configureSearchProviders(popupPage);
     await popupPage.locator('#defaultSearchProvider').selectOption('metaso');
-    await popupPage.locator('.default-provider-row .secondary-button').click();
+    await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
 
     const newTabPage = await openExtensionPage(extension.context, extension.extensionId, 'newtab');
@@ -133,10 +136,10 @@ test('switches search providers from the new tab menu and remembers the selectio
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await configureSearchProviders(popupPage);
     await popupPage.locator('#defaultSearchProvider').selectOption('google');
-    await popupPage.locator('.default-provider-row .secondary-button').click();
+    await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
 
     const newTabPage = await openExtensionPage(extension.context, extension.extensionId, 'newtab');
@@ -169,11 +172,11 @@ test('switches search providers from the new tab menu and remembers the selectio
   }
 });
 
-test('repairs legacy metaso-only search config in popup and new tab', async () => {
+test('repairs legacy metaso-only search config in settings and new tab', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await seedLegacyMetasoOnlySearchConfig(popupPage);
     await popupPage.reload();
 
@@ -213,7 +216,7 @@ test('configures and plays animated backgrounds in the real extension', async ()
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await popupPage.locator('[role="tab"][data-tab="backgrounds"]').click();
     await popupPage.locator('#backgroundMediaUrls').fill(`${animatedBackgroundOne}\n${animatedBackgroundTwo}`);
     await popupPage.locator('#saveConfigButton').click();

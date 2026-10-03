@@ -34,40 +34,53 @@ export const useBackgroundMedia = (): BackgroundMediaApi => {
 
   const loadDynamic = React.useCallback(async (forceRefresh: boolean): Promise<boolean> => {
     const requestId = ++requestIdRef.current;
-    try {
-      if (forceRefresh) {
-        localStorage.removeItem('backgroundImage');
-      } else {
+    if (!forceRefresh) {
+      try {
         const stored = localStorage.getItem('backgroundImage');
         if (stored) {
           const parsed: BackgroundImageCache = JSON.parse(stored);
-          const cachedSource = parsed.base64 || parsed.url;
-          if (cachedSource) {
+          const cachedSource = parsed?.base64 || parsed?.url;
+          if (typeof cachedSource === 'string' && cachedSource) {
             setMedia({ src: cachedSource, type: 'image' });
-            return true;
+            if (new Date(parsed.timestamp).toDateString() === new Date().toDateString()) return true;
           }
         }
+      } catch (error) {
+        console.warn('Failed to read background cache', error);
       }
+    }
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    try {
       const { imageUrl, fallbackUrls } = buildDynamicRequest();
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Background script response timeout')), FETCH_TIMEOUT_MS);
+        timeoutId = setTimeout(() => reject(new Error('Background script response timeout')), FETCH_TIMEOUT_MS);
       });
       const fetchPromise = sendMessage({ action: 'fetchBackgroundImage', url: imageUrl, fallbackUrls });
-      const response: any = await Promise.race([fetchPromise, timeoutPromise]);
+      const response = await Promise.race([fetchPromise, timeoutPromise]) as { success?: boolean; data?: string };
+      clearTimeout(timeoutId);
       if (requestIdRef.current !== requestId) return false;
-      if (response?.success && response.data) {
-        const base64Image = response.data as string;
+      if (response?.success && typeof response.data === 'string' && response.data) {
+        const base64Image = response.data;
+        await preloadMedia(base64Image, 'image');
+        if (requestIdRef.current !== requestId) return false;
         setMedia({ src: base64Image, type: 'image' });
-        localStorage.setItem('backgroundImage', JSON.stringify({
-          url: imageUrl, base64: base64Image, timestamp: Date.now(),
-        } satisfies BackgroundImageCache));
+        try {
+          localStorage.setItem('backgroundImage', JSON.stringify({
+            url: imageUrl, base64: base64Image, timestamp: Date.now(),
+          } satisfies BackgroundImageCache));
+        } catch (error) {
+          // Quota failure should not discard an image that is already usable.
+          console.warn('Failed to cache background image', error);
+        }
         return true;
       }
-      console.error('Background script returned no image', response);
+      console.warn('Background script returned no image', response);
     } catch (error) {
-      console.error('Failed to fetch background image:', error);
+      console.warn('Failed to fetch background image:', error);
+    } finally {
+      clearTimeout(timeoutId);
     }
-    if (requestIdRef.current === requestId) setMedia(null);
+    // Keep the old image visible when refresh fails.
     return false;
   }, []);
 
@@ -83,13 +96,12 @@ export const useBackgroundMedia = (): BackgroundMediaApi => {
         if (requestIdRef.current !== requestId) return true;
         setMedia({ src: url, type });
         setCustomIndex(idx);
-        localStorage.setItem(CUSTOM_INDEX_KEY, String(idx));
+        try { localStorage.setItem(CUSTOM_INDEX_KEY, String(idx)); } catch { /* Keep the loaded media. */ }
         return true;
       } catch (error) {
         console.error(`Failed to load custom background: ${url}`, error);
       }
     }
-    if (requestIdRef.current === requestId) setMedia(null);
     return false;
   }, [customUrls]);
 
@@ -149,7 +161,24 @@ export const useBackgroundMedia = (): BackgroundMediaApi => {
     })();
   }, [customUrls.length, customIndex, loadCustom, loadDynamic]);
 
-  const handleError = React.useCallback(() => { void loadDynamic(false); }, [loadDynamic]);
+  React.useEffect(() => {
+    if (customUrls.length) return;
+    let timer: ReturnType<typeof setTimeout>;
+    const schedule = () => {
+      const next = new Date();
+      next.setHours(24, 0, 0, 0);
+      timer = setTimeout(() => { void loadDynamic(false); schedule(); }, next.getTime() - Date.now());
+    };
+    schedule();
+    return () => clearTimeout(timer);
+  }, [customUrls.length, loadDynamic]);
+
+  const handleError = React.useCallback(() => {
+    // Never retry the same broken cache entry indefinitely.
+    try { localStorage.removeItem('backgroundImage'); } catch { /* ignore */ }
+    setMedia(null);
+    void loadDynamic(true);
+  }, [loadDynamic]);
 
   return { media, isSwitching, videoRef, ensureVideoPlayback, switchMedia, handleError };
 };

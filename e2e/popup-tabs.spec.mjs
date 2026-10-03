@@ -1,139 +1,184 @@
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { chromium, test, expect } from '@playwright/test';
+import { test, expect, enterJson, bookmarks, selectSettingsTab as select } from './helpers/extension.mjs';
 
-const extensionPath = path.join(process.cwd(), '.output', 'chrome-mv3');
+const save = (page) => page.locator('#saveConfigButton');
+const discard = (page) => page.locator('#discardConfigButton');
 
-const sampleJson = JSON.stringify([
-  { id: 'tab-test-1', title: 'Tab Test', url: 'https://example.com/tab-test' },
-], null, 2);
+test('settings open on AI search and keyboard navigation selects each section', async ({ app }) => {
+  const page = app.settings;
+  await expect(page.locator('[data-tab-panel="search"]')).toBeVisible();
+  await expect(save(page)).toBeDisabled();
+  await page.locator('#nav-search').focus();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.locator('#nav-bookmarks')).toBeFocused();
+  await expect(page.locator('[data-tab-panel="bookmarks"]')).toBeVisible();
+  await page.keyboard.press('End');
+  await expect(page.locator('#nav-anniversaries')).toBeFocused();
+  await page.keyboard.press('Home');
+  await expect(page.locator('#nav-search')).toBeFocused();
+});
 
-async function launchExtension() {
-  const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'your-new-tab-pw-tabs-'));
-  const context = await chromium.launchPersistentContext(userDataDir, {
-    channel: 'chromium',
-    headless: true,
-    viewport: { width: 1440, height: 960 },
-    args: [
-      `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`,
-    ],
+test('switching source modes, groups, sections and language preserves drafts until discarded', async ({ app }) => {
+  const page = app.settings;
+  await enterJson(page, bookmarks('External draft'));
+  await page.locator('input[value="remote"]').check();
+  await page.locator('#bookmarksUrl').fill('https://example.com/bookmarks.json');
+  await page.locator('input[value="json"]').check();
+  await expect(page.locator('#bookmarksJson')).toContainText('External draft');
+  await page.locator('.bookmark-group-button').nth(1).click();
+  await enterJson(page, bookmarks('Internal draft'));
+  await select(page, 'backgrounds');
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/draft.mp4');
+  await page.getByRole('button', { name: '中文', exact: true }).click();
+  await page.getByRole('button', { name: 'EN', exact: true }).click();
+  await select(page, 'bookmarks');
+  await expect(page.locator('#bookmarksJson')).toContainText('Internal draft');
+  await page.locator('.bookmark-group-button').nth(0).click();
+  await expect(page.locator('#bookmarksJson')).toContainText('External draft');
+  expect(await page.evaluate(() => localStorage.getItem('bookmarkGroup.external.bookmarksJson'))).toBeNull();
+  await discard(page).click();
+  await expect(page.locator('input[value="default"]')).toBeChecked();
+  await page.locator('.bookmark-group-button').nth(1).click();
+  await expect(page.locator('input[value="default"]')).toBeChecked();
+  await select(page, 'backgrounds');
+  await expect(page.locator('#backgroundMediaUrls')).toHaveValue('');
+  await expect(save(page)).toBeDisabled();
+});
+
+test('restoring one bookmark group requires confirmation and preserves the other group and sections', async ({ app }) => {
+  const page = app.settings;
+  await enterJson(page, bookmarks('External saved'));
+  await page.locator('#bookmarkGroupLabel').fill('Personal');
+  await page.locator('.bookmark-group-button').nth(1).click();
+  await enterJson(page, bookmarks('Internal saved'));
+  await page.locator('#bookmarkGroupLabel').fill('Work');
+  await select(page, 'backgrounds');
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/saved.gif');
+  await save(page).click();
+  await select(page, 'bookmarks');
+  await page.locator('.reset-button').click();
+  await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(page.locator('#bookmarksJson')).toContainText('Internal saved');
+  await expect(save(page)).toBeDisabled();
+  await page.locator('.reset-button').click();
+  await page.locator('#confirmRestoreButton').click();
+  await expect(page.locator('input[value="default"]')).toBeChecked();
+  await expect(page.locator('#bookmarkGroupLabel')).toHaveValue('');
+  expect(await page.evaluate(() => localStorage.getItem('bookmarkGroup.internal.useDirectJson'))).toBe('true');
+  await save(page).click();
+  await page.reload();
+  await select(page, 'bookmarks');
+  await expect(page.locator('input[value="default"]')).toBeChecked();
+  await page.locator('.bookmark-group-button').nth(0).click();
+  await expect(page.locator('#bookmarkGroupLabel')).toHaveValue('Personal');
+  await expect(page.locator('#bookmarksJson')).toContainText('External saved');
+  await select(page, 'backgrounds');
+  await expect(page.locator('#backgroundMediaUrls')).toHaveValue('https://example.com/saved.gif');
+});
+
+test('saving from another section reveals and focuses an invalid field in the hidden bookmark group', async ({ app }) => {
+  const page = app.settings;
+  await enterJson(page, '[{}]');
+  await page.locator('.bookmark-group-button').nth(1).click();
+  await select(page, 'backgrounds');
+  await save(page).click();
+  await expect(page.locator('[data-tab-panel="bookmarks"]')).toBeVisible();
+  await expect(page.locator('.bookmark-group-button').nth(0)).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#bookmarksJson')).toBeFocused();
+  await expect(page.locator('#bookmarksJson-error')).toContainText('rows 1');
+});
+
+test('adding a search engine opens its editor and saving invalid hidden fields returns focus to the editor', async ({ app }) => {
+  const page = app.settings;
+  await page.getByRole('button', { name: 'Add search engine' }).click();
+  const editor = page.locator('.provider-card').last();
+  const name = editor.locator('input').nth(0);
+  await expect(name).toBeFocused();
+  await name.fill('My engine');
+  await editor.locator('summary').click();
+  await select(page, 'backgrounds');
+  await save(page).click();
+  await expect(page.locator('.provider-card').last().locator('input').nth(1)).toBeFocused();
+  await page.locator('.provider-card').last().locator('input').nth(1).fill('https://example.com/?q={query}');
+  await save(page).click();
+  await page.reload();
+  await expect(page.locator('.provider-card').last()).toContainText('My engine');
+});
+
+test('a failed save retains drafts for retry and unrelated changes preserve the last selected search engine', async ({ app }) => {
+  const page = app.settings;
+  await app.seed({ lastSearchProvider: 'metaso' });
+  await select(page, 'backgrounds');
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/retry.mp4');
+  await page.evaluate(() => {
+    const set = Storage.prototype.setItem;
+    window.restoreStorage = () => { Storage.prototype.setItem = set; };
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'customBackgroundMediaUrls') throw new DOMException('Full', 'QuotaExceededError');
+      return set.call(this, key, value);
+    };
   });
-
-  let [serviceWorker] = context.serviceWorkers();
-  if (!serviceWorker) {
-    serviceWorker = await context.waitForEvent('serviceworker');
-  }
-  const extensionId = new URL(serviceWorker.url()).host;
-
-  return {
-    context,
-    extensionId,
-    async cleanup() {
-      await context.close();
-      fs.rmSync(userDataDir, { recursive: true, force: true });
-    },
-  };
-}
-
-async function openPopup(context, extensionId) {
-  const page = await context.newPage();
-  await page.goto(`chrome-extension://${extensionId}/settings.html`);
-  return page;
-}
-
-test('Bookmarks tab is the default; tab navigation reveals each tab panel', async () => {
-  const extension = await launchExtension();
-
-  try {
-    const popup = await openPopup(extension.context, extension.extensionId);
-
-    // Bookmarks tab is the default — toggle cards visible, others hidden.
-    await expect(popup.locator('[data-tab-panel="bookmarks"]')).toBeVisible();
-    await expect(popup.locator('[role="tab"][data-tab="bookmarks"]')).toHaveAttribute('aria-selected', 'true');
-    await expect(popup.locator('[data-tab-panel="search"]')).toHaveCount(0);
-    await expect(popup.locator('[data-tab-panel="backgrounds"]')).toHaveCount(0);
-    await expect(popup.locator('[data-tab-panel="anniversaries"]')).toHaveCount(0);
-
-    // Switch to Search.
-    await popup.locator('[role="tab"][data-tab="search"]').click();
-    await expect(popup.locator('[role="tab"][data-tab="search"]')).toHaveAttribute('aria-selected', 'true');
-    await expect(popup.locator('[role="tab"][data-tab="bookmarks"]')).toHaveAttribute('aria-selected', 'false');
-    await expect(popup.locator('[data-tab-panel="search"]')).toBeVisible();
-    await expect(popup.locator('#defaultSearchProvider')).toBeVisible();
-    await expect(popup.locator('[data-tab-panel="bookmarks"]')).toHaveCount(0);
-
-    // Switch to Backgrounds.
-    await popup.locator('[role="tab"][data-tab="backgrounds"]').click();
-    await expect(popup.locator('[role="tab"][data-tab="backgrounds"]')).toHaveAttribute('aria-selected', 'true');
-    await expect(popup.locator('#backgroundMediaUrls')).toBeVisible();
-    await expect(popup.locator('[data-tab-panel="search"]')).toHaveCount(0);
-
-    // Switch to Anniversaries.
-    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
-    await expect(popup.locator('[role="tab"][data-tab="anniversaries"]')).toHaveAttribute('aria-selected', 'true');
-    await expect(popup.locator('[data-tab-panel="anniversaries"]')).toBeVisible();
-    await expect(popup.locator('.anniversary-editor-card')).toHaveCount(2);
-    await expect(popup.locator('[data-tab-panel="backgrounds"]')).toHaveCount(0);
-  } finally {
-    await extension.cleanup();
-  }
+  await save(page).click();
+  await expect(page.locator('.status-message.error')).toContainText('Could not save');
+  await expect(save(page)).toBeEnabled();
+  await expect(page.locator('#backgroundMediaUrls')).toHaveValue('https://example.com/retry.mp4');
+  expect(await page.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'))).toBeNull();
+  await page.evaluate(() => window.restoreStorage());
+  await save(page).click();
+  await expect(save(page)).toBeDisabled();
+  expect(await page.evaluate(() => localStorage.getItem('lastSearchProvider'))).toBe('metaso');
+  await page.reload();
+  await select(page, 'backgrounds');
+  await expect(page.locator('#backgroundMediaUrls')).toHaveValue('https://example.com/retry.mp4');
 });
 
-test('Switching tabs preserves form state in unmounted panels', async () => {
-  const extension = await launchExtension();
-
-  try {
-    const popup = await openPopup(extension.context, extension.extensionId);
-
-    // Enter direct JSON mode and paste a payload on the Bookmarks tab.
-    await popup.locator('.toggle-card').filter({ hasText: /直接粘贴书签 JSON|Paste Bookmarks JSON Directly/ }).click();
-    await popup.locator('#bookmarksJson').fill(sampleJson);
-
-    // Switch away to Search, then to Backgrounds, then back.
-    await popup.locator('[role="tab"][data-tab="search"]').click();
-    await expect(popup.locator('#defaultSearchProvider')).toBeVisible();
-    await popup.locator('[role="tab"][data-tab="backgrounds"]').click();
-    await expect(popup.locator('#backgroundMediaUrls')).toBeVisible();
-    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
-    await expect(popup.locator('.anniversary-editor-card')).toHaveCount(2);
-    await popup.locator('[role="tab"][data-tab="bookmarks"]').click();
-
-    // The pasted JSON must still be there (state lives in the popup-level hook).
-    await expect(popup.locator('#bookmarksJson')).toHaveValue(sampleJson);
-  } finally {
-    await extension.cleanup();
-  }
+test('unsaved changes warn before leaving and discarding removes the warning', async ({ app }) => {
+  const page = app.settings;
+  await select(page, 'backgrounds');
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/unsaved.gif');
+  const dialogEvent = page.waitForEvent('dialog');
+  const leaving = page.goto('about:blank').catch(() => {});
+  const dialog = await dialogEvent;
+  expect(dialog.type()).toBe('beforeunload');
+  await dialog.dismiss();
+  await leaving;
+  await expect(page.locator('#backgroundMediaUrls')).toHaveValue('https://example.com/unsaved.gif');
+  await discard(page).click();
+  await page.goto('about:blank');
+  expect(page.url()).toBe('about:blank');
 });
 
-test('Save button in the persistent footer works from any active tab', async () => {
-  const extension = await launchExtension();
-
-  try {
-    const popup = await openPopup(extension.context, extension.extensionId);
-
-    // Move to the Backgrounds tab, fill a media URL, then save from the footer.
-    await popup.locator('[role="tab"][data-tab="backgrounds"]').click();
-    await popup.locator('#backgroundMediaUrls').fill('https://example.com/sample.gif');
-
-    // Save button is always visible in the footer.
-    await expect(popup.locator('#saveConfigButton')).toBeVisible();
-    await popup.locator('#saveConfigButton').click();
-    await expect(popup.locator('.status-message.success')).toBeVisible();
-
-    // Persisted to localStorage.
-    const stored = await popup.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'));
-    expect(stored).toBe('https://example.com/sample.gif');
-
-    await popup.locator('[role="tab"][data-tab="anniversaries"]').click();
-    await popup.locator('.anniversary-editor-card').first().locator('input').first().fill('Launch day');
-    await popup.locator('.anniversary-editor-card').first().locator('select').nth(1).selectOption('lunar');
-    await popup.locator('#saveConfigButton').click();
-    const anniversaries = await popup.evaluate(() => JSON.parse(localStorage.getItem('anniversaryItems') || '[]'));
-    expect(anniversaries[0].title).toBe('Launch day');
-    expect(anniversaries[0].calendar).toBe('lunar');
-  } finally {
-    await extension.cleanup();
+test('removing all dates shows an empty state and a newly added date can be edited and saved', async ({ app }) => {
+  const page = app.settings;
+  await select(page, 'anniversaries');
+  while (await page.locator('.anniversary-editor-card').count()) {
+    const card = page.locator('.anniversary-editor-card').first();
+    await card.locator('summary').click();
+    await card.getByRole('button', { name: 'Remove', exact: true }).click();
   }
+  await expect(page.locator('.empty-state')).toBeVisible();
+  await page.getByRole('button', { name: 'Add a date' }).click();
+  await expect(page.getByRole('textbox', { name: 'Name', exact: true })).toBeFocused();
+  await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Launch day');
+  await page.getByLabel('Date', { exact: true }).fill('2027-03-21');
+  await page.getByLabel('Calendar', { exact: true }).selectOption('lunar');
+  await save(page).click();
+  await page.reload();
+  await select(page, 'anniversaries');
+  await expect(page.locator('.anniversary-editor-card')).toHaveCount(1);
+  await expect(page.locator('.anniversary-editor-card')).toContainText('Launch day');
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('anniversaryItems'))[0].calendar)).toBe('lunar');
+});
+
+test('background URLs show media types and invalid line numbers without fetching previews', async ({ app }) => {
+  const page = app.settings;
+  const requests = [];
+  page.on('request', (request) => { if (request.url().includes('example.com/')) requests.push(request.url()); });
+  await select(page, 'backgrounds');
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/image.gif\n\ninvalid\nhttps://example.com/movie.mp4');
+  await expect(page.locator('#backgroundMediaUrls-error')).toContainText('lines 3');
+  await expect(page.locator('.media-list .badge')).toHaveText(['Image', '!', 'Video']);
+  await save(page).click();
+  await expect(page.locator('#backgroundMediaUrls')).toBeFocused();
+  expect(await page.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'))).toBeNull();
+  expect(requests).toEqual([]);
 });

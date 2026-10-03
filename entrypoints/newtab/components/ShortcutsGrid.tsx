@@ -14,11 +14,6 @@ const splitRows = (items: Bookmark[]): Bookmark[][] => {
 };
 
 export const ShortcutsGrid: React.FC<{ bookmarks: Bookmark[] }> = ({ bookmarks }) => {
-  const handleClick = (rawUrl: string) => {
-    const safe = sanitizeHttpUrl(rawUrl);
-    if (safe) window.open(safe, '_blank', 'noopener,noreferrer');
-  };
-
   return (
     <div className="shortcuts-grid">
       {splitRows(bookmarks).map((row, rowIndex) => (
@@ -26,10 +21,12 @@ export const ShortcutsGrid: React.FC<{ bookmarks: Bookmark[] }> = ({ bookmarks }
           {row.map((bookmark) => {
             const iconSrc = getSafeIconImageSrc(bookmark.icon);
             return (
-              <div
+              <a
                 key={bookmark.id}
                 className="shortcut-item"
-                onClick={() => handleClick(bookmark.url)}
+                href={sanitizeHttpUrl(bookmark.url) || undefined}
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 <div className="shortcut-icon">
                   {iconSrc
@@ -37,7 +34,7 @@ export const ShortcutsGrid: React.FC<{ bookmarks: Bookmark[] }> = ({ bookmarks }
                     : bookmark.title.charAt(0)}
                 </div>
                 <div className="shortcut-label">{bookmark.title}</div>
-              </div>
+              </a>
             );
           })}
         </div>

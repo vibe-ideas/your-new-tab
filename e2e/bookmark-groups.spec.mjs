@@ -66,8 +66,8 @@ async function activatePopupBookmarksTab(popupPage) {
 
 async function fillDirectJsonForCurrentGroup(popupPage, jsonText) {
   await activatePopupBookmarksTab(popupPage);
-  const directJsonCard = popupPage.locator('.toggle-card')
-    .filter({ hasText: /直接粘贴书签 JSON|Paste Bookmarks JSON Directly/ });
+  const directJsonCard = popupPage.locator('.source-option')
+    .filter({ hasText: /JSON 数据|JSON data/ });
   await expect(directJsonCard).toBeVisible();
   const isActive = await directJsonCard.evaluate((el) => el.classList.contains('active'));
   if (!isActive) await directJsonCard.click();
@@ -86,7 +86,7 @@ async function saveAndExpectSuccess(popupPage) {
 test('each bookmark group keeps its own JSON; new tab toggle swaps bookmarks and persists across reload', async () => {
   const extension = await launchExtension();
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
 
     // External (default active group) — direct JSON.
     await fillDirectJsonForCurrentGroup(popupPage, externalJson);
@@ -116,10 +116,10 @@ test('each bookmark group keeps its own JSON; new tab toggle swaps bookmarks and
   }
 });
 
-test('custom group labels render in the popup switcher and the new tab toggle', async () => {
+test('custom group labels render in the settings switcher and the new tab toggle', async () => {
   const extension = await launchExtension();
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await activatePopupBookmarksTab(popupPage);
 
     // Rename External (active by default).
@@ -150,10 +150,10 @@ test('custom group labels render in the popup switcher and the new tab toggle', 
   }
 });
 
-test('already-open new tab follows popup-driven group switch via the storage event', async () => {
+test('already-open new tab follows settings-driven group switch via the storage event', async () => {
   const extension = await launchExtension();
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
 
     // Seed both groups.
     await fillDirectJsonForCurrentGroup(popupPage, externalJson);

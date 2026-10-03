@@ -5,7 +5,6 @@ import {
   BOOKMARK_GROUP_REFRESH_SIGNAL_KEY,
   type BookmarkGroupId,
   type BookmarkGroupLabels,
-  isBookmarkGroupKey,
   readActiveBookmarkGroup,
   readBookmarkGroupCache,
   readBookmarkGroupConfig,
@@ -14,113 +13,130 @@ import {
   writeBookmarkGroupCache,
 } from '@/utils/bookmarkGroups';
 import { DEFAULT_BOOKMARKS } from '@/utils/defaultBookmarks';
+import { validateBookmarks, type Bookmark } from '@/utils/bookmarks';
+import { t } from '@/utils/i18n';
 
-export interface Bookmark {
-  id: string;
-  title: string;
-  url: string;
-  category?: string;
-  icon?: string;
-}
+export type { Bookmark } from '@/utils/bookmarks';
 
 export interface BookmarkLoaderApi {
   bookmarks: Bookmark[];
+  error: string | null;
   activeGroup: BookmarkGroupId;
   groupLabels: BookmarkGroupLabels;
   setActiveGroup: (group: BookmarkGroupId) => void;
 }
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 10000;
 
-const loadForGroup = async (group: BookmarkGroupId, useCache: boolean): Promise<Bookmark[]> => {
+function readValidCache(group: BookmarkGroupId) {
+  const cache = readBookmarkGroupCache(group);
+  if (!cache) return null;
+  const result = validateBookmarks(cache.bookmarks);
+  return result.error ? null : { ...cache, bookmarks: result.bookmarks };
+}
+
+async function loadForGroup(group: BookmarkGroupId, useCache: boolean, signal: AbortSignal) {
   const config = readBookmarkGroupConfig(group);
-
-  if (config.useDefaultBookmarks) return DEFAULT_BOOKMARKS as Bookmark[];
-
-  if (config.useDirectJson) {
-    try {
-      const parsed: unknown = JSON.parse(config.bookmarksJson || '[]');
-      if (Array.isArray(parsed)) {
-        writeBookmarkGroupCache(group, parsed);
-        return parsed as Bookmark[];
-      }
-    } catch (error) {
-      console.error('Failed to parse direct JSON bookmarks:', error);
-    }
-    return DEFAULT_BOOKMARKS as Bookmark[];
-  }
-
-  if (useCache) {
-    const cache = readBookmarkGroupCache<Bookmark[]>(group);
-    if (cache && Array.isArray(cache.bookmarks)) {
-      const sameDay = new Date(cache.timestamp).toDateString() === new Date().toDateString();
-      if (sameDay) return cache.bookmarks;
-    }
-  }
-
-  if (!config.bookmarksUrl) return DEFAULT_BOOKMARKS as Bookmark[];
-
+  const cache = readValidCache(group);
+  const fallback = cache?.bookmarks ?? DEFAULT_BOOKMARKS;
+  if (config.useDefaultBookmarks) return { bookmarks: DEFAULT_BOOKMARKS, error: null };
   try {
-    const response = await fetch(config.bookmarksUrl);
-    if (!response.ok) return DEFAULT_BOOKMARKS as Bookmark[];
-    const data: Bookmark[] = await response.json();
-    writeBookmarkGroupCache(group, data);
-    return data;
+    let data: unknown;
+    if (config.useDirectJson) {
+      data = JSON.parse(config.bookmarksJson || '[]');
+    } else {
+      if (useCache && cache && cache.sourceUrl === config.bookmarksUrl && new Date(cache.timestamp).toDateString() === new Date().toDateString()) {
+        return { bookmarks: cache.bookmarks, error: null };
+      }
+      if (!config.bookmarksUrl) return { bookmarks: fallback, error: null };
+      const response = await fetch(config.bookmarksUrl, { signal });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      data = await response.json();
+    }
+    // A superseded request must neither render nor overwrite a newer cache.
+    signal.throwIfAborted();
+    const result = validateBookmarks(data);
+    if (!result.error) writeBookmarkGroupCache(group, result.bookmarks, config.useDirectJson ? undefined : config.bookmarksUrl);
+    return {
+      bookmarks: result.error && result.bookmarks.length === 0 ? fallback : result.bookmarks,
+      error: result.error,
+    };
   } catch (error) {
-    console.error('Failed to fetch bookmarks:', error);
-    return DEFAULT_BOOKMARKS as Bookmark[];
+    if (signal.aborted) throw error;
+    console.warn('Failed to load bookmarks', error);
+    return { bookmarks: fallback, error: t('bookmarksLoadFailed') };
   }
-};
+}
 
 export const useBookmarkLoader = (): BookmarkLoaderApi => {
-  const [bookmarks, setBookmarks] = React.useState<Bookmark[]>([]);
+  const [bookmarks, setBookmarks] = React.useState<Bookmark[]>(DEFAULT_BOOKMARKS);
+  const [error, setError] = React.useState<string | null>(null);
   const [activeGroup, setActiveGroupState] = React.useState<BookmarkGroupId>(() => readActiveBookmarkGroup());
   const [groupLabels, setGroupLabels] = React.useState<BookmarkGroupLabels>(() => readBookmarkGroupLabels());
 
   const setActiveGroup = React.useCallback((group: BookmarkGroupId) => {
-    setActiveGroupState((current) => {
-      if (current === group) return current;
-      writeActiveBookmarkGroup(group);
-      return group;
-    });
+    writeActiveBookmarkGroup(group);
+    setActiveGroupState(group);
   }, []);
 
-  const loadActive = React.useCallback(async (useCache: boolean) => {
-    const next = await loadForGroup(activeGroup, useCache);
-    setBookmarks(next);
-  }, [activeGroup]);
-
   React.useEffect(() => {
-    void loadActive(true);
-  }, [loadActive]);
-
-  React.useEffect(() => {
-    const checkAndRefresh = () => {
-      const cache = readBookmarkGroupCache<Bookmark[]>(activeGroup);
-      if (!cache || Date.now() - cache.timestamp > ONE_DAY_MS) {
-        void loadActive(false);
+    let active = true;
+    let controller: AbortController | undefined;
+    let scheduled: ReturnType<typeof setTimeout> | undefined;
+    const load = async (useCache: boolean) => {
+      controller?.abort();
+      const request = new AbortController();
+      controller = request;
+      const timeout = setTimeout(() => request.abort(), FETCH_TIMEOUT_MS);
+      try {
+        const result = await loadForGroup(activeGroup, useCache, request.signal);
+        if (active && controller === request) {
+          setBookmarks(result.bookmarks);
+          setError(result.error);
+        }
+      } catch {
+        if (active && controller === request) {
+          setBookmarks(readValidCache(activeGroup)?.bookmarks ?? DEFAULT_BOOKMARKS);
+          setError(t('bookmarksLoadFailed'));
+        }
+      } finally {
+        clearTimeout(timeout);
       }
     };
-    checkAndRefresh();
-    const id = setInterval(checkAndRefresh, ONE_DAY_MS);
-    return () => clearInterval(id);
-  }, [activeGroup, loadActive]);
-
-  React.useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
-      const key = event.key || '';
+      const key = event.key;
       if (key === ACTIVE_GROUP_STORAGE_KEY) {
         setActiveGroupState(readActiveBookmarkGroup());
       } else if (key === BOOKMARK_GROUP_LABELS_STORAGE_KEY) {
         setGroupLabels(readBookmarkGroupLabels());
-      } else if (key === BOOKMARK_GROUP_REFRESH_SIGNAL_KEY || isBookmarkGroupKey(key)) {
-        setGroupLabels(readBookmarkGroupLabels());
-        void loadActive(false);
+      } else if (key === `bookmarkGroup.${activeGroup}.bookmarksData`) {
+        // Cache propagation is a read, never a new fetch/write cycle.
+        const config = readBookmarkGroupConfig(activeGroup);
+        const cache = readValidCache(activeGroup);
+        if (event.newValue && cache && cache.sourceUrl === config.bookmarksUrl && !config.useDefaultBookmarks && !config.useDirectJson) {
+          setBookmarks(cache.bookmarks);
+          setError(null);
+        }
+      } else if (key === BOOKMARK_GROUP_REFRESH_SIGNAL_KEY || key?.startsWith(`bookmarkGroup.${activeGroup}.`)) {
+        // A save writes several keys synchronously; load the completed config once.
+        controller?.abort();
+        controller = undefined;
+        clearTimeout(scheduled);
+        scheduled = setTimeout(() => { void load(false); }, 0);
       }
     };
+    void load(true);
+    const interval = setInterval(() => { void load(true); }, ONE_DAY_MS);
     window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, [loadActive]);
+    return () => {
+      active = false;
+      controller?.abort();
+      clearTimeout(scheduled);
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [activeGroup]);
 
-  return { bookmarks, activeGroup, groupLabels, setActiveGroup };
+  return { bookmarks, error, activeGroup, groupLabels, setActiveGroup };
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { t } from '@/utils/i18n';
+import { useClock } from '../hooks/useClock';
 
 const formatTime = (date: Date): string => date.toLocaleTimeString('zh-CN', {
   hour12: false,
@@ -21,9 +22,12 @@ const formatDate = (date: Date): string => {
   });
 };
 
-export const TimeDisplay: React.FC<{ now: Date }> = ({ now }) => (
-  <div className="time-display">
-    <div className="time">{formatTime(now)}</div>
-    <div className="date">{formatDate(now)}</div>
-  </div>
-);
+export const TimeDisplay: React.FC = () => {
+  const now = useClock();
+  return (
+    <div className="time-display">
+      <div className="time">{formatTime(now)}</div>
+      <div className="date">{formatDate(now)}</div>
+    </div>
+  );
+};

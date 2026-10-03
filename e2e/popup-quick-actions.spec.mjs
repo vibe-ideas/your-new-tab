@@ -48,13 +48,14 @@ async function openExtensionPage(context, extensionId, pageName) {
 }
 
 async function pasteDirectJson(popupPage, jsonText) {
-  await popupPage.locator('.toggle-card').filter({ hasText: /直接粘贴书签 JSON|Paste Bookmarks JSON Directly/ }).click();
+  await popupPage.locator('[data-tab="bookmarks"]').click();
+  await popupPage.locator('.source-option').filter({ hasText: /JSON 数据|JSON data/ }).click();
   const textarea = popupPage.locator('#bookmarksJson');
   await expect(textarea).toBeVisible();
   await textarea.fill(jsonText);
 }
 
-test('Save in Quick actions propagates new direct JSON bookmarks to an already-open new tab', async () => {
+test('saving bookmark JSON updates an already-open new tab', async () => {
   const extension = await launchExtension();
 
   try {
@@ -62,7 +63,7 @@ test('Save in Quick actions propagates new direct JSON bookmarks to an already-o
     // Defaults render before any save.
     await expect(newTabPage.locator('.shortcut-label').first()).toBeVisible();
 
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await pasteDirectJson(popupPage, directJsonBefore);
     await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
@@ -73,11 +74,11 @@ test('Save in Quick actions propagates new direct JSON bookmarks to an already-o
   }
 });
 
-test('Refresh bookmarks in Quick actions re-reads bookmarks in an already-open new tab', async () => {
+test('refreshing saved bookmarks updates an already-open new tab', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await pasteDirectJson(popupPage, directJsonBefore);
     await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
@@ -95,7 +96,7 @@ test('Refresh bookmarks in Quick actions re-reads bookmarks in an already-open n
 
     // Click Refresh bookmarks in the popup; it writes bookmarksRefreshSignal,
     // which fires a storage event in the new tab and triggers a re-read.
-    const refreshLabel = /刷新书签|Refresh bookmarks/i;
+    const refreshLabel = /刷新已保存的书签|Refresh saved bookmarks/i;
     await popupPage.getByRole('button', { name: refreshLabel }).click();
 
     await expect(newTabPage.locator('.shortcut-label')).toContainText(['After Refresh']);
@@ -104,16 +105,16 @@ test('Refresh bookmarks in Quick actions re-reads bookmarks in an already-open n
   }
 });
 
-test('Test button surfaces a status toast that stays in the viewport when scrolled', async () => {
+test('validating bookmark JSON keeps success feedback visible after scrolling', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
 
     // Direct JSON, valid payload — Test should report success.
     await pasteDirectJson(popupPage, directJsonBefore);
 
-    const testLabel = /^测试$|^Test$/i;
+    const testLabel = /^校验数据$|^Validate data$/i;
     const testButton = popupPage.getByRole('button', { name: testLabel });
 
     // Scroll to the Test button so the popup viewport sits on Quick actions
@@ -143,11 +144,11 @@ test('Test button surfaces a status toast that stays in the viewport when scroll
   }
 });
 
-test('Reset in Quick actions restores defaults in an already-open new tab', async () => {
+test('restoring bookmark-group defaults only updates an open new tab after saving', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await pasteDirectJson(popupPage, directJsonBefore);
     await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
@@ -155,8 +156,11 @@ test('Reset in Quick actions restores defaults in an already-open new tab', asyn
     const newTabPage = await openExtensionPage(extension.context, extension.extensionId, 'newtab');
     await expect(newTabPage.locator('.shortcut-label')).toContainText(['Before Save']);
 
-    const resetLabel = /^重置$|^Reset$/i;
+    const resetLabel = /^恢复当前分组默认$|^Restore group defaults$/i;
     await popupPage.getByRole('button', { name: resetLabel }).click();
+    await popupPage.locator('#confirmRestoreButton').click();
+    await expect(newTabPage.locator('.shortcut-label')).toContainText(['Before Save']);
+    await popupPage.locator('#saveConfigButton').click();
     await expect(popupPage.locator('.status-message.success')).toBeVisible();
 
     // Default bookmarks should now render — the test JSON entry must be gone.

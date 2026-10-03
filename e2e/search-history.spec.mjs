@@ -44,9 +44,10 @@ async function openExtensionPage(context, extensionId, pageName) {
 
 async function configureGoogleSearchUrl(popupPage) {
   await popupPage.locator('[role="tab"][data-tab="search"]').click();
+  await popupPage.locator('.provider-card[data-provider-id="google"] > summary').click();
   await popupPage.locator('.provider-card[data-provider-id="google"] .input-field').nth(1).fill(googleSearchUrl);
   await popupPage.locator('#defaultSearchProvider').selectOption('google');
-  await popupPage.locator('.default-provider-row .secondary-button').click();
+  await popupPage.locator('#saveConfigButton').click();
   await expect(popupPage.locator('.status-message.success')).toBeVisible();
 }
 
@@ -65,7 +66,7 @@ test('records search history and navigates with arrow keys', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await configureGoogleSearchUrl(popupPage);
     await popupPage.close();
 
@@ -114,7 +115,7 @@ test('filters history by prefix when navigating with arrow keys', async () => {
   const extension = await launchExtension();
 
   try {
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await configureGoogleSearchUrl(popupPage);
     await popupPage.close();
 
@@ -149,10 +150,13 @@ test('filters history by prefix when navigating with arrow keys', async () => {
   }
 });
 
-test('caps stored history at 20 entries', async () => {
+test('submitting a new search keeps only the 20 most recent queries', async () => {
   const extension = await launchExtension();
 
   try {
+    const settings = await openExtensionPage(extension.context, extension.extensionId, 'settings');
+    await configureGoogleSearchUrl(settings);
+    await settings.close();
     const newTabPage = await openExtensionPage(extension.context, extension.extensionId, 'newtab');
     await expect(newTabPage.locator('.search-box')).toBeVisible();
 
@@ -167,13 +171,7 @@ test('caps stored history at 20 entries', async () => {
     const storedCount = await newTabPage.evaluate(() => JSON.parse(localStorage.getItem('searchHistory') || '[]').length);
     expect(storedCount).toBe(25);
 
-    await newTabPage.evaluate(() => {
-      const STORAGE_KEY = 'searchHistory';
-      const MAX_HISTORY = 20;
-      const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-      const next = ['fresh', ...current].slice(0, MAX_HISTORY);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    });
+    await performSearch(extension.context, newTabPage, 'fresh');
 
     const trimmed = await newTabPage.evaluate(() => JSON.parse(localStorage.getItem('searchHistory') || '[]'));
     expect(trimmed.length).toBe(20);

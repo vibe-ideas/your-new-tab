@@ -14,7 +14,7 @@ export interface BackgroundImageCache {
 export const CUSTOM_URLS_KEY = 'customBackgroundMediaUrls';
 export const CUSTOM_INDEX_KEY = 'customBackgroundMediaIndex';
 export const PRELOAD_TIMEOUT_MS = 15000;
-export const FETCH_TIMEOUT_MS = 10000;
+export { BACKGROUND_RESPONSE_TIMEOUT_MS as FETCH_TIMEOUT_MS } from '@/utils/backgroundFetch';
 
 const VIDEO_EXTENSIONS = /\.(mp4|webm|ogg|ogv|mov|m4v)(?:[?#].*)?$/i;
 

@@ -179,13 +179,14 @@ async function main() {
     server = await startStaticServer();
     extension = await launchExtension();
 
-    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'popup');
+    const popupPage = await openExtensionPage(extension.context, extension.extensionId, 'settings');
     await popupPage.waitForLoadState('domcontentloaded');
-    await popupPage.locator('.popup-shell').waitFor();
+    await popupPage.locator('.settings-shell').waitFor();
     await disableMotion(popupPage);
     await capture(popupPage, 'popup-initial', 4);
 
-    await popupPage.locator('.toggle-grid .toggle-card').nth(1).click();
+    await popupPage.locator('[data-tab="bookmarks"]').click();
+    await popupPage.locator('input[name="bookmarkSource"][value="json"]').check();
     await popupPage.locator('#bookmarksJson').waitFor();
     await capture(popupPage, 'popup-json-mode', 3);
 
@@ -200,7 +201,6 @@ async function main() {
     await popupPage.locator('#defaultSearchProvider').selectOption('google');
     await capture(popupPage, 'popup-filled', 4);
 
-    await popupPage.locator('.default-provider-row .secondary-button').click();
     await popupPage.locator('#saveConfigButton').click();
     await popupPage.locator('.status-message.success').waitFor();
     await capture(popupPage, 'popup-saved', 3);

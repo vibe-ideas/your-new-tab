@@ -2,9 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './newtab.css';
 import { t } from '../../utils/i18n';
-import { writeActiveBookmarkGroup } from '../../utils/bookmarkGroups';
 import { NewTabErrorBoundary } from './ErrorBoundary';
-import { useClock } from './hooks/useClock';
 import { useToast } from './hooks/useToast';
 import { useBookmarkLoader } from './hooks/useBookmarkLoader';
 import { useBackgroundMedia } from './hooks/useBackgroundMedia';
@@ -20,12 +18,15 @@ import { Toast } from './components/Toast';
 import { AnniversarySidebar } from './components/AnniversarySidebar';
 
 const NewTab: React.FC = () => {
-  const now = useClock();
   const toast = useToast();
   const bookmarks = useBookmarkLoader();
   const background = useBackgroundMedia();
   const providers = useSearchProviders();
   const search = useSearchInput();
+
+  React.useEffect(() => {
+    if (bookmarks.error) toast.show(bookmarks.error);
+  }, [bookmarks.error, toast.show]);
 
   React.useEffect(() => {
     document.title = t('newtabPageTitle');
@@ -42,7 +43,6 @@ const NewTab: React.FC = () => {
   const handleSelectGroup = (group: typeof bookmarks.activeGroup) => {
     if (group === bookmarks.activeGroup) return;
     bookmarks.setActiveGroup(group);
-    writeActiveBookmarkGroup(group);
   };
 
   const containerClass = background.media ? 'newtab-container with-background' : 'newtab-container';
@@ -60,7 +60,7 @@ const NewTab: React.FC = () => {
         groupLabels={bookmarks.groupLabels}
         onSelect={handleSelectGroup}
       />
-      <TimeDisplay now={now} />
+      <TimeDisplay />
       <SearchHub
         query={search.query}
         onQueryChange={(q) => { search.setQuery(q); search.resetHistoryCursor(); }}

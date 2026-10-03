@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Redesign settings as a dedicated light interface with AI search first, responsive section navigation, collapsible editors, and a persistent Save / Discard bar.
+- Keep edits across all sections and both bookmark groups as one draft; warn before leaving with unsaved changes and retain edits when storage writes fail.
+- Make bookmark sources explicit (built-in, JSON, remote), show inline validation with focus on the affected field, and limit confirmed restores to the current section or bookmark group.
+- Add locally parsed background media lists and labeled date editors with an empty state; align the toolbar launcher with the settings design.
+
+### Fixed
+
+- Stop remote bookmark refresh loops between open tabs; cancel superseded requests and track the source URL in the cache.
+- Validate bookmark rows at import, save, fetch and cache boundaries; report invalid rows and retain the last valid list when a source fails.
+- Save current search-provider edits from the settings footer and preserve drafts across bookmark-group switches.
+- Keep search-menu keyboard highlighting stable across clock ticks; restore normal Tab navigation and keyboard-accessible bookmark links.
+- Refresh expired daily backgrounds while keeping the old image visible; align fallback request deadlines and keep loaded images when cache writes fail.
+- Recognize `settings.html` in build validation and use the full settings page in E2E tests and demo scripts.
+
+### Tests
+
+- Add regression coverage for multi-tab refresh, stale requests, invalid bookmark data, settings drafts, keyboard navigation, and background cache/fallback failures.
+- Verify the 20-query history limit through a real search submission.
+- Cover settings keyboard navigation, draft discard, scoped restore, validation focus, storage failure recovery, and unsaved-exit warnings. Check both languages at desktop, tablet, mobile and 200% browser zoom.
+
 ## 0.6.0 - 2026-05-19
 
 ### Added

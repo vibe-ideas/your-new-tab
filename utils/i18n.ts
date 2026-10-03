@@ -27,6 +27,9 @@ export interface TranslationKeys {
   jsonValid: string;
   jsonInvalid: string;
   jsonShouldBeArray: string;
+  invalidBookmarkRows: string;
+  bookmarksLoadFailed: string;
+  configSaveFailed: string;
   formatted: string;
   formatFailed: string;
   minified: string;
@@ -163,6 +166,9 @@ const translations: Record<Language, TranslationKeys> = {
     jsonValid: 'JSON 格式正确',
     jsonInvalid: 'JSON 格式错误',
     jsonShouldBeArray: 'JSON 格式错误: 书签数据应该是数组',
+    invalidBookmarkRows: '第 {rows} 项书签无效：需要唯一的 id、非空 title 和 HTTP/HTTPS url。',
+    bookmarksLoadFailed: '书签加载失败，已保留上次有效书签或使用内置书签。',
+    configSaveFailed: '保存失败，请重试。',
     formatted: 'JSON 已格式化',
     formatFailed: '格式化失败',
     minified: 'JSON 已压缩',
@@ -209,7 +215,7 @@ const translations: Record<Language, TranslationKeys> = {
     jsonMode: '直接 JSON',
     urlMode: '远程 URL',
     searchSection: '搜索引擎',
-    searchSectionHint: '设置默认搜索引擎，并维护可切换的搜索列表。支持使用 Tab 键（或 Alt + ↑/↓）快速切换。',
+    searchSectionHint: '设置默认搜索引擎，并维护可切换的搜索列表。支持使用 Alt + ↑/↓ 快速切换。',
     searchProviderName: '名称',
     searchProviderUrl: '搜索 URL 模板',
     addProvider: '新增搜索提供商',
@@ -244,7 +250,7 @@ const translations: Record<Language, TranslationKeys> = {
     bookmarkGroupLabelHint: '留空时使用默认名称（外网 / 内网），最多 24 个字符。',
     // Newtab UI
     newtabPageTitle: '新标签页',
-    searchInputPlaceholder: '输入并搜索... (Tab 键切换)',
+    searchInputPlaceholder: '输入并搜索... (Alt + ↑/↓ 切换)',
     searchProviderToggleAria: '切换搜索提供商，当前为 {name}',
     searchProviderToggleNoMenu: '搜索',
     searchButtonAria: '搜索',
@@ -298,6 +304,9 @@ const translations: Record<Language, TranslationKeys> = {
     jsonValid: 'JSON format is valid',
     jsonInvalid: 'JSON format error',
     jsonShouldBeArray: 'JSON format error: Bookmarks data should be an array',
+    invalidBookmarkRows: 'Invalid bookmark rows {rows}: provide a unique id, a non-empty title and an HTTP/HTTPS url.',
+    bookmarksLoadFailed: 'Could not load bookmarks. Showing the last valid bookmarks or built-in defaults.',
+    configSaveFailed: 'Could not save settings. Please try again.',
     formatted: 'JSON formatted',
     formatFailed: 'Format failed',
     minified: 'JSON minified',
@@ -344,7 +353,7 @@ const translations: Record<Language, TranslationKeys> = {
     jsonMode: 'Direct JSON',
     urlMode: 'Remote URL',
     searchSection: 'Search providers',
-    searchSectionHint: 'Set the default provider and maintain the list shown in the new tab page. Press Tab (or Alt+↑/↓) to switch.',
+    searchSectionHint: 'Set the default provider and maintain the list shown in the new tab page. Press Alt+↑/↓ to switch.',
     searchProviderName: 'Name',
     searchProviderUrl: 'Search URL template',
     addProvider: 'Add provider',
@@ -379,7 +388,7 @@ const translations: Record<Language, TranslationKeys> = {
     bookmarkGroupLabelHint: 'Leave empty to use the default (External / Internal). Up to 24 characters.',
     // Newtab UI
     newtabPageTitle: 'New Tab',
-    searchInputPlaceholder: 'Type and search... (Tab to switch)',
+    searchInputPlaceholder: 'Type and search... (Alt+↑/↓ to switch)',
     searchProviderToggleAria: 'Switch search provider, currently {name}',
     searchProviderToggleNoMenu: 'Search',
     searchButtonAria: 'Search',

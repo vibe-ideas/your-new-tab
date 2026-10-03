@@ -103,16 +103,21 @@ export const SearchHub: React.FC<SearchHubProps> = ({
       return;
     }
 
+    if (e.key === 'Tab') {
+      setShowMenu(false);
+      return;
+    }
+
     // 2. If the popover menu is open, handle keyboard navigation
     if (showMenu) {
-      if (e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey)) {
+      if (e.key === 'ArrowDown') {
         e.preventDefault();
         setHighlightedIndex((prev) => 
           prev === -1 ? 0 : (prev + 1) % selectableProviders.length
         );
         return;
       }
-      if (e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey)) {
+      if (e.key === 'ArrowUp') {
         e.preventDefault();
         setHighlightedIndex((prev) => 
           prev === -1 ? selectableProviders.length - 1 : (prev - 1 + selectableProviders.length) % selectableProviders.length
@@ -137,16 +142,6 @@ export const SearchHub: React.FC<SearchHubProps> = ({
     } else {
       // 3. If the menu is closed, handle input keys (only when focus is in the input field)
       if (e.target === inputRef.current) {
-        if (e.key === 'Tab') {
-          e.preventDefault();
-          const dir = e.shiftKey ? -1 : 1;
-          const currentIndex = selectableProviders.findIndex((p) => p.id === activeProviderId);
-          if (currentIndex !== -1) {
-            const nextIndex = (currentIndex + dir + selectableProviders.length) % selectableProviders.length;
-            onSelectProvider(selectableProviders[nextIndex].id);
-          }
-          return;
-        }
         if (e.key === 'Enter') {
           e.preventDefault();
           onSubmit(query);
@@ -199,7 +194,7 @@ export const SearchHub: React.FC<SearchHubProps> = ({
                   className={`provider-popover-item${p.id === activeProviderId ? ' active' : ''}${isHighlighted ? ' highlighted' : ''}`}
                   role="option"
                   aria-selected={p.id === activeProviderId}
-                  onClick={() => { onSelectProvider(p.id); setShowMenu(false); }}
+                  onClick={() => { onSelectProvider(p.id); setShowMenu(false); inputRef.current?.focus(); }}
                   onMouseEnter={() => setHighlightedIndex(idx)}
                 >
                   <span className="provider-option-icon" aria-hidden="true">

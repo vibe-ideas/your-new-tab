@@ -21,6 +21,7 @@ export interface BookmarkGroupConfig {
 export interface BookmarkCacheEntry<T = unknown> {
   bookmarks: T;
   timestamp: number;
+  sourceUrl?: string;
 }
 
 interface GroupKeys {
@@ -174,8 +175,8 @@ export const readBookmarkGroupCache = <T>(group: BookmarkGroupId): BookmarkCache
   }
 };
 
-export const writeBookmarkGroupCache = <T>(group: BookmarkGroupId, bookmarks: T) => {
-  safeWrite(groupKeys(group).data, JSON.stringify({ bookmarks, timestamp: Date.now() }));
+export const writeBookmarkGroupCache = <T>(group: BookmarkGroupId, bookmarks: T, sourceUrl?: string) => {
+  safeWrite(groupKeys(group).data, JSON.stringify({ bookmarks, timestamp: Date.now(), sourceUrl }));
 };
 
 export const clearBookmarkGroupCache = (group: BookmarkGroupId) => {

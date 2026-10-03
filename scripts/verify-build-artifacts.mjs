@@ -9,6 +9,7 @@ const ALLOWED_TOP_LEVEL = new Set([
   'manifest.json',
   'newtab.html',
   'popup.html',
+  'settings.html',
   'background.js',
   'chunks',
   'assets',

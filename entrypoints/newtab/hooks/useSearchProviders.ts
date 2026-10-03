@@ -98,7 +98,7 @@ export const useSearchProviders = (): SearchProvidersApi => {
     try { localStorage.setItem(LAST_KEY, id); } catch { /* ignore */ }
   }, []);
 
-  const selectableProviders = pickSelectable(providers);
+  const selectableProviders = React.useMemo(() => pickSelectable(providers), [providers]);
   const activeProviderId = resolveSearchProviderId(selectableProviders, [selectedId]);
   const activeProvider = selectableProviders.find((p) => p.id === activeProviderId) || selectableProviders[0];
 
