@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.7.0 - 2026-10-03
+
+### Added
+
+- Anniversary countdown island on the new tab page, with recurring dates and lunar calendar support.
+- Import and export bookmark collections as JSON files from the full settings page.
+- Alt + ArrowUp / ArrowDown shortcuts for switching search engines while preserving normal Tab navigation.
+
 ### Changed
 
 - Redesign settings as a dedicated light interface with AI search first, responsive section navigation, collapsible editors, and a persistent Save / Discard bar.
