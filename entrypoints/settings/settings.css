@@ -158,11 +158,12 @@ details[open] > .item-summary .edit-label > span { transform: rotate(180deg); }
 .json-toolbar button { min-height: 28px; font-size: 11px; padding: 3px 6px; }
 textarea.json-textarea { min-height: 260px; padding: 14px; font: 12px/1.8 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: #fafbfe; tab-size: 2; }
 .bookmark-preview { margin-top: 20px; }
+.field-stack .bookmark-preview { margin-top: 6px; }
 .preview-items { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-.preview-item { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; min-width: 0; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: #637086; }
+.preview-item { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; min-width: 0; max-width: 100%; border: 1px solid var(--border); border-radius: 6px; font-size: 11px; color: #637086; }
 .preview-dot { display: inline-block; width: 5px; height: 5px; flex-shrink: 0; border-radius: 2px; background: #b4c1d6; }
 .preview-item img { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
-.preview-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mode-summary { margin-top: 26px; display: flex; align-items: flex-start; gap: 12px; padding: 16px; background: #f5f8fd; border-radius: var(--radius); }
 .mode-icon { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--radius); background: #e8eefb; color: var(--accent); }
 .mode-icon svg { width: 18px; height: 18px; }

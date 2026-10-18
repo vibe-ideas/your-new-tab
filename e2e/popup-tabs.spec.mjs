@@ -169,6 +169,25 @@ test('removing all dates shows an empty state and a newly added date can be edit
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('anniversaryItems'))[0].calendar)).toBe('lunar');
 });
 
+test('bookmark JSON previews valid shortcuts while typing and leaves invalid rows out', async ({ app }) => {
+  const page = app.settings;
+  const icon = '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"></svg>';
+  await enterJson(page, [
+    { id: 'ok', title: 'Visible shortcut', url: 'https://example.com/', icon },
+    { id: 'plain', title: 'Plain shortcut', url: 'https://example.com/plain', icon: '<svg onload="alert(1)"></svg>' },
+    { id: 'bad', title: 'Hidden shortcut', url: 'javascript:alert(1)' },
+  ]);
+  const preview = page.locator('.bookmark-preview');
+  await expect(preview).toContainText('2 shortcuts included');
+  await expect(preview.locator('.preview-item')).toHaveText(['Visible shortcut', 'Plain shortcut']);
+  await expect(preview.locator('img')).toHaveCount(1);
+  await expect(preview.locator('img')).toHaveAttribute('src', /^data:image\/svg\+xml/);
+  await expect(preview).toContainText('Invalid bookmark rows 3');
+  await expect(preview).not.toContainText('Hidden shortcut');
+  await page.locator('#bookmarksJson').fill('not-json');
+  await expect(page.locator('.bookmark-preview')).toHaveCount(0);
+});
+
 test('background URLs show media types and invalid line numbers without fetching previews', async ({ app }) => {
   const page = app.settings;
   const requests = [];

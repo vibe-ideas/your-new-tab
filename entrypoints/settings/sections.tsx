@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { t } from '@/utils/i18n';
 import { DEFAULT_BOOKMARKS } from '@/utils/defaultBookmarks';
+import { validateBookmarks, type Bookmark } from '@/utils/bookmarks';
 import { BOOKMARK_GROUP_IDS } from '@/utils/bookmarkGroups';
 import { isBuiltInSearchProvider, type SearchProvider } from '@/utils/searchProviders';
 import { createAnniversaryItem, type AnniversaryType, type AnniversaryCalendar } from '@/utils/anniversaries';
@@ -17,6 +18,22 @@ export function FieldError({ state, field }: Props & { field: string }) {
 }
 function aria(state: SettingsState, field: string) {
   return { 'aria-invalid': Boolean(state.errorFor(field)), 'aria-describedby': state.errorFor(field) ? `${field}-error` : undefined };
+}
+
+function BookmarkPreview({ bookmarks, error }: { bookmarks: Bookmark[]; error?: string | null }) {
+  return <div className="bookmark-preview">
+    <p className="help-text">{s('preview', { count: bookmarks.length })}</p>
+    {error ? <p className="field-error">{error}</p> : null}
+    {bookmarks.length > 0 && <div className="preview-items">{bookmarks.map((bookmark) => {
+      const icon = getSafeIconImageSrc(bookmark.icon);
+      return <span className="preview-item" key={bookmark.id}>{icon ? <img src={icon} alt="" /> : <span className="preview-dot" aria-hidden="true" />}<span className="preview-label">{bookmark.title}</span></span>;
+    })}</div>}
+  </div>;
+}
+
+function readJsonPreview(json: string) {
+  if (!json.trim()) return null;
+  try { return validateBookmarks(JSON.parse(json)); } catch { return null; }
 }
 
 export function SearchSection({ state }: Props) {
@@ -82,6 +99,7 @@ export function SearchSection({ state }: Props) {
 export function BookmarksSection({ state }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const { group } = state;
+  const jsonPreview = group.source === 'json' ? readJsonPreview(group.json) : null;
   const sources: { id: BookmarkSource; title: 'builtInBookmarks' | 'json' | 'remote'; hint: 'builtInHint' | 'jsonHint' | 'remoteHint' }[] = [
     { id: 'default', title: 'builtInBookmarks', hint: 'builtInHint' }, { id: 'json', title: 'json', hint: 'jsonHint' }, { id: 'remote', title: 'remote', hint: 'remoteHint' },
   ];
@@ -103,7 +121,7 @@ export function BookmarksSection({ state }: Props) {
           <span><strong>{s(source.title)}</strong><span className="help-text">{s(source.hint)}</span></span>
         </label>)}</div>
       </fieldset>
-      {group.source === 'default' && <div className="bookmark-preview"><p className="help-text">{s('preview', { count: DEFAULT_BOOKMARKS.length })}</p><div className="preview-items">{DEFAULT_BOOKMARKS.map((bookmark) => <span className="preview-item" key={bookmark.id}><span className="preview-dot" aria-hidden="true" />{bookmark.title}</span>)}</div></div>}
+      {group.source === 'default' && <BookmarkPreview bookmarks={DEFAULT_BOOKMARKS} />}
       {group.source === 'json' && <div className="field-stack">
         <div className="settings-row"><label className="field-label" htmlFor="bookmarksJson">{s('bookmarkData')}</label><div className="json-toolbar">
           <button className="text-button" type="button" onClick={() => state.formatJson()}>{t('format')}</button>
@@ -114,6 +132,7 @@ export function BookmarksSection({ state }: Props) {
         <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void state.importJson(file); e.target.value = ''; }} />
         <textarea id="bookmarksJson" className="input-field json-textarea" rows={10} spellCheck={false} placeholder={'[\n  {"id": "example", "title": "Example", "url": "https://example.com"}\n]'} value={group.json} onChange={(e) => state.updateGroup({ json: e.target.value })} {...aria(state, 'bookmarksJson')} />
         <FieldError state={state} field="bookmarksJson" />
+        {jsonPreview && <BookmarkPreview bookmarks={jsonPreview.bookmarks} error={jsonPreview.error} />}
       </div>}
       {group.source === 'remote' && <div className="field-stack"><label className="field-label" htmlFor="bookmarksUrl">{s('remoteUrl')}</label>
         <input id="bookmarksUrl" className="input-field mono" value={group.url} placeholder="https://example.com/bookmarks.json" onChange={(e) => state.updateGroup({ url: e.target.value })} {...aria(state, 'bookmarksUrl')} />
