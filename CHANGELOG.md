@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## 0.8.0 - 2026-10-22
+
+### Added
+
+- Sync saved custom search engines, bookmark collections and labels, background URLs, dates, and language through the browser account (Google in Chrome, Mozilla in Firefox).
+- Show browser sync-storage usage and separate timestamps for writes, received updates, and checks; offer retry and a downloadable pre-migration backup.
+- Preview valid bookmark JSON entries while editing, with invalid rows excluded from the preview.
+
+### Changed
+
+- Restyle settings as a dark terminal-inspired interface with thin mint selection lines, monospaced configuration data, compact lists, and responsive bottom navigation.
+- Store bookmark JSON compactly while preserving the editor draft and readable exports.
+- Upload only custom configuration, using compact, validated chunks within browser sync limits. Keep search history, image caches, remote bookmark caches, and transient selections on the device.
+- Add the `storage` extension permission and update the privacy policy and user guides to describe browser-account sync.
+
+### Fixed
+
+- Retain unsaved drafts when another page or device changes settings; saving submits only edited sections.
+- Keep failed uploads in a durable local outbox, retain the previous configuration while incoming chunks are incomplete, and preserve a local backup before the first sync migration.
+- Return phone users to the selected section's heading when switching from the bottom navigation.
+
+### Tests
+
+- Add coverage for compact JSON storage, migration and backup, sync retries and quota limits, chunk integrity, incoming updates, draft conflicts, activity timestamps, and phone navigation.
+
 ## 0.7.0 - 2026-10-03
 
 ### Added

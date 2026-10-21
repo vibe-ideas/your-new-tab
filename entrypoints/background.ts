@@ -1,5 +1,6 @@
 import { isAllowedBackgroundFetchUrl } from '../utils/safeUrl';
 import { BACKGROUND_MAX_SOURCES, BACKGROUND_SOURCE_TIMEOUT_MS } from '../utils/backgroundFetch';
+import { startConfigSyncService } from '../utils/configSyncService';
 
 export default defineBackground(() => {
   const runtime = (typeof browser !== 'undefined' && browser.runtime) ? browser.runtime : chrome.runtime;
@@ -9,7 +10,15 @@ export default defineBackground(() => {
     return;
   }
 
+  const syncConfig = startConfigSyncService();
+
   runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (['configSync:init', 'configSync:save', 'configSync:retry'].includes(message?.action)) {
+      syncConfig(message.action, message.values)
+        .then((state) => sendResponse({ success: true, state }))
+        .catch((error) => sendResponse({ success: false, error: error instanceof Error ? error.message : String(error) }));
+      return true;
+    }
     if (message.action === 'fetchBackgroundImage') {
       const candidateUrls: string[] = [];
       if (typeof message.url === 'string') candidateUrls.push(message.url);

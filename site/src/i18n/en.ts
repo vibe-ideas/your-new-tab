@@ -46,11 +46,11 @@ export const en: Dict = {
       },
       {
         title: 'Configurable shortcuts',
-        body: 'Maintain bookmarks as JSON in the popup: remote URL, local-only, or paste mode. Live-syncs across tabs without broadcast.',
+        body: 'Manage built-in bookmarks, custom JSON, or a remote source URL in Settings. Saved custom configuration syncs through your browser account.',
       },
       {
         title: 'Privacy by default',
-        body: 'No tabs permission. No content script. No telemetry. Config lives in localStorage; third-party requests go straight from your browser.',
+        body: 'No tabs permission, content scripts, telemetry, or developer backend. Custom settings use browser account sync; search history and caches stay local.',
       },
     ],
   },
@@ -85,8 +85,8 @@ export const en: Dict = {
       'Privacy should be the default, not the upsell. The condensed summary below mirrors PRIVACY.md in the repo.',
     points: [
       {
-        title: 'Stored locally',
-        body: 'Search history, cached bookmarks, provider settings, animated background list, and language preference all live in your browser’s localStorage.',
+        title: 'Account sync with a local copy',
+        body: 'Custom bookmarks, search providers, background links, dates, and language sync through Google in Chrome or Mozilla in Firefox when browser sync is enabled. Search history and caches stay local, along with a pre-sync configuration backup.',
       },
       {
         title: 'No data to the author',

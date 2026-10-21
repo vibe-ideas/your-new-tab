@@ -201,3 +201,19 @@ test('background URLs show media types and invalid line numbers without fetching
   expect(await page.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'))).toBeNull();
   expect(requests).toEqual([]);
 });
+
+test('on a phone, bottom navigation returns from sync details to the selected settings and keeps saving reachable', async ({ app }) => {
+  const page = app.settings;
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.sync-details > summary').click();
+  await expect(page.getByRole('button', { name: 'Export pre-sync backup' })).toBeVisible();
+  await page.locator('#nav-backgrounds').click();
+  await expect(page.getByRole('heading', { name: 'Background', exact: true })).toBeInViewport();
+  await page.locator('#backgroundMediaUrls').fill('https://example.com/phone.webp');
+  await save(page).click();
+  await expect(save(page)).toBeDisabled();
+  expect(await page.evaluate(() => localStorage.getItem('customBackgroundMediaUrls'))).toBe('https://example.com/phone.webp');
+  await page.locator('#nav-search').click();
+  await expect(page.locator('#defaultSearchProvider')).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

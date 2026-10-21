@@ -21,7 +21,8 @@
 - **Personalized Shortcuts**: One-click access to your favorite sites, edited as JSON in the popup
 - **Dynamic Backgrounds**: Daily rotation from Unsplash & Picsum
 - **Animated Backgrounds**: Optional GIF/APNG/WebP/MP4/WebM URLs, cycled via the windmill button
-- **Privacy-First**: All settings live in `localStorage`; no telemetry, no remote code, minimal permissions (no `tabs` API)
+- **Configuration sync**: Saved custom settings sync through your browser account (Google in Chrome, Mozilla in Firefox), with local backups and a storage-usage indicator. Built-in defaults, search history, image caches, and temporary selections are not uploaded.
+- **Privacy-First**: No developer backend, telemetry, or remote code; only `storage` and the existing image-host permissions (no `tabs` API).
 - **Adaptive Layout**: Responsive across desktop and laptop screen sizes
 - **Smart Fallbacks**: Graceful error handling for every external request
 

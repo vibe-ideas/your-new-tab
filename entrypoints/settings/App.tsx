@@ -3,6 +3,7 @@ import { s, type CopyKey } from './copy';
 import { useSettingsState, type Section } from './useSettingsState';
 import { SearchSection, BookmarksSection, BackgroundsSection, AnniversariesSection } from './sections';
 import './settings.css';
+import { SyncStatus } from './SyncStatus';
 
 const sections: { id: Section; intro: CopyKey; path: string }[] = [
   { id: 'search', intro: 'searchIntro', path: 'm21 21-4.4-4.4M19 10.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z' },
@@ -14,37 +15,42 @@ function Icon({ path }: { path: string }) { return <svg viewBox="0 0 24 24" widt
 
 export default function App() {
   const state = useSettingsState();
+  const selectSection = (section: Section) => {
+    state.setSection(section);
+    if (window.matchMedia('(max-width: 1100px)').matches) window.scrollTo(0, 0);
+  };
   const active = sections.find((item) => item.id === state.section)!;
   const dialog = useRef<HTMLDialogElement>(null);
   const resetButton = useRef<HTMLButtonElement>(null);
   const [confirming, setConfirming] = useState(false);
-  useEffect(() => { document.title = `${s('settings')} · Your New Tab`; document.documentElement.lang = state.language; }, [state.language]);
+  useEffect(() => { document.title = `${s('settings')} · Your New Tab`; document.documentElement.lang = state.language; document.documentElement.dataset.theme = 'dark'; }, [state.language]);
   useEffect(() => { if (confirming) dialog.current?.showModal(); else dialog.current?.close(); }, [confirming]);
   const closeDialog = () => { setConfirming(false); resetButton.current?.focus(); };
   const restoreName = state.section === 'bookmarks' ? state.group.label.trim() || s(state.activeGroup) : s(state.section);
   return <div className="settings-shell">
-    <header className="settings-header">
-      <div className="brand-lockup"><span className="brand-mark"><Icon path="M4 5h16v14H4V5Zm4 4h8m-8 4h5" /></span><div><div className="brand-title">Your New Tab <span>/ {s('settings')}</span></div><p className="brand-subtitle">{s('subtitle')}</p></div></div>
-      <div className="language-switcher" role="group" aria-label="Language / 语言">{(['zh-CN', 'en'] as const).map((language) => <button key={language} type="button" className={`language-button${state.language === language ? ' active' : ''}`} aria-pressed={state.language === language} onClick={() => state.changeLanguage(language)}>{language === 'en' ? 'EN' : '中文'}</button>)}</div>
-    </header>
     <div className="settings-layout">
       <aside className="settings-sidebar">
+        <header className="settings-header">
+          <div className="brand-lockup"><span className="brand-mark"><Icon path="M3 4h18v16H3V4Zm4 4 3 3-3 3m6 1h4" /></span><div><div className="brand-title">Your New Tab <span>/ {s('settings')}</span></div><p className="brand-subtitle">{s('subtitle')}</p></div></div>
+          <div className="language-switcher" role="group" aria-label="Language / 语言">{(['zh-CN', 'en'] as const).map((language) => <button key={language} type="button" className={`language-button${state.language === language ? ' active' : ''}`} aria-pressed={state.language === language} onClick={() => state.changeLanguage(language)}>{language === 'en' ? 'EN' : '中文'}</button>)}</div>
+        </header>
         <nav className="settings-nav" role="tablist" aria-label={s('settings')}>
-          {sections.map((item, index) => <button id={`nav-${item.id}`} className={`nav-item${state.section === item.id ? ' active' : ''}`} type="button" role="tab" data-tab={item.id} key={item.id} aria-selected={state.section === item.id} aria-controls="settings-panel" tabIndex={state.section === item.id ? 0 : -1} onClick={() => state.setSection(item.id)} onKeyDown={(event) => {
+          {sections.map((item, index) => <button id={`nav-${item.id}`} className={`nav-item${state.section === item.id ? ' active' : ''}`} type="button" role="tab" data-tab={item.id} key={item.id} aria-selected={state.section === item.id} aria-controls="settings-panel" tabIndex={state.section === item.id ? 0 : -1} onClick={() => selectSection(item.id)} onKeyDown={(event) => {
             let next: number;
             if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % sections.length;
             else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index + sections.length - 1) % sections.length;
             else if (event.key === 'Home') next = 0;
             else if (event.key === 'End') next = sections.length - 1;
             else return;
-            event.preventDefault(); state.setSection(sections[next].id); document.getElementById(`nav-${sections[next].id}`)?.focus();
-          }}><span className="nav-icon"><Icon path={item.path} /></span>{s(item.id)}</button>)}
+            event.preventDefault(); selectSection(sections[next].id); document.getElementById(`nav-${sections[next].id}`)?.focus();
+          }}><span className="nav-icon"><Icon path={item.path} /></span><span className="nav-label">{s(item.id)}</span></button>)}
         </nav>
-        <div className="sidebar-note"><Icon path="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Zm-4 9 3 3 5-6" /><strong>{s('local')}</strong><p>{s('localHint')}</p></div>
+        <SyncStatus />
       </aside>
       <main className="settings-main">
+        {state.remoteChanged && <p className="sync-draft-notice" role="status">{s('syncDraft')}</p>}
         <div id="settings-panel" role="tabpanel" aria-labelledby={`nav-${state.section}`} tabIndex={0} data-tab-panel={state.section}>
-          <header className="section-header"><span className="eyebrow">YOUR NEW TAB</span><h1>{s(state.section)}</h1><p>{s(active.intro)}</p></header>
+          <header className="section-header"><h1>{s(state.section)}</h1><p>{s(active.intro)}</p></header>
           <div className="section-body">
             {state.section === 'search' && <SearchSection state={state} />}
             {state.section === 'bookmarks' && <BookmarksSection state={state} />}

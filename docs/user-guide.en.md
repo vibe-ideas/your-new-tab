@@ -40,7 +40,15 @@ The **Bookmarks** tab keeps two source options:
 - **Built-in bookmarks**: the default mode, using the developer-focused shortcuts bundled with the extension.
 - **Paste bookmarks JSON directly**: import your own shortcut list, with formatting and minifying tools in the popup.
 
-Bookmark data is stored locally in the browser's `localStorage`. Resetting the extension returns to the built-in bookmarks and does not fetch data from an external bookmark source.
+Saved custom configuration is kept locally and written to browser sync storage. In Chrome, sign in to the same Google account and enable browser sync, then install the extension with the same extension ID on the other machine. Firefox uses a Mozilla account; the two browsers do not share account sync. Signing into a Google website alone does not enable Chrome sync. Unpacked developer installations also need a consistent extension ID.
+
+Sync includes both custom bookmark groups and labels, bookmark source URLs, search providers and the default choice, background URLs, dates, and language. Bundled bookmarks only need a default-choice marker. Search history, image and remote-bookmark caches, the active group, and the last selected provider stay local.
+
+Settings shows sync storage usage (up to 100 KiB), plus local timestamps for the last successful write, received configuration update, and sync check. Retrying shows progress; missing historical timestamps display “No record yet”. These times do not confirm cloud delivery. Large JSON is split into chunks and applied only when complete. Quota or write failures retain local edits; use **Retry sync** to try again. **Saved to browser sync storage** does not confirm upload to Google: the browser handles cloud transfer and offline recovery.
+
+On first use, existing synced settings take precedence and the previous local configuration is backed up. **Export pre-sync backup** downloads the custom data as JSON; bookmark arrays are under `values.external.bookmarks` and `values.internal.bookmarks`. Sections sync independently; concurrent edits to the same section use the version ultimately delivered by the browser. Incoming changes retain unsaved drafts. Saving submits edited sections; discarding loads the latest settings.
+
+Save restored defaults to propagate a reset to other devices. Clearing local site data does not delete synced settings.
 
 ### Search history
 

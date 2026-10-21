@@ -44,18 +44,17 @@ export function SearchSection({ state }: Props) {
     state.update({ providers: next, defaultProvider: defaultId });
   };
   return <>
-    <section className="settings-section">
+    <section className="settings-section settings-split default-engine-section">
+      <div className="section-heading"><div><label className="field-label" htmlFor="defaultSearchProvider">{s('defaultProvider')}</label><p id="defaultHint">{s('defaultHint')}</p></div></div>
       <div className="field-stack">
-        <label className="field-label" htmlFor="defaultSearchProvider">{s('defaultProvider')}</label>
         <select id="defaultSearchProvider" className="input-field default-select" value={defaultProvider} onChange={(e) => state.update({ defaultProvider: e.target.value })} aria-describedby="defaultHint">
           {providers.filter((p) => p.enabled !== false).map((p) => <option key={p.id} value={p.id}>{p.name || s('unnamed')}</option>)}
         </select>
-        <p id="defaultHint" className="help-text">{s('defaultHint')}</p>
       </div>
     </section>
-    <section className="settings-section">
+    <section className="settings-section settings-split">
       <div className="section-heading"><div><h2>{s('engines')}</h2><p>{s('enginesHint')}</p></div><span className="count-label">{providers.length}</span></div>
-      <div className="engine-list">
+      <div className="section-content"><div className="engine-list">
         {providers.map((provider, index) => {
           const icon = getSafeIconImageSrc(provider.iconSvg);
           const builtIn = isBuiltInSearchProvider(provider.id);
@@ -91,7 +90,7 @@ export function SearchSection({ state }: Props) {
         const id = `custom_${Date.now()}`;
         state.update({ providers: [...providers, { id, name: '', urlTemplate: '', capability: 'experimental', enabled: true }] });
         state.focusField(`provider-name-${id}`);
-      }}><span aria-hidden="true">＋</span> {s('addProvider')}</button>
+      }}><span aria-hidden="true">＋</span> {s('addProvider')}</button></div>
     </section>
   </>;
 }
@@ -130,12 +129,12 @@ export function BookmarksSection({ state }: Props) {
           <button className="text-button" type="button" onClick={state.exportJson}>{t('exportFile')}</button>
         </div></div>
         <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={(e) => { const file = e.target.files?.[0]; if (file) void state.importJson(file); e.target.value = ''; }} />
-        <textarea id="bookmarksJson" className="input-field json-textarea" rows={10} spellCheck={false} placeholder={'[\n  {"id": "example", "title": "Example", "url": "https://example.com"}\n]'} value={group.json} onChange={(e) => state.updateGroup({ json: e.target.value })} {...aria(state, 'bookmarksJson')} />
+        {/* taste-skill-ignore: example JSON is an input hint, not populated data. */}<textarea id="bookmarksJson" className="input-field json-textarea" rows={10} spellCheck={false} placeholder={'[\n  {"id": "example", "title": "Example", "url": "https://example.com"}\n]'} value={group.json} onChange={(e) => state.updateGroup({ json: e.target.value })} {...aria(state, 'bookmarksJson')} />
         <FieldError state={state} field="bookmarksJson" />
         {jsonPreview && <BookmarkPreview bookmarks={jsonPreview.bookmarks} error={jsonPreview.error} />}
       </div>}
       {group.source === 'remote' && <div className="field-stack"><label className="field-label" htmlFor="bookmarksUrl">{s('remoteUrl')}</label>
-        <input id="bookmarksUrl" className="input-field mono" value={group.url} placeholder="https://example.com/bookmarks.json" onChange={(e) => state.updateGroup({ url: e.target.value })} {...aria(state, 'bookmarksUrl')} />
+        {/* taste-skill-ignore: reserved example domain is an input hint. */}<input id="bookmarksUrl" className="input-field mono" value={group.url} placeholder="https://example.com/bookmarks.json" onChange={(e) => state.updateGroup({ url: e.target.value })} {...aria(state, 'bookmarksUrl')} />
         <FieldError state={state} field="bookmarksUrl" /><p className="help-text">{s('remoteHelp')}</p>
       </div>}
       {group.source !== 'default' && <div className="inline-actions"><button type="button" className="secondary-button" disabled={state.testing} onClick={() => void state.testBookmarks()}>{s(state.testing ? 'testing' : group.source === 'json' ? 'validate' : 'testUrl')}</button></div>}
@@ -149,14 +148,14 @@ export function BackgroundsSection({ state }: Props) {
   const invalid = lines.filter(({ url }) => !isHttpUrl(url));
   const inlineError = invalid.length ? s('invalidMedia', { rows: invalid.map(({ line }) => line).join(', ') }) : state.errorFor('backgroundMediaUrls');
   return <>
-    <div className="mode-summary"><span className="mode-icon" aria-hidden="true">◩</span><div><span className="eyebrow">{s('backgroundMode')}</span><h2>{lines.length ? s('customBackground', { count: lines.length }) : s('daily')}</h2><p className="help-text">{s(lines.length ? 'customBackgroundHint' : 'dailyHint')}</p></div></div>
+    <div className="mode-summary"><span className="mode-icon" aria-hidden="true">◩</span><div><span className="mode-label">{s('backgroundMode')}</span><h2>{lines.length ? s('customBackground', { count: lines.length }) : s('daily')}</h2><p className="help-text">{s(lines.length ? 'customBackgroundHint' : 'dailyHint')}</p></div></div>
     <section className="settings-section">
       <div className="field-stack"><label className="field-label" htmlFor="backgroundMediaUrls">{s('mediaUrls')}</label>
-        <textarea id="backgroundMediaUrls" className="input-field media-textarea mono" rows={6} placeholder={'https://example.com/landscape.webp\nhttps://example.com/ocean.mp4'} value={state.draft.backgroundUrls} onChange={(e) => { state.update({ backgroundUrls: e.target.value }); state.clearError('backgroundMediaUrls'); }} aria-invalid={Boolean(inlineError)} aria-describedby={inlineError ? 'backgroundMediaUrls-error' : 'mediaHelp'} />
+        {/* taste-skill-ignore: reserved example URLs explain the accepted syntax. */}<textarea id="backgroundMediaUrls" className="input-field media-textarea mono" rows={6} placeholder={'https://example.com/landscape.webp\nhttps://example.com/ocean.mp4'} value={state.draft.backgroundUrls} onChange={(e) => { state.update({ backgroundUrls: e.target.value }); state.clearError('backgroundMediaUrls'); }} aria-invalid={Boolean(inlineError)} aria-describedby={inlineError ? 'backgroundMediaUrls-error' : 'mediaHelp'} />
         {inlineError && <p className="field-error" id="backgroundMediaUrls-error" role="alert">{inlineError}</p>}
         <p className="help-text" id="mediaHelp">{s('mediaHelp')}</p>
       </div>
-      {lines.length > 0 && <ul className="media-list">{lines.map(({ url, line }) => <li key={line}><span className="line-number">{line.toString().padStart(2, '0')}</span><span className="media-url">{url}</span><span className={`badge${!isHttpUrl(url) ? ' badge-error' : ''}`}>{isHttpUrl(url) ? s(detectMediaType(url)) : '!'}</span></li>)}</ul>}
+      {lines.length > 0 && <ul className="media-list">{lines.map(({ url, line }) => <li key={line}><span className="line-number">{line}</span><span className="media-url">{url}</span><span className={`badge${!isHttpUrl(url) ? ' badge-error' : ''}`}>{isHttpUrl(url) ? s(detectMediaType(url)) : '!'}</span></li>)}</ul>}
       <p className="help-text privacy-note">{s('noPreview')}</p>
     </section>
   </>;

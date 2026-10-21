@@ -30,3 +30,6 @@ web-ext.config.ts
 test-results
 playwright-report
 docs/screenshots
+
+# Local design audit artifacts
+.taste-skill/

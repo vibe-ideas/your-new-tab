@@ -79,8 +79,8 @@ for (const target of TARGETS) {
   const manifestPath = path.join(targetDir, 'manifest.json');
   try {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    if (manifest.permissions && manifest.permissions.length > 0) {
-      errors.push(`${target}: manifest declares permissions ${JSON.stringify(manifest.permissions)} (expected none)`);
+    if (JSON.stringify(manifest.permissions) !== JSON.stringify(['storage'])) {
+      errors.push(`${target}: manifest declares permissions ${JSON.stringify(manifest.permissions)} (expected only storage)`);
     }
     if (!Array.isArray(manifest.host_permissions) || manifest.host_permissions.length === 0) {
       errors.push(`${target}: manifest must declare host_permissions for image hosts`);

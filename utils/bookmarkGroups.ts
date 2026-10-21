@@ -139,6 +139,9 @@ export const readBookmarkGroupConfig = (group: BookmarkGroupId): BookmarkGroupCo
 };
 
 export const writeBookmarkGroupConfig = (group: BookmarkGroupId, config: BookmarkGroupConfig) => {
+  // Parse before writing any keys so invalid JSON cannot partially change the source.
+  const json = !config.useDefaultBookmarks && config.useDirectJson
+    ? JSON.stringify(JSON.parse(config.bookmarksJson)) : null;
   const keys = groupKeys(group);
   safeWrite(keys.useDefault, String(config.useDefaultBookmarks));
   safeWrite(keys.useDirectJson, String(config.useDirectJson));
@@ -148,7 +151,7 @@ export const writeBookmarkGroupConfig = (group: BookmarkGroupId, config: Bookmar
     safeRemove(keys.json);
   } else if (config.useDirectJson) {
     safeRemove(keys.url);
-    safeWrite(keys.json, config.bookmarksJson);
+    safeWrite(keys.json, json!);
   } else {
     safeWrite(keys.url, config.bookmarksUrl);
     safeRemove(keys.json);

@@ -44,6 +44,7 @@ export const test = base.extend({
         };
       }, newSvg);
       const settings = await open('settings');
+      await settings.locator('#saveConfigButton').waitFor();
       const seed = (values) => settings.evaluate((entries) => {
         for (const [key, value] of Object.entries(entries)) {
           if (value === null) localStorage.removeItem(key);

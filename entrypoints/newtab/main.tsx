@@ -16,8 +16,15 @@ import { BackgroundLayer } from './components/BackgroundLayer';
 import { WindmillButton } from './components/WindmillButton';
 import { Toast } from './components/Toast';
 import { AnniversarySidebar } from './components/AnniversarySidebar';
+import { initializeConfigSync, CONFIG_APPLIED_EVENT } from '@/utils/configSyncClient';
 
 const NewTab: React.FC = () => {
+  const [, refreshLanguage] = React.useReducer((value: number) => value + 1, 0);
+  React.useEffect(() => {
+    const refresh = () => { document.title = t('newtabPageTitle'); refreshLanguage(); };
+    window.addEventListener(CONFIG_APPLIED_EVENT, refresh);
+    return () => window.removeEventListener(CONFIG_APPLIED_EVENT, refresh);
+  }, []);
   const toast = useToast();
   const bookmarks = useBookmarkLoader();
   const background = useBackgroundMedia();
@@ -81,11 +88,11 @@ const NewTab: React.FC = () => {
 };
 
 const container = document.getElementById('app');
-if (container) {
+void initializeConfigSync().finally(() => { if (container) {
   const root = createRoot(container);
   root.render(
     <NewTabErrorBoundary>
       <NewTab />
     </NewTabErrorBoundary>
   );
-}
+} });

@@ -7,6 +7,7 @@ export default defineConfig({
     name: '__MSG_extensionName__',
     description: '__MSG_extensionDescription__',
     default_locale: 'en',
+    permissions: ['storage'],
     chrome_url_overrides: {
       newtab: '/newtab/index.html',
     },

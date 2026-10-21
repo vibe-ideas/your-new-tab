@@ -34,7 +34,7 @@ This is an **AI-search-first** browser extension built with WXT (Web Extension F
 │   │       ├── BookmarksTab.tsx
 │   │       ├── SearchTab.tsx
 │   │       └── BackgroundsTab.tsx
-│   └── background.ts    # Background script (image fetch only)
+│   └── background.ts    # Background script (image fetch + configuration sync)
 ├── utils/               # Shared helpers (browser API, search providers, history)
 ├── public/              # Static assets (icons rendered from assets/icon-source.svg)
 ├── assets/              # Extension icon source (SVG + 1024 PNG)
@@ -81,9 +81,9 @@ npm run compile      # Run TypeScript compilation without emitting files
 ### Entry Points
 - **New Tab Page**: The main user interface located in `entrypoints/newtab/`. React app rendering the AI search bar, provider picker, search history, clock, shortcut grid, and background.
 - **Popup**: Configuration UI in `entrypoints/popup/`. Manages bookmark sources, search-provider list (built-in + custom), default provider, and animated background URLs.
-- **Background Script**: `entrypoints/background.ts`. Sole responsibility is fetching daily background images from Unsplash/Picsum to bypass CORS — no broadcast, no content scripting.
+- **Background Script**: `entrypoints/background.ts`. Fetches daily background images and serializes configuration sync writes through `utils/configSyncService.ts`. No tab broadcast or content scripting.
 
-Cross-tab config sync uses `window` `storage` events (no `tabs` permission, no message broadcast).
+Cross-device configuration sync uses `storage.sync`, with a durable local outbox and migration backup in `storage.local`. `utils/configSyncClient.ts` mirrors complete updates into `localStorage`; existing readers use `window` `storage` events. No `tabs` permission or message broadcast.
 
 ### Core Components
 
@@ -114,7 +114,7 @@ The extension is configured in `wxt.config.ts` to:
 - Use the React module for React-specific features
 - Override the new tab page with the custom interface
 - Configure the development server to run on port 3000
-- Request only `host_permissions` for the Unsplash/Picsum image hosts — no `tabs`, no broad host access
+- Request `storage` for account configuration sync and `host_permissions` for the Unsplash/Picsum image hosts — no `tabs`, no broad host access
 
 ## Data Flow
 
@@ -148,3 +148,12 @@ The extension is configured in `wxt.config.ts` to:
 - **React 19**: UI library for building the new tab interface
 - **TypeScript**: Typed JavaScript for better development experience
 - **CSS**: Custom styling with modern features like backdrop-filter
+## Configuration Sync
+
+- Six independent sections: search, external/internal bookmarks, backgrounds, dates, language. Only saved custom configuration is uploaded; defaults use null markers, and unchanged built-in providers are omitted.
+- `utils/configSyncModel.ts` validates and maps settings; `configSyncStorage.ts` chunks compact JSON with revision hashes, enforces sync quotas, and rejects incomplete updates.
+- `configSyncService.ts` serializes writes in the background, persists pending edits, and prioritizes existing sync data on first migration. `configSyncClient.ts` preserves a local outbox until the background acknowledges it.
+- Unsaved settings drafts survive incoming updates; saving only publishes edited sections. Same-section concurrent edits follow browser sync conflict resolution.
+- The settings sidebar reports local sync-storage writes, not confirmed cloud delivery. Chrome uses Google account sync; Firefox uses Mozilla account sync.
+- Search history, caches, background position, active bookmark group and last selected search provider remain local.
+- Sync tests: `pnpm run test:e2e -- e2e/config-sync-ui.spec.mjs`. Account-to-account transport requires a manual two-profile/two-device acceptance check with matching extension IDs.

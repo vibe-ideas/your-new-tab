@@ -6,6 +6,8 @@ import { DEFAULT_ANNIVERSARIES, readAnniversaryItems, sanitizeAnniversaryItems, 
 import { parseBookmarkJson } from '@/utils/bookmarks';
 import { isHttpSearchTemplate, isHttpUrl } from '@/utils/safeUrl';
 import { s } from './copy';
+import { captureConfig, emptySnapshot, same } from '@/utils/configSyncModel';
+import { CONFIG_APPLIED_EVENT, publishConfigChanges } from '@/utils/configSyncClient';
 
 export type Section = 'search' | 'bookmarks' | 'backgrounds' | 'anniversaries';
 export type BookmarkSource = 'default' | 'json' | 'remote';
@@ -45,6 +47,15 @@ function readDraft(): SettingsDraft {
 }
 
 const equal = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const sameSettings = (a: SettingsDraft, b: SettingsDraft) => {
+  const normalized = (draft: SettingsDraft) => ({ ...draft, groups: Object.fromEntries(BOOKMARK_GROUP_IDS.map((id) => {
+    const group = draft.groups[id];
+    let json: unknown = group.json;
+    try { json = JSON.parse(group.json); } catch { /* preserve invalid drafts */ }
+    return [id, { ...group, json }];
+  })) });
+  return same(normalized(a), normalized(b));
+};
 export const mediaLines = (value: string) => value.split('\n').map((url, index) => ({ url: url.trim(), line: index + 1 })).filter(({ url }) => url);
 
 function validate(draft: SettingsDraft): Issue[] {
@@ -86,11 +97,14 @@ function persist(draft: SettingsDraft, saved: SettingsDraft) {
       writes.set(prefix + 'useDefaultBookmarks', String(next.source === 'default'));
       writes.set(prefix + 'useDirectJson', String(next.source === 'json'));
       writes.set(prefix + 'bookmarksUrl', next.source === 'default' ? 'default' : next.source === 'remote' ? next.url : null);
-      writes.set(prefix + 'bookmarksJson', next.source === 'json' ? next.json : null);
+      // Compact the stored copy only; keep the editor's formatting and all JSON fields.
+      writes.set(prefix + 'bookmarksJson', next.source === 'json' ? JSON.stringify(JSON.parse(next.json)) : null);
     }
   }
   if (BOOKMARK_GROUP_IDS.some((id) => draft.groups[id].label !== saved.groups[id].label)) {
-    writes.set('bookmarkGroupLabels', JSON.stringify({ external: draft.groups.external.label.trim(), internal: draft.groups.internal.label.trim() }));
+    const labels = readBookmarkGroupLabels();
+    for (const id of BOOKMARK_GROUP_IDS) if (draft.groups[id].label !== saved.groups[id].label) labels[id] = draft.groups[id].label.trim();
+    writes.set('bookmarkGroupLabels', JSON.stringify(labels));
   }
   if (!equal(draft.providers, saved.providers) || draft.defaultProvider !== saved.defaultProvider) {
     const config = repairSearchProviderConfig({
@@ -132,6 +146,7 @@ export function useSettingsState() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [focus, setFocus] = useState<{ field: string; token: number } | null>(null);
   const [status, setStatus] = useState<{ text: string; error: boolean } | null>(null);
+  const [remoteChanged, setRemoteChanged] = useState(false);
   const [testing, setTesting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const testRequest = useRef<AbortController | null>(null);
@@ -144,6 +159,16 @@ export function useSettingsState() {
     if (!error) timer.current = setTimeout(() => setStatus(null), 3000);
   };
   useEffect(() => () => { clearTimeout(timer.current); testRequest.current?.abort(); }, []);
+  useEffect(() => {
+    const refresh = () => {
+      setLanguage(i18n.getLanguage());
+      const current = readDraft();
+      if (dirty) { if (!sameSettings(current, saved)) setRemoteChanged(true); }
+      else if (!sameSettings(current, saved)) { setSaved(current); setDraft(current); setRemoteChanged(false); }
+    };
+    window.addEventListener(CONFIG_APPLIED_EVENT, refresh);
+    return () => window.removeEventListener(CONFIG_APPLIED_EVENT, refresh);
+  }, [dirty, saved]);
   useEffect(() => {
     const config = readProviders();
     if (config.repaired) {
@@ -204,11 +229,15 @@ export function useSettingsState() {
       return;
     }
     try {
+      let before;
+      try { before = captureConfig(localStorage); } catch { before = emptySnapshot(); }
       persist(draft, saved);
-      setSaved(draft); notify(s('saved'));
+      const next = remoteChanged ? readDraft() : draft;
+      setSaved(next); setDraft(next); setRemoteChanged(false); notify(s('saved'));
+      publishConfigChanges(before);
     } catch (error) { console.warn('Could not save settings', error); notify(s('saveFailed'), true); }
   };
-  const discard = () => { testRequest.current?.abort(); setTesting(false); setDraft(saved); setIssues([]); setStatus(null); };
+  const discard = () => { testRequest.current?.abort(); setTesting(false); const current = readDraft(); setSaved(current); setDraft(current); setRemoteChanged(false); setIssues([]); setStatus(null); };
   const restore = () => {
     if (section === 'search') update({ providers: structuredClone(DEFAULT_SEARCH_PROVIDERS), defaultProvider: DEFAULT_SEARCH_PROVIDER_ID });
     if (section === 'bookmarks') updateGroup({ source: 'default', label: '', json: '', url: '' });
@@ -217,7 +246,12 @@ export function useSettingsState() {
     setIssues((current) => current.filter((issue) => issue.section !== section || (section === 'bookmarks' && issue.group !== activeGroup)));
     notify(s('restored'));
   };
-  const changeLanguage = (value: Language) => { i18n.setLanguage(value); setLanguage(value); };
+  const changeLanguage = (value: Language) => {
+    let before;
+    try { before = captureConfig(localStorage); } catch { before = emptySnapshot(); }
+    i18n.setLanguage(value); setLanguage(value);
+    try { publishConfigChanges(before); } catch (error) { console.warn('Could not sync language', error); }
+  };
   const testBookmarks = async () => {
     testRequest.current?.abort();
     const controller = new AbortController();
@@ -262,6 +296,6 @@ export function useSettingsState() {
   };
   const errorFor = (field: string) => issues.find((issue) => issue.field === field && (!issue.group || issue.group === activeGroup))?.message;
   const refresh = () => { broadcastBookmarkRefresh(); notify(t('bookmarksRefreshed')); };
-  return { draft, saved, dirty, section, setSection, activeGroup, selectGroup, group, language, changeLanguage, issues, errorFor, clearError, update, updateGroup, save, discard, restore, status, focusField, testing, testBookmarks, formatJson, importJson, exportJson, refresh };
+  return { draft, saved, dirty, remoteChanged, section, setSection, activeGroup, selectGroup, group, language, changeLanguage, issues, errorFor, clearError, update, updateGroup, save, discard, restore, status, focusField, testing, testBookmarks, formatJson, importJson, exportJson, refresh };
 }
 export type SettingsState = ReturnType<typeof useSettingsState>;
